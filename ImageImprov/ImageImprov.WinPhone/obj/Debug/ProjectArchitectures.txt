@@ -1,0 +1,2 @@
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.WinPhone\ImageImprov.WinPhone.csproj;neutral
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov\ImageImprov.csproj;neutral

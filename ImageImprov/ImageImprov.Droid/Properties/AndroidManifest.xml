@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<uses-sdk android:minSdkVersion="15" />
+	<application android:label="ImageImprov.Droid" >
+    <!-- getting a null pointer error around the action bar.  does this make it go away?? -->
+    <!-- NOPE. not how to turn action bar off. style name="ActionBarPopupThemeOverlay" parent="Theme.AppCompat.Light.NoActionBar">
+      <item name="windowActionBar">false</item>
+    </style -->
+  </application>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.CAMERA" />
+</manifest>
