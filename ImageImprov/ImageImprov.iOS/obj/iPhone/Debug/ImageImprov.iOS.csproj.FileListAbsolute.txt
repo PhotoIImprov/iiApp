@@ -2,7 +2,7 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ibtool\_Bundl
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\actool\_PartialAppManifest.items
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\actool\_BundleResourceWithLogicalName.items
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\optimized\
-C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ImageImprov.iOS.csprojResolveAssemblyReference.cache
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ImageImprov.iOS.exe.config
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ImageImprov.iOS.exe
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ImageImprov.iOS.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ImageImprov.dll
@@ -10,6 +10,8 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Platform.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Platform.iOS.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Xaml.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Newtonsoft.Json.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\System.Net.Http.Primitives.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ImageImprov.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Core.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Core.xml
@@ -19,6 +21,8 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Xaml.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Xaml.xml
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Xamarin.Forms.Xaml.dll.mdb
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\Newtonsoft.Json.xml
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\System.Net.Http.Primitives.xml
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ar\Xamarin.Forms.Platform.iOS.resources.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\ca\Xamarin.Forms.Platform.iOS.resources.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\cs\Xamarin.Forms.Platform.iOS.resources.dll
@@ -53,6 +57,7 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\vi\Xamarin.Fo
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\zh-Hans\Xamarin.Forms.Platform.iOS.resources.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\zh-Hant\Xamarin.Forms.Platform.iOS.resources.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\bin\iPhone\Debug\zh-HK\Xamarin.Forms.Platform.iOS.resources.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ImageImprov.iOS.csprojResolveAssemblyReference.cache
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ImageImprov.iOS.exe
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ImageImprov.iOS.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.iOS\obj\iPhone\Debug\ImageImprov.iOS.exe.mdb

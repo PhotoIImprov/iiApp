@@ -40,5 +40,14 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\Sys
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.ServiceModel.Internals.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Text.RegularExpressions.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Resources.ResourceManager.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\Newtonsoft.Json.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Xml.XDocument.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Runtime.Serialization.Primitives.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Text.Encoding.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Text.Encoding.Extensions.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\Microsoft.CSharp.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\Mono.CSharp.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Net.Requests.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Net.Primitives.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Collections.Concurrent.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Droid\obj\Debug\android\assets\System.Runtime.InteropServices.dll

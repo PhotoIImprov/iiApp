@@ -25,6 +25,9 @@
     <AppxPackagedFile Include="C:\VSProj\ImageImprov\ImageImprov\ImageImprov.WinPhone\bin\Debug\ImageImprov.WinPhone.exe">
       <PackagePath>ImageImprov.WinPhone.exe</PackagePath>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\VSProj\ImageImprov\ImageImprov\ImageImprov.WinPhone\bin\Debug\ImageImprov.WinPhone.exe.config">
+      <PackagePath>ImageImprov.WinPhone.exe.config</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="C:\VSProj\ImageImprov\ImageImprov\ImageImprov\bin\Debug\ImageImprov.dll">
       <PackagePath>ImageImprov.dll</PackagePath>
     </AppxPackagedFile>
@@ -42,6 +45,9 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\VSProj\ImageImprov\packages\Xamarin.Forms.2.3.3.180\lib\wpa81\Xamarin.Forms.Xaml.dll">
       <PackagePath>Xamarin.Forms.Xaml.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\VSProj\ImageImprov\ImageImprov\ImageImprov\bin\Debug\Newtonsoft.Json.dll">
+      <PackagePath>Newtonsoft.Json.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\VSProj\ImageImprov\ImageImprov\ImageImprov.WinPhone\Assets\Logo.scale-240.png">
       <PackagePath>Assets\Logo.scale-240.png</PackagePath>

@@ -129,6 +129,13 @@ class MonoPackageManager_Resources {
 		"System.Reflection.Extensions.dll",
 		"System.Text.RegularExpressions.dll",
 		"System.Resources.ResourceManager.dll",
+		"Newtonsoft.Json.dll",
+		"System.Xml.XDocument.dll",
+		"System.Runtime.Serialization.Primitives.dll",
+		"System.Text.Encoding.dll",
+		"System.Text.Encoding.Extensions.dll",
+		"System.Net.Requests.dll",
+		"System.Net.Primitives.dll",
 		"System.Collections.Concurrent.dll",
 		"System.Runtime.InteropServices.dll",
 	};

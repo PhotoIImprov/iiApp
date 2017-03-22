@@ -1,4 +1,3 @@
-C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\ImageImprov.Windows.csprojResolveAssemblyReference.cache
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\App.g.i.cs
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\App.g.cs
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\MainPage.g.i.cs
@@ -23,11 +22,14 @@ C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Pl
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Platform.WinRT.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Platform.WinRT.Tablet.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Xaml.dll
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Newtonsoft.Json.dll
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\ImageImprov.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Core.xml
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Platform.WinRT.pri
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Platform.WinRT.Tablet.pri
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Xamarin.Forms.Xaml.xml
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\bin\Debug\Newtonsoft.Json.xml
+C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\ImageImprov.Windows.csprojResolveAssemblyReference.cache
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\ImageImprov.Windows.exe
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\ImageImprov.Windows.pdb
 C:\VSProj\ImageImprov\ImageImprov\ImageImprov.Windows\obj\Debug\ImageImprov.Windows.csproj.GenerateResource.Cache
