@@ -33,6 +33,8 @@ namespace ImageImprov.WinPhone
         /// </summary>
         public App()
         {
+            // @todo need to get a GUI
+            // @todo need to handle the camera
             this.InitializeComponent();
             this.Suspending += this.OnSuspending;
         }

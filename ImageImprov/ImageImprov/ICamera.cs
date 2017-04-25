@@ -14,7 +14,7 @@ namespace ImageImprov
         //> ShouldTakePicture
 
         //< ShowImage
-        void ShowImage(string filepath);
+        void ShowImage(string filepath, byte[] imgBytes);
         //> ShowImage
     }
 }

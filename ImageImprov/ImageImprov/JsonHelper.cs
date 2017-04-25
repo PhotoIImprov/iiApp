@@ -14,17 +14,23 @@ namespace ImageImprov {
 
         public static IList<T> DeserializeToList<T>(string jsonString) {
             InvalidJsonElements = null;
-            var array = JArray.Parse(jsonString);
             IList<T> objectsList = new List<T>();
+            try {
+                // this line will crash if json is null.
+                var array = JArray.Parse(jsonString);
 
-            foreach (var item in array) {
-                try {
-                    // the good
-                    objectsList.Add(item.ToObject<T>());
-                } catch (Exception ex) {
-                    InvalidJsonElements = InvalidJsonElements ?? new List<string>();
-                    InvalidJsonElements.Add(item.ToString());
+                foreach (var item in array) {
+                    try {
+                        // the good
+                        objectsList.Add(item.ToObject<T>());
+                    } catch (Exception ex) {
+                        InvalidJsonElements = InvalidJsonElements ?? new List<string>();
+                        InvalidJsonElements.Add(item.ToString());
+                    }
                 }
+            } catch (Exception e) {
+                // ignore. we received a null list.  users of the fcn will be responsible when nothing comes back.
+                bool falseBreak = false;
             }
             return objectsList;
         }

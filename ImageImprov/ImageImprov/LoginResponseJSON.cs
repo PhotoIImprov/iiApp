@@ -13,14 +13,14 @@ namespace ImageImprov
     [JsonObject]
     public class LoginResponseJSON
     {
-        [JsonProperty("user_id")]
-        public string userId { get; set; }
+        //[JsonProperty("user_id")]
+        //public long userId { get; set; }
 
         // The uploading category_id is the id for the competition currently open for people to 
         // submit entries (ie, upload).
         // The voting category is not returned in the login info, so it's not included here.
         // @see GlobalStatusSingleton for that info.
         [JsonProperty("uploading_category_id")]
-        public string uploadingCategoryId { get; set; }
+        public long uploadingCategoryId { get; set; }
     }
 }

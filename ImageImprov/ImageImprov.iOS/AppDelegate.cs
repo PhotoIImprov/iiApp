@@ -28,11 +28,20 @@ namespace ImageImprov.iOS
         //
         // You have 17 seconds to return from this method, or iOS will terminate your application.
         //
+        // @todo Check for camera availability and set in GlobalStatusSingleton
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
             Forms.Init();
 
             LoadApplication(new App());
+
+            if (!Xamarin.Forms.Application.Current.Properties.ContainsKey(App.PROPERTY_UUID)) {
+                NSUuid generator = new NSUuid();
+                generator.Init();
+                GlobalStatusSingleton.UUID = generator.ToString();
+                // this gives the device id.
+                //UIKit.UIDevice.CurrentDevice.IdentifierForVendor.AsString();
+            }
 
             //< imagePicker
             var imagePicker = new UIImagePickerController { SourceType = UIImagePickerControllerSourceType.Camera };
@@ -51,7 +60,8 @@ namespace ImageImprov.iOS
                 var image = (UIImage)e.Info.ObjectForKey(new NSString("UIImagePickerControllerOriginalImage"));
                 InvokeOnMainThread(() => {
                     image.AsPNG().Save(filepath, false);
-                    ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(filepath);
+                    byte[] imgBytes = null;
+                    ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(filepath, imgBytes);
                 });
                 uiApplication.KeyWindow.RootViewController.DismissViewController(true, null);
             };
