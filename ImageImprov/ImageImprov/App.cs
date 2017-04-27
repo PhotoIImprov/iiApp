@@ -58,8 +58,8 @@ namespace ImageImprov
         private void loadProperties() {
             IDictionary<string, object> properties = Application.Current.Properties;
             if (properties.ContainsKey(PROPERTY_UUID)) {
-                GlobalStatusSingleton.UUID = properties[PROPERTY_UUID] as string;
-                //GlobalStatusSingleton.UUID = "";
+                //GlobalStatusSingleton.UUID = properties[PROPERTY_UUID] as string;
+                GlobalStatusSingleton.UUID = "";
             } // else { not implemented as it gets taken care of by the device specific code.
             if (properties.ContainsKey(PROPERTY_USERNAME)) {
                 GlobalStatusSingleton.username = properties[PROPERTY_USERNAME] as string;

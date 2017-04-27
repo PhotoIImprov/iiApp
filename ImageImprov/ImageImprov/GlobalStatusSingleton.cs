@@ -59,8 +59,11 @@ namespace ImageImprov
 
         public static AuthenticationToken authToken;
 
-        //public static string activeURL = "https://api.imageimprov.com/";
+#if DEBUG
         public static string activeURL = "http://104.198.176.198:8080/";
+#else
+        public static string activeURL = "https://api.imageimprov.com/";
+#endif
 
         // returns true if we are in vertical mode, or false for landscape.
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }

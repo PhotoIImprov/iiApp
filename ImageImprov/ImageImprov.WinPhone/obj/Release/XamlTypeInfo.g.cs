@@ -9,17 +9,17 @@
 
 
 
-namespace ImageImprov.Windows
+namespace ImageImprov.WinPhone
 {
     public partial class App : global::Windows.UI.Xaml.Markup.IXamlMetadataProvider
     {
-        private global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider _provider;
+        private global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider _provider;
 
         public global::Windows.UI.Xaml.Markup.IXamlType GetXamlType(global::System.Type type)
         {
             if(_provider == null)
             {
-                _provider = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider();
+                _provider = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider();
             }
             return _provider.GetXamlTypeByType(type);
         }
@@ -28,7 +28,7 @@ namespace ImageImprov.Windows
         {
             if(_provider == null)
             {
-                _provider = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider();
+                _provider = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider();
             }
             return _provider.GetXamlTypeByName(fullName);
         }
@@ -40,7 +40,7 @@ namespace ImageImprov.Windows
     }
 }
 
-namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
+namespace ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo
 {
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Windows.UI.Xaml.Build.Tasks", "4.0.0.0")]    
@@ -59,7 +59,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
             {
                 xamlType = CreateXamlType(typeIndex);
             }
-            var userXamlType = xamlType as global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType;
+            var userXamlType = xamlType as global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType;
             if(xamlType == null || (userXamlType != null && userXamlType.IsReturnTypeStub && !userXamlType.IsLocalType))
             {
                 global::Windows.UI.Xaml.Markup.IXamlType libXamlType = CheckOtherMetadataProvidersForType(type);
@@ -95,7 +95,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
             {
                 xamlType = CreateXamlType(typeIndex);
             }
-            var userXamlType = xamlType as global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType;
+            var userXamlType = xamlType as global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType;
             if(xamlType == null || (userXamlType != null && userXamlType.IsReturnTypeStub && !userXamlType.IsLocalType))
             {
                 global::Windows.UI.Xaml.Markup.IXamlType libXamlType = CheckOtherMetadataProvidersForName(typeName);
@@ -149,18 +149,18 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
         private void InitTypeTables()
         {
             _typeNameTable = new string[5];
-            _typeNameTable[0] = "Xamarin.Forms.Platform.WinRT.WindowsPage";
+            _typeNameTable[0] = "Xamarin.Forms.Platform.WinRT.WindowsPhonePage";
             _typeNameTable[1] = "Xamarin.Forms.Platform.WinRT.WindowsBasePage";
             _typeNameTable[2] = "Windows.UI.Xaml.Controls.Page";
             _typeNameTable[3] = "Windows.UI.Xaml.Controls.UserControl";
-            _typeNameTable[4] = "ImageImprov.Windows.MainPage";
+            _typeNameTable[4] = "ImageImprov.WinPhone.MainPage";
 
             _typeTable = new global::System.Type[5];
-            _typeTable[0] = typeof(global::Xamarin.Forms.Platform.WinRT.WindowsPage);
+            _typeTable[0] = typeof(global::Xamarin.Forms.Platform.WinRT.WindowsPhonePage);
             _typeTable[1] = typeof(global::Xamarin.Forms.Platform.WinRT.WindowsBasePage);
             _typeTable[2] = typeof(global::Windows.UI.Xaml.Controls.Page);
             _typeTable[3] = typeof(global::Windows.UI.Xaml.Controls.UserControl);
-            _typeTable[4] = typeof(global::ImageImprov.Windows.MainPage);
+            _typeTable[4] = typeof(global::ImageImprov.WinPhone.MainPage);
         }
 
         private int LookupTypeIndexByName(string typeName)
@@ -195,40 +195,38 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
             return -1;
         }
 
-        private object Activate_0_WindowsPage() { return new global::Xamarin.Forms.Platform.WinRT.WindowsPage(); }
-        private object Activate_4_MainPage() { return new global::ImageImprov.Windows.MainPage(); }
+        private object Activate_4_MainPage() { return new global::ImageImprov.WinPhone.MainPage(); }
 
         private global::Windows.UI.Xaml.Markup.IXamlType CreateXamlType(int typeIndex)
         {
-            global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlSystemBaseType xamlType = null;
-            global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType userType;
+            global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlSystemBaseType xamlType = null;
+            global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType userType;
             string typeName = _typeNameTable[typeIndex];
             global::System.Type type = _typeTable[typeIndex];
 
             switch (typeIndex)
             {
 
-            case 0:   //  Xamarin.Forms.Platform.WinRT.WindowsPage
-                userType = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Xamarin.Forms.Platform.WinRT.WindowsBasePage"));
-                userType.Activator = Activate_0_WindowsPage;
+            case 0:   //  Xamarin.Forms.Platform.WinRT.WindowsPhonePage
+                userType = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Xamarin.Forms.Platform.WinRT.WindowsBasePage"));
                 xamlType = userType;
                 break;
 
             case 1:   //  Xamarin.Forms.Platform.WinRT.WindowsBasePage
-                userType = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Windows.UI.Xaml.Controls.Page"));
+                userType = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Windows.UI.Xaml.Controls.Page"));
                 xamlType = userType;
                 break;
 
             case 2:   //  Windows.UI.Xaml.Controls.Page
-                xamlType = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlSystemBaseType(typeName, type);
+                xamlType = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
             case 3:   //  Windows.UI.Xaml.Controls.UserControl
-                xamlType = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlSystemBaseType(typeName, type);
+                xamlType = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
-            case 4:   //  ImageImprov.Windows.MainPage
-                userType = new global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Xamarin.Forms.Platform.WinRT.WindowsPage"));
+            case 4:   //  ImageImprov.WinPhone.MainPage
+                userType = new global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Xamarin.Forms.Platform.WinRT.WindowsPhonePage"));
                 userType.Activator = Activate_4_MainPage;
                 userType.SetIsLocalType();
                 xamlType = userType;
@@ -248,7 +246,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
                     global::Windows.UI.Xaml.Markup.IXamlMetadataProvider provider;
                     provider = new global::Xamarin.Forms.Platform.WinRT.Xamarin_Forms_Platform_WinRT_XamlTypeInfo.XamlMetaDataProvider() as global::Windows.UI.Xaml.Markup.IXamlMetadataProvider;
                     _otherProviders.Add(provider); 
-                    provider = new global::Xamarin.Forms.Platform.WinRT.Xamarin_Forms_Platform_WinRT_Tablet_XamlTypeInfo.XamlMetaDataProvider() as global::Windows.UI.Xaml.Markup.IXamlMetadataProvider;
+                    provider = new global::Xamarin.Forms.Platform.WinRT.Xamarin_Forms_Platform_WinRT_Phone_XamlTypeInfo.XamlMetaDataProvider() as global::Windows.UI.Xaml.Markup.IXamlMetadataProvider;
                     _otherProviders.Add(provider); 
                 }
                 return _otherProviders;
@@ -296,7 +294,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
 
         private global::Windows.UI.Xaml.Markup.IXamlMember CreateXamlMember(string longMemberName)
         {
-            global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlMember xamlMember = null;
+            global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlMember xamlMember = null;
             // No Local Properties
             return xamlMember;
         }
@@ -353,9 +351,9 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Windows.UI.Xaml.Build.Tasks", "4.0.0.0")]    
     [System.Diagnostics.DebuggerNonUserCodeAttribute()]
-    internal class XamlUserType : global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlSystemBaseType
+    internal class XamlUserType : global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlSystemBaseType
     {
-        global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider _provider;
+        global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider _provider;
         global::Windows.UI.Xaml.Markup.IXamlType _baseType;
         bool _isArray;
         bool _isMarkupExtension;
@@ -369,7 +367,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
         global::System.Collections.Generic.Dictionary<string, string> _memberNames;
         global::System.Collections.Generic.Dictionary<string, object> _enumValues;
 
-        public XamlUserType(global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider provider, string fullName, global::System.Type fullType, global::Windows.UI.Xaml.Markup.IXamlType baseType)
+        public XamlUserType(global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider provider, string fullName, global::System.Type fullType, global::Windows.UI.Xaml.Markup.IXamlType baseType)
             :base(fullName, fullType)
         {
             _provider = provider;
@@ -562,7 +560,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
     [System.Diagnostics.DebuggerNonUserCodeAttribute()]
     internal class XamlMember : global::Windows.UI.Xaml.Markup.IXamlMember
     {
-        global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider _provider;
+        global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider _provider;
         string _name;
         bool _isAttachable;
         bool _isDependencyProperty;
@@ -571,7 +569,7 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
         string _typeName;
         string _targetTypeName;
 
-        public XamlMember(global::ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo.XamlTypeInfoProvider provider, string name, string typeName)
+        public XamlMember(global::ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo.XamlTypeInfoProvider provider, string name, string typeName)
         {
             _name = name;
             _typeName = typeName;
@@ -622,7 +620,5 @@ namespace ImageImprov.Windows.ImageImprov_Windows_XamlTypeInfo
         }
     }
 }
-
-
 
 

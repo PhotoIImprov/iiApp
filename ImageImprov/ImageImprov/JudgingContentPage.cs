@@ -116,16 +116,20 @@ namespace ImageImprov {
         }
 
         private void ClearContent(int index) {
+            portraitView.IsEnabled = false;
+            landscapeView.IsEnabled = false;
             ballots.Clear();
             //ballotImgs.Clear();  // does Content update? No
             for (int i=0; i<4; i++) {
                 if (i != index) {
+                    ballotImgs[i].IsEnabled = false;
                     ballotImgs[i].IsVisible = false;
                 } else {
+
                     // @todo setting isenabled to false is insufficient.
                     //      clicking definitely causes an exception.
                     //      removing the gesture recognizer causes an exception down stream with no tap...
-                    //ballotImgs[i].IsEnabled = false;
+                    ballotImgs[i].IsEnabled = false;
                     //ballotImgs[i].GestureRecognizers.Remove(ballotImgs[i].GestureRecognizers[0]);
                 }
             }
@@ -149,6 +153,10 @@ namespace ImageImprov {
                 for (int i = 0; i < 26; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
+            } else {
+                // flush the old children.
+                portraitView.Children.Clear();
+                portraitView.IsEnabled = true;
             }
             if (defaultNavigationButtons==null) {
                 defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
@@ -168,6 +176,25 @@ namespace ImageImprov {
             } else {
                 // Note: This is reached on ctor call, so don't put an assert here.
                 result = -1;
+                if (ballotImgs.Count > 0) {
+                    portraitView.Children.Add(ballotImgs[0], 0, 0);
+                    Grid.SetRowSpan(ballotImgs[0], 6);
+                }
+
+                if (ballotImgs.Count > 1) {
+                    portraitView.Children.Add(ballotImgs[1], 0, 6);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[1], 6);
+                }
+
+                if (ballotImgs.Count > 2) {
+                    portraitView.Children.Add(ballotImgs[2], 0, 13);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[2], 6);
+                }
+
+                if (ballotImgs.Count > 3) {
+                    portraitView.Children.Add(ballotImgs[3], 0, 19);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[3], 6);
+                }
             }
             portraitView.Children.Add(challengeLabel, 0, 12);
             portraitView.Children.Add(defaultNavigationButtons, 0, 25);
@@ -204,6 +231,10 @@ namespace ImageImprov {
                 // 2 columns, 50% each
                 landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            } else {
+                // flush the old children.
+                landscapeView.Children.Clear();
+                landscapeView.IsEnabled = true;
             }
             // should I be flushing the children each time???
             if (ballotImgs.Count == 4) {
@@ -220,6 +251,23 @@ namespace ImageImprov {
                 Grid.SetRowSpan(ballotImgs[3], 12);
             } else {
                 result = -1;
+                if (ballotImgs.Count > 0) {
+                    landscapeView.Children.Add(ballotImgs[0], 0, 0);
+                    Grid.SetRowSpan(ballotImgs[0], 12);
+                }
+
+                if (ballotImgs.Count > 1) {
+                    landscapeView.Children.Add(ballotImgs[1], 1, 0);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[1], 12);
+                }
+                if (ballotImgs.Count > 2) {
+                    landscapeView.Children.Add(ballotImgs[2], 0, 14);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[2], 12);
+                }
+                if (ballotImgs.Count > 3) {
+                    landscapeView.Children.Add(ballotImgs[3], 1, 14);  // col, row format
+                    Grid.SetRowSpan(ballotImgs[3], 12);
+                }
             }
             landscapeView.Children.Add(challengeLabel, 0, 12);
             Grid.SetColumnSpan(challengeLabel, 2);
@@ -348,16 +396,20 @@ namespace ImageImprov {
             int result = 0;
             var jpegInfo = new JpegInfo();
             using (var myFStream = new MemoryStream(imgStr)) {
-                jpegInfo = ExifReader.ReadJpeg(myFStream);
-                // portrait. upright. ExifLib.ExifOrientation.TopRight;
-                // portrait. upside down. ExifLib.ExifOrientation.BottomLeft;
-                // landscape. top to the right. ExifLib.ExifOrientation.BottomRight;
-                // Landscape. Top (where the samsung is) rotated to the left. ExifLib.ExifOrientation.TopLeft;
-                if ((jpegInfo.Orientation == ExifOrientation.TopRight) || (jpegInfo.Orientation == ExifOrientation.BottomLeft)) {
-                    result = 1;
-                }  else if ((jpegInfo.Orientation==0) && (jpegInfo.Height > jpegInfo.Width)) {
-                    // if there's no orientation info, go with portrait if H > W.
-                    result = 1;
+                try {
+                    jpegInfo = ExifReader.ReadJpeg(myFStream);
+                    // portrait. upright. ExifLib.ExifOrientation.TopRight;
+                    // portrait. upside down. ExifLib.ExifOrientation.BottomLeft;
+                    // landscape. top to the right. ExifLib.ExifOrientation.BottomRight;
+                    // Landscape. Top (where the samsung is) rotated to the left. ExifLib.ExifOrientation.TopLeft;
+                    if ((jpegInfo.Orientation == ExifOrientation.TopRight) || (jpegInfo.Orientation == ExifOrientation.BottomLeft)) {
+                        result = 1;
+                    } else if ((jpegInfo.Orientation == 0) && (jpegInfo.Height > jpegInfo.Width)) {
+                        // if there's no orientation info, go with portrait if H > W.
+                        result = 1;
+                    }
+                } catch (Exception e) {
+                    // will barf if there's an exif issue. so just accept result==0 and move on.
                 }
             }
             return result;
@@ -387,11 +439,31 @@ namespace ImageImprov {
                 }
 #if DEBUG
                 int checkFull = ballotImgs.Count;
-                Debug.Assert(ballotImgs.Count == 4);
+                Debug.Assert(ballotImgs.Count == 4, "less than 4 ballots sent");
 #endif // Debug            
             } catch (Exception e) {
                 // probably thrown by Deserialize.
                 bool falseBreak = false;
+                try {
+                    ballots = JsonHelper.DeserializeToList<BallotJSON>(result);
+                    foreach (BallotJSON ballot in ballots) {
+                        Image image = new Image();
+                        image.Source = ImageSource.FromStream(() => new MemoryStream(ballot.imgStr));
+                        image.Aspect = Aspect.AspectFill;
+                        orientationCount += isPortraitOrientation(ballot.imgStr);
+                        // This works. looks like a long press will be a pain in the ass.
+                        TapGestureRecognizer tapGesture = new TapGestureRecognizer();
+                        if (tapGesture == null) {
+                            tapGesture = new TapGestureRecognizer();
+                        }
+                        tapGesture.Tapped += OnClicked;
+                        image.GestureRecognizers.Add(tapGesture);
+                        ballotImgs.Add(image);
+                    }
+                } catch (Exception e2) {
+                    // did i rethrow
+                    bool falseBreak2 = false;
+                }
             }
             buildPortraitView();
             buildLandscapeView();
@@ -456,6 +528,9 @@ namespace ImageImprov {
                 await Task.Delay(100);
             }
             */
+            // ballots may have been cleared and this can be a dbl tap registration.
+            // in which case, ignore.
+            if (ballots.Count == 0) { return; }
             bool found = false;
             int index = 0;
             int selectionId = 0;
@@ -485,7 +560,7 @@ namespace ImageImprov {
             string jsonQuery = JsonConvert.SerializeObject(votes);
             string origText = challengeLabel.Text;
             challengeLabel.Text = "Vote submitting, loading new ballot";
-            //ClearContent(selectionId);  test for error...
+            ClearContent(selectionId);  
             string result = await requestVoteAsync(jsonQuery);
             if (result.Equals("fail")) {
                 // @todo This fail case is untested code. Does the UI come back?

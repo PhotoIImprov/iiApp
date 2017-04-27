@@ -338,6 +338,7 @@ namespace ImageImprov
                     cancelRegistrationButton,
                 }
             };
+            usernameEntry.Text = "";
             return registrationLayout;
         }
 
@@ -584,6 +585,7 @@ namespace ImageImprov
                         = JsonConvert.DeserializeObject<AuthenticationToken>
                         (await tokenResult.Content.ReadAsStringAsync());
                     GlobalStatusSingleton.loggedIn = true;
+                    result = "Success";
                 }
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
