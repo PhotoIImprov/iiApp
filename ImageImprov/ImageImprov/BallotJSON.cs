@@ -13,12 +13,16 @@ namespace ImageImprov
     [JsonObject]
     public class BallotJSON
     {
-        // the bid id
-        [JsonProperty("bid")]
-        public long bidId { get; set; }
+        // the category we're now voting on
+        [JsonProperty("category")]
+        public CategoryJSON category;
 
-        // a byte representation of a jpg
-        [JsonProperty("image")]
-        public Byte[] imgStr { get; set; }
+        [JsonProperty("ballots")]
+        public List<BallotCandidateJSON> ballots { get; set; }
+
+        public void Clear() {
+            // tbd. Do I need to clear category as well?
+            ballots.Clear();
+        }
     }
 }

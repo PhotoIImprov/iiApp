@@ -622,5 +622,3 @@ namespace ImageImprov.WinPhone.ImageImprov_WinPhone_XamlTypeInfo
 }
 
 
-
-

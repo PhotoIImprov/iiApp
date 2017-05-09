@@ -10,7 +10,7 @@ namespace ImageImprov
 {
     // Represents a category users compete on, along with associated meta data.
     [JsonObject]
-    class CategoryJSON
+    public class CategoryJSON
     {
         public readonly static string UNKNOWN = "UNKNOWN";   // i shouldn't recv this one.
         public readonly static string UPLOAD = "UPLOAD";

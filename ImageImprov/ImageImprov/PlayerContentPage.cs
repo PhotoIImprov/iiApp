@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Diagnostics;  // for debug assertions.
+
 
 using Newtonsoft.Json;
 using Org.BouncyCastle;
@@ -229,6 +231,18 @@ namespace ImageImprov
             };
         }
         
+        protected void createRegisterButton() {
+            registerButton = new Button { Text = "Register" };
+            registerButton.Clicked += (sender, args) =>
+            {
+                GlobalStatusSingleton.username = usernameEntry.Text;
+                GlobalStatusSingleton.password = passwordEntry.Text;
+                // call the event handler that manages the communication with server for registration.
+                if (RegisterNow != null) {
+                    RegisterNow(this, eDummy);
+                }
+            };
+        }
         protected Layout<View> createDefaultNavigationButtons() {
             defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
             return defaultNavigationButtons;
@@ -252,6 +266,10 @@ namespace ImageImprov
         }
 
         protected StackLayout createForceLoginLayout() {
+            if (registerButton == null) {
+                createRegisterButton();
+            }
+
             alreadyAMemberLabel.Text = "Enter password to play";
             forceLoginLayout = new StackLayout
             {
@@ -259,11 +277,14 @@ namespace ImageImprov
                 Children =
                 {
                     alreadyAMemberLabel,
+                    loggedInLabel,
                     usernameRow(),
                     passwordRow(),
                     connectButton,
                     new Label { Text = " " },
                     anonymousPlayButton,
+                    new Label { Text = " " },
+                    registerButton,
                 }
             };
             return forceLoginLayout;
@@ -306,16 +327,9 @@ namespace ImageImprov
         }
 
         protected StackLayout createRegistrationLayout() {
-            registerButton = new Button { Text = "Register" };
-            registerButton.Clicked += (sender, args) =>
-            {
-                GlobalStatusSingleton.username = usernameEntry.Text;
-                GlobalStatusSingleton.password = passwordEntry.Text;
-                // call the event handler that manages the communication with server for registration.
-                if (RegisterNow != null) {
-                    RegisterNow(this, eDummy);
-                }
-            };
+            if (registerButton == null) {
+                createRegisterButton();
+            }
 
             cancelRegistrationButton = new Button { Text = "Never mind; I'll register later" };
             cancelRegistrationButton.Clicked += (sender, args) =>
@@ -344,6 +358,11 @@ namespace ImageImprov
 
         // resets my ui as it may have been changed to a subpage.
         public void goHome() {
+            Debug.Assert(GlobalStatusSingleton.loggedIn, "Not logged and creating a loggedin page");
+            if (GlobalStatusSingleton.loggedIn == false) {
+                bool falsebreak = true;
+            }
+
             if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
                 // anonymous user
                 Content = createAnonLoggedInLayout();
@@ -357,6 +376,8 @@ namespace ImageImprov
             string loginResult = await requestTokenAsync();
             if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
                 loggedInLabel.Text = loginResult;
+                // if I was in autologin and failed (may have happened from a pwd theft, or because of a db wipe in testing), need to reset ui.
+                Content = createForceLoginLayout();
             } else {
                 if (TokenReceived != null) {
                     TokenReceived(this, eDummy);
@@ -367,7 +388,7 @@ namespace ImageImprov
                 } else {
                     Content = createAutoLoginLayout();
                 }
-                loggedInLabel.Text = "Logged in";
+                loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
 
             }
         }
