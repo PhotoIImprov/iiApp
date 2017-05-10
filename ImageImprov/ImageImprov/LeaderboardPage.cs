@@ -129,7 +129,8 @@ namespace ImageImprov {
                 foreach (LeaderboardJSON leader in leaders) {
                     Image image = new Image();
                     image.Source = ImageSource.FromStream(() => new MemoryStream(leader.imgStr));
-                    image.Aspect = Aspect.AspectFill;
+                    //image.Aspect = Aspect.AspectFill;
+                    image.Aspect = Aspect.AspectFit;
 
                     // did not implement click recognition on the images.
 

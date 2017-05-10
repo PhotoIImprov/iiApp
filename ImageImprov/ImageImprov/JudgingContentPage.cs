@@ -221,6 +221,8 @@ namespace ImageImprov {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // I can add none, but if i add one, then i just have 1. So here's 2. :)
+            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             portraitView.Children.Add(ballotImgs[0], 0, 0);
             Grid.SetRowSpan(ballotImgs[0], 12);
@@ -253,6 +255,8 @@ namespace ImageImprov {
             for (int i = 0; i < 26; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
+            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
             portraitView.Children.Add(ballotImgs[0], 0, 0);
             Grid.SetRowSpan(ballotImgs[0], 6);
 
@@ -286,6 +290,9 @@ namespace ImageImprov {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // I can add none, but if i add one, then i just have 1. So here's 2. :)
+            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
             // am I in two landscape on top or two portrait on top?
             if (ballot.ballots[0].isPortrait() == BallotCandidateJSON.PORTRAIT) {
                 // portrait on top
@@ -351,7 +358,7 @@ namespace ImageImprov {
                     result = buildFourLandscapeImgLandscapeView();
                 } else if (orientationCount > 2) {
                     // portrait
-                    result = buildFourLandscapeImgPortraitView();
+                    result = buildFourPortraitImgLandscapeView();
                 } else {
                     result = buildTwoXTwoImgLandscapeView();
                 }
@@ -423,7 +430,8 @@ namespace ImageImprov {
             }
             // 2 columns, 50% each
             landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // I can add none, but if i add one, then i just have 1. So here's 2. :)
+            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             landscapeView.Children.Add(ballotImgs[0], 0, 0);
             Grid.SetRowSpan(ballotImgs[0], 12);
@@ -671,8 +679,9 @@ namespace ImageImprov {
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
                     Image image = new Image();
                     image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
-                    image.Aspect = Aspect.AspectFill;
-                    
+                    //image.Aspect = Aspect.AspectFill;
+                    image.Aspect = Aspect.AspectFit;
+
                     // orientation info now sent from the server.
                     //candidate.orientation = isPortraitOrientation(candidate.imgStr);
                     orientationCount += candidate.isPortrait();
