@@ -20,7 +20,8 @@ namespace ImageImprov.Droid
         //Theme = "@style/MainTheme", 
         //Theme = "@android:Theme.Holo.Light.NoActionBar",
         MainLauncher = true, 
-        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
+        ScreenOrientation = ScreenOrientation.FullSensor)]
     public class MainActivity : FormsApplicationActivity
     {
         //< file

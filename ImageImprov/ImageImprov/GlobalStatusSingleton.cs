@@ -68,6 +68,8 @@ namespace ImageImprov
 
         // returns true if we are in vertical mode, or false for landscape.
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }
+        // single place to track if we are in portrait or landscape.
+        public static bool inPortraitMode;
 
         // will be set to false by android or iOS if the device has no camera.
         // need to check this in cameraContentPage still. (is that created before or after ios/android contexts?)

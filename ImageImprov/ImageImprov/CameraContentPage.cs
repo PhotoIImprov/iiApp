@@ -13,10 +13,15 @@ using ExifLib;
 namespace ImageImprov {
     public class CameraContentPage : ContentPage, ICamera {
         const string PHOTO = "photo";
-        
-        //< images
+
+        protected bool inPortraitMode;
+
+        //< images.  Need both a portrait and a landscape instance due to different spans.
+        // extents are bound to the object.  Since they differ for portrait and landscape I have two choices.
+        // have to copies, or rebuild everything everytime.
         Image currentSubmissionImg = new Image();
-        readonly Image latestTakenImg = new Image();
+        Image latestTakenImg = new Image();
+
         // filepath to the latest taken img
         string latestTakenPath;
         // To get img bytes we have to use native Android and iOS code.
@@ -34,10 +39,13 @@ namespace ImageImprov {
         Label lastActionResultLabel;
 
         Button takePicture;
-        Button selectPictureFromCameraRoll;
+        // @todo enable pictures from the camera roll
+        //Button selectPictureFromCameraRoll;
         Button submitCurrentPicture;
 
-        StackLayout portraitLayout;
+        Grid portraitView;
+        Grid landscapeView;
+
         KeyPageNavigator defaultNavigationButtons;
 
         public CameraContentPage() {
@@ -54,8 +62,9 @@ namespace ImageImprov {
                 IsVisible = false
             };
             submitCurrentPicture.Clicked += this.OnSubmitCurrentPicture;
-            defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 0, RowSpacing = 0 };
+            defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
 
+            /*
             portraitLayout = new StackLayout {
                 VerticalOptions = LayoutOptions.Center,
                 Children = {
@@ -68,7 +77,93 @@ namespace ImageImprov {
                     defaultNavigationButtons,
                 },
             };
-            Content = portraitLayout;
+            */
+            // only have one active at a time as grid properties bind to the ui elements, meaning
+            // an element can only be defined correctly for one rotation at a time.
+            //buildPortraitView();
+            //buildLandscapeView();
+            setView();
+        }
+
+        protected override void OnSizeAllocated(double width, double height) {
+            // need to have portrait mode local rather than global or i can't
+            // tell if I've updated for this page yet or not.
+            base.OnSizeAllocated(width, height);
+            if ((width > height) && (inPortraitMode==true)) {
+                inPortraitMode = false;
+                GlobalStatusSingleton.inPortraitMode = false;
+                buildLandscapeView();
+                Content = landscapeView;
+            } else if ((height>width) && (inPortraitMode==false)) {
+                inPortraitMode = true;
+                GlobalStatusSingleton.inPortraitMode = true;
+                buildPortraitView();
+                Content = portraitView;
+            }
+        }
+
+        protected int buildPortraitView() {
+            if (portraitView == null) {
+                portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                for (int i = 0; i < 15; i++) {
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            } else {
+                // flush the old children.
+                portraitView.Children.Clear();
+                portraitView.IsEnabled = true;
+            }
+            portraitView.Children.Add(categoryLabel, 0, 0);  // col, row
+            portraitView.Children.Add(takePicture, 0, 1);
+            portraitView.Children.Add(currentSubmissionImg, 0, 2);
+            Grid.SetRowSpan(currentSubmissionImg, 5);
+            portraitView.Children.Add(latestTakenImg, 0, 7);
+            Grid.SetRowSpan(latestTakenImg, 5);
+            portraitView.Children.Add(submitCurrentPicture, 0, 12);
+            portraitView.Children.Add(lastActionResultLabel, 0, 13);
+            portraitView.Children.Add(defaultNavigationButtons, 0, 14);
+
+            return 1;
+        }
+
+        protected int buildLandscapeView() {
+            if (landscapeView == null) {
+                landscapeView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                for (int i = 0; i < 10; i++) {
+                    landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+                // 2 columns, 50% each
+                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                // I can add none, but if i add one, then i just have 1. So here's 2. :)
+                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            } else {
+                // flush the old children.
+                landscapeView.Children.Clear();
+                landscapeView.IsEnabled = true;
+            }
+
+            landscapeView.Children.Add(categoryLabel, 0, 0);  // col, row
+            landscapeView.Children.Add(lastActionResultLabel, 1, 0);
+            landscapeView.Children.Add(takePicture, 0, 1);
+            landscapeView.Children.Add(submitCurrentPicture, 1, 1);
+            landscapeView.Children.Add(currentSubmissionImg, 0, 2);
+            Grid.SetRowSpan(currentSubmissionImg, 7);
+            landscapeView.Children.Add(latestTakenImg, 1, 2);
+            Grid.SetRowSpan(latestTakenImg, 7);
+            landscapeView.Children.Add(defaultNavigationButtons, 0, 9);
+            Grid.SetColumnSpan(defaultNavigationButtons, 2);
+
+            return 1;
+        }
+
+        protected void setView() {
+            inPortraitMode = GlobalStatusSingleton.IsPortrait(this);
+            if (inPortraitMode) {
+                Content = portraitView;
+            } else {
+                Content = landscapeView;
+            }
         }
 
         public bool hasCamera() {
@@ -108,7 +203,9 @@ namespace ImageImprov {
             }
 
             ((Button)sender).IsEnabled = true;
-            Content = portraitLayout; 
+
+            // was this line needed?
+            //Content = portraitLayout; 
             return;
         }
 
