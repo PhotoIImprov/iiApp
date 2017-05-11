@@ -65,12 +65,22 @@ namespace ImageImprov {
         const string CATEGORY = "category";
         // the command name to request a ballot when voting.
         const string BALLOT = "ballot";
+        
+        // When third is selected, there is enough info to rank all 4 images.
+        const int PENULTIMATE_BALLOT_SELECTED = 3;
 
         // interesting. doing this somehow sets up a double tap (and therefore an error due to data clearing)
         //TapGestureRecognizer tapGesture;
 
         // tracks the number of pictures in each orientation so we know how to display.
         int orientationCount;
+
+        // tracks the votes that have been made until the final vote.
+        VotesJSON votes = null;
+        int firstSelectedIndex;
+        // tracks which ballots have not yet received a vote in the multi-img vote voting scenario.
+        List<BallotCandidateJSON> unvotedImgs;
+
 
         public JudgingContentPage() {
             ballotImgsP = new List<Image>();
@@ -146,9 +156,13 @@ namespace ImageImprov {
             ballot.Clear();
             ballotImgsP.Clear();  // does Content update? No
             ballotImgsL.Clear();  // does Content update? No
+            unvotedImgs.Clear();
+            votes.votes.Clear();
             Content = new StackLayout() { Children = { challengeLabelP, } };
         }
 
+        // Turn of all images. voting is done.  Leave the selected image visible.
+        // Hide all the others.
         private void highlightCorrectImg(IList<Image> ballotImgs, int index) {
             for (int i = 0; i < ballotImgs.Count; i++) {
                 if (i != index) {
@@ -160,12 +174,26 @@ namespace ImageImprov {
                     //      clicking definitely causes an exception.
                     //      removing the gesture recognizer causes an exception down stream with no tap...
                     ballotImgs[i].IsEnabled = false;
+                    ballotImgs[i].IsVisible = true;
                     //ballotImgs[i].GestureRecognizers.Remove(ballotImgs[i].GestureRecognizers[0]);
                 }
             }
         }
 
+        /// <summary>
+        /// This is for the old way, where we only select a single image for a ballot 
+        /// </summary>
+        /// <param name="index"></param>
         private void ClearContent(int index) {
+            portraitView.IsEnabled = false;
+            landscapeView.IsEnabled = false;
+            ballot.Clear();
+
+            highlightCorrectImg(ballotImgsP, index);
+            highlightCorrectImg(ballotImgsL, index);
+        }
+
+        private void RemoveVotedOnImage(int index) {
             portraitView.IsEnabled = false;
             landscapeView.IsEnabled = false;
             ballot.Clear();
@@ -785,6 +813,7 @@ namespace ImageImprov {
             orientationCount = 0;
             try {
                 ballot = JsonConvert.DeserializeObject<BallotJSON>(result);
+                unvotedImgs = new List<BallotCandidateJSON>(ballot.ballots);
                 // handle category first.
                 challengeLabelP.Text = "Current category: " + ballot.category.description;
                 challengeLabelL.Text = "Current category: " + ballot.category.description;
@@ -860,18 +889,22 @@ namespace ImageImprov {
 
         // Voting.
         protected async virtual void OnVote(object sender, EventArgs e) {
-            // I can't vote without having ballots, so there should be no need to check login status
-            // that said, this should be a quick check, and who knows what race conditions could sneak in
-            // once I'm storing state.
+            //SingleVoteGeneratesBallot(sender, e);
+            MultiVoteGeneratesBallot(sender, e);
+        }
 
-            // @todo. do i need anything here?
-            /*
-            while ((GlobalStatusSingleton.loggedIn == false)
-                   || (GlobalStatusSingleton.votingCategoryId == GlobalStatusSingleton.NO_CATEGORY_INFO)) {
-                // should sleep me for 100 millisecs
-                await Task.Delay(100);
+        protected int findUnallocatedBid(List<VoteJSON> votes) {
+            return 1;
+        }
+
+        protected async virtual void SingleVoteGeneratesBallot(object sender, EventArgs e) {
+            if (votes == null) {
+                votes = new VotesJSON();
+                votes.votes = new List<VoteJSON>();
+            } else {
+                votes.votes.Clear();
             }
-            */
+
             // ballots may have been cleared and this can be a dbl tap registration.
             // in which case, ignore.
             if (ballot.ballots.Count == 0) { return; }
@@ -894,31 +927,29 @@ namespace ImageImprov {
                     index++;
                 }
             }
-            VoteJSON vote = new ImageImprov.VoteJSON();
-            vote.bid = bid;
-            vote.vote = 1;
-            vote.like = true;
-            VotesJSON votes = new VotesJSON();
-            //votes.userId = GlobalStatusSingleton.loginCredentials.userId;
-            votes.votes = new List<VoteJSON>();
-            votes.votes.Add(vote);
 #if DEBUG
             if (found == false) {
                 throw new Exception("A button clicked on an image not in my ballots.");
             }
 #endif
+            VoteJSON vote = new ImageImprov.VoteJSON();
+            vote.bid = bid;
+            vote.vote = votes.votes.Count + 1;
+            vote.like = true;
+            votes.votes.Add(vote);
+
             string jsonQuery = JsonConvert.SerializeObject(votes);
             string origText = challengeLabelP.Text;
             challengeLabelP.Text = "Vote submitted, loading new ballot";
             challengeLabelL.Text = "Vote submitted, loading new ballot";
-            ClearContent(selectionId);  
+            ClearContent(selectionId);
             string result = await requestVoteAsync(jsonQuery);
             if (result.Equals("fail")) {
                 // @todo This fail case is untested code. Does the UI come back?
                 challengeLabelP.Text = "Connection failed. Please revote";
                 challengeLabelL.Text = "Connection failed. Please revote";
                 AdjustContentToRotation();
-            //} else ("no ballot created") { 
+                //} else ("no ballot created") { 
             } else {
                 // only clear on success
                 ClearContent();
@@ -928,6 +959,93 @@ namespace ImageImprov {
             }
         }
 
+        protected async virtual void MultiVoteGeneratesBallot(object sender, EventArgs e) {
+            if (votes == null) {
+                votes = new VotesJSON();
+                votes.votes = new List<VoteJSON>();
+            }
+
+            // ballots may have been cleared and this can be a dbl tap registration.
+            // in which case, ignore.
+            if (ballot.ballots.Count == 0) { return; }
+            bool found = false;
+            int index = 0;
+            int selectionId = 0;
+            long bid = -1;
+            // ballotImgsP and L have same meta info, so only need this once.
+            // but I do need to search the correct one to id the sender.
+            var searchImgs = ballotImgsL;
+            if (GlobalStatusSingleton.inPortraitMode == true) {
+                searchImgs = ballotImgsP;
+            }
+            BallotCandidateJSON votedOnCandidate = null;
+            foreach (Image img in searchImgs) {
+                if (img == sender) {
+                    found = true;
+                    votedOnCandidate = ballot.ballots[index];
+                    bid = ballot.ballots[index].bidId;
+                    selectionId = index;
+                } else {
+                    index++;
+                }
+            }
+#if DEBUG
+            if (found == false) {
+                throw new Exception("A button clicked on an image not in my ballots.");
+            }
+#endif
+            VoteJSON vote = new ImageImprov.VoteJSON();
+            vote.bid = bid;
+            vote.vote = votes.votes.Count+1;
+            if (vote.vote == 1) {
+                // first selected save the selectionId;
+                firstSelectedIndex = selectionId;
+            }
+            vote.like = true;
+            votes.votes.Add(vote);
+            if (votedOnCandidate != null) {
+                unvotedImgs.Remove(votedOnCandidate);
+            }
+            // No. This fails for cases where num ballots != 4, which is allowed.
+            //if (vote.vote == PENULTIMATE_BALLOT_SELECTED) {
+            if (vote.vote == (ballot.ballots.Count-1)) {
+#if DEBUG
+                Debug.Assert(unvotedImgs.Count == 1, "We dont have just one image left!!");
+#endif
+                vote = new ImageImprov.VoteJSON();
+                // This has to be the only one left.
+                vote.bid = unvotedImgs[0].bidId;
+                vote.vote = votes.votes.Count + 1;
+                vote.like = true;
+                votes.votes.Add(vote);
+
+                string jsonQuery = JsonConvert.SerializeObject(votes);
+                string origText = challengeLabelP.Text;
+                challengeLabelP.Text = "Vote submitted, loading new ballot";
+                challengeLabelL.Text = "Vote submitted, loading new ballot";
+                ClearContent(firstSelectedIndex);
+                string result = await requestVoteAsync(jsonQuery);
+                if (result.Equals("fail")) {
+                    // @todo This fail case is untested code. Does the UI come back?
+                    challengeLabelP.Text = "Connection failed. Please revote";
+                    challengeLabelL.Text = "Connection failed. Please revote";
+                    AdjustContentToRotation();
+                    //} else ("no ballot created") { 
+                } else {
+                    // only clear on success
+                    ClearContent();
+                    challengeLabelP.Text = origText;
+                    challengeLabelL.Text = origText;
+                    processBallotString(result);
+                }
+            } else {
+                // turn this image off and wait till all are selected.
+                ballotImgsP[selectionId].IsEnabled = false;
+                ballotImgsP[selectionId].IsVisible = false;
+                ballotImgsL[selectionId].IsEnabled = false;
+                ballotImgsL[selectionId].IsVisible = false;
+            }
+        }
         // sends the vote in and waits for a new ballot.
         static async Task<string> requestVoteAsync(string jsonQuery) {
             string result = "fail";
