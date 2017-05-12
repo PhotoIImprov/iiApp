@@ -15,6 +15,7 @@ namespace ImageImprov {
     public delegate void LoadChallengeNameEventHandler(object sender, EventArgs e);
     public delegate void LoadBallotPicsEventHandler(object sender, EventArgs e);
     public delegate void CategoryLoadSuccessEventHandler(object sender, EventArgs e);
+    public delegate void DequeueBallotRequestEventHandler(object sender, EventArgs e);
 
     // This is the first roog page of the judging.
     class JudgingContentPage : ContentPage {
@@ -44,18 +45,30 @@ namespace ImageImprov {
         public event LoadChallengeNameEventHandler LoadChallengeName;
         // This is the I'm loaded, who else wants me.
         public event CategoryLoadSuccessEventHandler CategoryLoadSuccess;
+        // We just voted. Time to grab another ballot from the queue.
+        public event DequeueBallotRequestEventHandler DequeueBallotRequest;
 
 
         // The BallotJSON now holds a list, rather than a single instance.
         // The single instance has been refactored to BallotCandidateJSON
         //IList<BallotJSON> ballots;
-        BallotJSON ballot;
+        BallotJSON ballot = null;
 
         // @todo ideally, the images would be built in BallotJSON. Get this working, then think about that.
         // @todo imgs currently only respond to taps.  Would like to be able to longtap a fast vote.
         // Need to instances to accomodate the way GridLayout handles spans.
         IList<Image> ballotImgsP = null;
         IList<Image> ballotImgsL = null;
+
+        /// <summary>
+        /// ballot, ballotImgsP, and ballotImgsL hold the active Ballot.
+        /// This queue holds the ballots I have pre-downloaded for faster response times.
+        /// Stores each ballot as the incoming json string, rather than adding a whole bunch of objects.
+        /// An incoming ballot is ALWAYS added to the queue rather than processed. This way I avoid logic
+        /// difficulties and potential race conditions in assessing where the ballot should go.
+        /// From there, the queue is consumed whenever I need a ballot.
+        /// </summary>
+        Queue<string> preloadedBallots = null;
 
         public event LoadBallotPicsEventHandler LoadBallotPics;
         public event EventHandler Vote;
@@ -83,6 +96,8 @@ namespace ImageImprov {
 
 
         public JudgingContentPage() {
+            preloadedBallots = new Queue<string>();
+
             ballotImgsP = new List<Image>();
             ballotImgsL = new List<Image>();
             buildPortraitView();
@@ -105,11 +120,11 @@ namespace ImageImprov {
             this.LoadChallengeName += new LoadChallengeNameEventHandler(OnLoadChallengeName);
             this.LoadBallotPics += new LoadBallotPicsEventHandler(OnLoadBallotPics);
             this.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(LoadBallotPics);
+            this.DequeueBallotRequest += new DequeueBallotRequestEventHandler(OnDequeueBallotRequest);
 
             // and to listen for vote sends; done as event so easy to process async.
             this.Vote += new EventHandler(OnVote);
 
-            // fire a loadChallengeNameEvent.
             eDummy = new EventArgs();
         }
 
@@ -118,13 +133,6 @@ namespace ImageImprov {
             if (LoadChallengeName != null) {
                 LoadChallengeName(this, eDummy);
             }
-            // can't do this without the challenge info!
-            // now done as a listener off CategoryLoad
-            /*
-            if (LoadBallotPics != null) {
-                LoadBallotPics(this, eDummy);
-            }
-            */
         }
 
         protected override void OnSizeAllocated(double width, double height) {
@@ -193,15 +201,6 @@ namespace ImageImprov {
             highlightCorrectImg(ballotImgsL, index);
         }
 
-        private void RemoveVotedOnImage(int index) {
-            portraitView.IsEnabled = false;
-            landscapeView.IsEnabled = false;
-            ballot.Clear();
-
-            highlightCorrectImg(ballotImgsP, index);
-            highlightCorrectImg(ballotImgsL, index);
-        }
-
         /// <summary>
         /// Builds/updates the portrait view
         /// </summary>
@@ -237,13 +236,13 @@ namespace ImageImprov {
             } else {
                 // Note: This is reached on ctor call, so don't put an assert here.
                 result = -1;
-                /*
                 portraitView.RowDefinitions.Clear();
                 portraitView.ColumnDefinitions.Clear();
                 for (int i = 0; i < 26; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
 
+                /*
                 if (ballotImgsP.Count > 0) {
                     portraitView.Children.Add(ballotImgsP[0], 0, 0);
                     Grid.SetRowSpan(ballotImgsP[0], 6);
@@ -452,13 +451,13 @@ namespace ImageImprov {
                 result = -1;
                 landscapeView.RowDefinitions.Clear();
                 landscapeView.ColumnDefinitions.Clear();
-                /*
                 for (int i = 0; i < 26; i++) {
                     landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 2; i++) {
                     landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 }
+                /*
                 if (ballotImgsL.Count > 0) {
                     landscapeView.Children.Add(ballotImgsL[0], 0, 0);
                     Grid.SetRowSpan(ballotImgsL[0], 12);
@@ -638,8 +637,6 @@ namespace ImageImprov {
             }
         }
 
-        // I think this is handled through and abstract event handler in the cstr.
-        //private void OnSizeChanged() {        }
 
         /////
         /////
@@ -653,7 +650,20 @@ namespace ImageImprov {
             if (CategoryLoadSuccess != null) {
                 CategoryLoadSuccess(sender, e);
             }
+        }
 
+        protected async virtual void OnDequeueBallotRequest(object sender, EventArgs e) {
+            // Note: sender maybe null! (when fired from processBallotString due to a no img ballot.
+
+            // Fires a loadBallotPics if queue is empty.
+            // Otherwise, does the ui update.
+            while (preloadedBallots.Count == 0) {
+                // This should only happen if downloads are slow, user is super fast, or... whatever.
+                // should sleep me for 100 millisecs, then check again.
+                await Task.Delay(100);
+            }
+            ClearContent();
+            processBallotString(preloadedBallots.Dequeue());
         }
 
         //< requestChallengeNameAsync
@@ -719,7 +729,7 @@ namespace ImageImprov {
         }
         //> RequestTimeAsync
 
-         static int counter = 0;
+         static int counter = 1;
         //<Ballot Loading
         protected async virtual void OnLoadBallotPics(object sender, EventArgs e) {
             /* waiting for event now.
@@ -731,10 +741,13 @@ namespace ImageImprov {
             */
             string result = await requestBallotPicsAsync();
             if (!result.Equals("fail")) {
-                processBallotString(result);
+                preloadedBallots.Enqueue(result);
+                if (ballot == null) {
+                    processBallotString(preloadedBallots.Dequeue());
+                }
             } else {
-                challengeLabelP.Text = "Currently unable to load ballots";
-                challengeLabelL.Text = "Currently unable to load ballots";
+                challengeLabelP.Text = "Currently unable to load ballots.  Attempts: " + counter;
+                challengeLabelL.Text = "Currently unable to load ballots.  Attempts: " + counter;
                 counter++;
                 if (counter > 2) {
                     bool falsebreak = true;
@@ -742,6 +755,25 @@ namespace ImageImprov {
                 await Task.Delay(5000);
                 if (LoadBallotPics != null) {
                     LoadBallotPics(this, eDummy);
+                }
+
+            }
+            // keep this thread going constantly, making sure we never run out.
+            while (true) {
+                if (preloadedBallots.Count < GlobalStatusSingleton.minBallotsToLoad) {
+                    result = await requestBallotPicsAsync();
+                    if (!result.Equals("fail")) {
+                        preloadedBallots.Enqueue(result);
+                    }
+                } else {
+                    // no need to go bonkers
+                    await Task.Delay(500);
+                }
+                // this happens when i run out of ballots
+                // but why??
+                // unhappy with this solution as it means I don't understand what's happening.
+                if ((ballot.ballots == null) && (preloadedBallots.Count > 1)) {
+                    processBallotString(preloadedBallots.Dequeue());
                 }
 
             }
@@ -782,6 +814,7 @@ namespace ImageImprov {
         /// images are grouped together in the datasets.
         /// </summary>
         protected void checkImgOrderAndReorderAsNeeded() {
+            // I decided not to implement this for now.
 
         }
 
@@ -806,7 +839,12 @@ namespace ImageImprov {
             return image;
         }
 
-        // implmented as a function so it can be reused by the vote message response.
+        /// <summary>
+        /// implmented as a function so it can be reused by the vote message response.
+        /// Note: This function does NOT deal with the ballot queue.  It is assumed that whatever
+        /// is coming into me has already undergone a preloadedBallots dequeue.
+        /// </summary>
+        /// <param name="result"></param>
         protected virtual void processBallotString(string result) {
 #if DEBUG
             int checkEmpty = ballotImgsP.Count;
@@ -829,6 +867,13 @@ namespace ImageImprov {
                 if (orientationCount == 2) {
                     checkImgOrderAndReorderAsNeeded();
                 }
+
+                if (ballot.ballots.Count == 0) {
+                    // bad ballot. fire a dequeue
+                    if (DequeueBallotRequest != null) {
+                        DequeueBallotRequest(this, eDummy);
+                    }
+                }
 #if DEBUG
                 int checkFull = ballotImgsP.Count;
                 // not guaranteed 4 back anymore.
@@ -847,15 +892,15 @@ namespace ImageImprov {
             AdjustContentToRotation();
         }
 
-        // this gets the image streams from the server. It does NOT builds them as this is a statis async fcn.
-        // try to do this by staying away from Bitmap (android) and UIImage (iOS).
-        // may not be possible as it seems the abstraction layer Image does not have a way to build the image 
-        // from bytes.
-        //    my guess is I should focus on streams...
-        // @return The stream as a string. It will still need to be processed into images.
-        // @todo handle errors from ballots
-        // @todo handle request on fails and network reactivation
-        // @todo turn on authentication
+        /// <summary>
+        /// This gets the image streams from the server. It does NOT builds them as this is a statis async fcn.
+        /// try to do this by staying away from Bitmap (android) and UIImage (iOS).
+        /// may not be possible as it seems the abstraction layer Image does not have a way to build the image 
+        /// from bytes.
+        ///    my guess is I should focus on streams...
+        /// Queueing and dequeuing is handled in the calling event handler.
+        /// </summary>
+        /// <returns></returns>
         static async Task<string> requestBallotPicsAsync() {
             string result = "fail";
             try {
@@ -1025,19 +1070,42 @@ namespace ImageImprov {
                 challengeLabelP.Text = "Vote submitted, loading new ballot";
                 challengeLabelL.Text = "Vote submitted, loading new ballot";
                 ClearContent(firstSelectedIndex);
-                string result = await requestVoteAsync(jsonQuery);
-                if (result.Equals("fail")) {
-                    // @todo This fail case is untested code. Does the UI come back?
-                    challengeLabelP.Text = "Connection failed. Please revote";
-                    challengeLabelL.Text = "Connection failed. Please revote";
-                    AdjustContentToRotation();
-                    //} else ("no ballot created") { 
-                } else {
-                    // only clear on success
-                    ClearContent();
-                    challengeLabelP.Text = origText;
-                    challengeLabelL.Text = origText;
-                    processBallotString(result);
+
+                // Ok. I want to be running the request right now!
+                // I want to wait a random amount of time then yank 1 from the queue right away.
+
+                // What I can easily do is:
+                //   yank one from the queue and fire the request.
+
+                // The solution is to fire of a pull from queue event while this trundles along...
+                // Or. Fire a load ballot event, while this pulls from queue.
+                // No, because load ballot doesn't send a vote.
+                // right now, do nothing.
+                if (DequeueBallotRequest != null) {
+                    DequeueBallotRequest(this, eDummy);
+                }
+
+                // keep refiring until success.
+                string result = "fail";
+                while (result.Equals("fail")) {
+                    result = await requestVoteAsync(jsonQuery);
+                    if (result.Equals("fail")) {
+                        // @todo This fail case is untested code. Does the UI come back?
+                        if (preloadedBallots.Count == 0) {
+                            challengeLabelP.Text = "No connection. Awaiting connection for more ballots.";
+                            challengeLabelL.Text = "No connection. Awaiting connection for more ballots.";
+                            AdjustContentToRotation();
+                        }
+                    } else {
+                        /* moved to queue processing.
+                        // only clear on success
+                        ClearContent();
+                        challengeLabelP.Text = origText;
+                        challengeLabelL.Text = origText;
+                        processBallotString(result);
+                        */
+                        preloadedBallots.Enqueue(result);
+                    }
                 }
             } else {
                 // turn this image off and wait till all are selected.

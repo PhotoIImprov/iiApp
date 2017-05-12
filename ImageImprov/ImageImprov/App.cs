@@ -15,6 +15,7 @@ namespace ImageImprov
         public const string PROPERTY_PWD = "pwd";
         public const string PROPERTY_MAINTAIN_LOGIN = "maintainlogin";
         public const string PROPERTY_ASPECT_OR_FILL_IMGS = "aspectOrFillImgs";
+        public const string PROPERTY_MIN_BALLOTS_TO_LOAD = "minBallotsToLoad";
         //public const string PROPERTY_REGISTERED = "registered";
 
         public App()
@@ -48,6 +49,7 @@ namespace ImageImprov
             Properties[PROPERTY_PWD] = GlobalStatusSingleton.password;
             Properties[PROPERTY_MAINTAIN_LOGIN] = GlobalStatusSingleton.maintainLogin.ToString();
             Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
+            Properties[PROPERTY_MIN_BALLOTS_TO_LOAD] = GlobalStatusSingleton.minBallotsToLoad.ToString();
         }
 
         protected override void OnResume()
@@ -77,6 +79,9 @@ namespace ImageImprov
             }
             if (properties.ContainsKey(PROPERTY_ASPECT_OR_FILL_IMGS)) {
                 GlobalStatusSingleton.aspectOrFillImgs = ((properties[PROPERTY_ASPECT_OR_FILL_IMGS] as string).Equals("AspectFit") ? Aspect.AspectFit : Aspect.Fill);
+            }
+            if (properties.ContainsKey(PROPERTY_MIN_BALLOTS_TO_LOAD)) {
+                GlobalStatusSingleton.minBallotsToLoad= Convert.ToInt32(properties[PROPERTY_MIN_BALLOTS_TO_LOAD] as string);
             }
         }
     }

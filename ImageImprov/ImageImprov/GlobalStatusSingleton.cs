@@ -49,6 +49,16 @@ namespace ImageImprov
         // No AspectFill.
         public static Aspect aspectOrFillImgs = Aspect.AspectFit;
 
+        /// <summary>
+        /// The number of ballots to load at startup.
+        /// Defaults to 3. Increases based on user behavior.
+        /// </summary>
+        public static int minBallotsToLoad = 3;
+
+        /// <summary>
+        /// Regardless of user behavior, we never preload more than 6 ballots.
+        /// </summary>
+        public const int MAX_BALLOTS_TO_LOAD = 6;
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
         /// END PREFERENCES SECTION
