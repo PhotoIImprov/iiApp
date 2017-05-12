@@ -14,6 +14,7 @@ namespace ImageImprov {
 
         // flips between remaining logged in and out
         CheckBox maintainLoginCheckbox;
+        CheckBox aspectOrFillCheckbox;
 
         public SettingsPage() {
             buildUI();
@@ -26,6 +27,15 @@ namespace ImageImprov {
             {
                 OnCheckBoxTapped(sender, new EventArgs());
             };
+            
+            aspectOrFillCheckbox = new CheckBox {
+                Text = "Constrain img to original aspect ratio",
+                IsChecked = GlobalSingletonHelpers.AspectSettingToBool(GlobalStatusSingleton.aspectOrFillImgs),
+            };
+            aspectOrFillCheckbox.CheckChanged += (sender, args) =>
+            {
+                OnCheckBoxTapped(sender, new EventArgs());
+            };
 
             defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
 
@@ -34,12 +44,17 @@ namespace ImageImprov {
                 settingsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             settingsGrid.Children.Add(maintainLoginCheckbox, 0, 4);
+            settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
             settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 
         }
 
         void OnCheckBoxTapped(object sender, EventArgs args) {
-            GlobalStatusSingleton.maintainLogin = ((CheckBox)sender).IsChecked;
+            if (sender == maintainLoginCheckbox) {
+                GlobalStatusSingleton.maintainLogin = ((CheckBox)sender).IsChecked;
+            } else if (sender == aspectOrFillCheckbox) {
+                GlobalStatusSingleton.aspectOrFillImgs = GlobalSingletonHelpers.BoolToAspectSetting(((CheckBox)sender).IsChecked);
+            }
         }
 
     }

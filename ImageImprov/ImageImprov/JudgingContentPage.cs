@@ -789,7 +789,8 @@ namespace ImageImprov {
             Image image = new Image();
             image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
             //image.Aspect = Aspect.AspectFill;
-            image.Aspect = Aspect.AspectFit;
+            //image.Aspect = Aspect.AspectFit;
+            image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
 
             // orientation info now sent from the server.
             //candidate.orientation = isPortraitOrientation(candidate.imgStr);

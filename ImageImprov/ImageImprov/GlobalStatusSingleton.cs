@@ -36,10 +36,23 @@ namespace ImageImprov
         // user password
         public static string password = "pa55w0rd";
 
+        /////////////////////////////////// 
+        /// BEGIN PREFERENCES SECTION
+        /// BEGIN PREFERENCES SECTION
+        /////////////////////////////////// 
         // A user preference that says whether or not the user wishes to remain
         // logged in on session end.
         // default to false in the event there is no user data.
         public static bool maintainLogin = false;
+
+        // Right now we constrain to only AspectFit or Fill formats
+        // No AspectFill.
+        public static Aspect aspectOrFillImgs = Aspect.AspectFit;
+
+        /////////////////////////////////// 
+        /// END PREFERENCES SECTION
+        /// END PREFERENCES SECTION
+        /////////////////////////////////// 
 
         // holdover from when we used "login"
         //public static LoginResponseJSON loginCredentials;

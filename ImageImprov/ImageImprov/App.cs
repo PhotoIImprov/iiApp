@@ -14,6 +14,7 @@ namespace ImageImprov
         public const string PROPERTY_USERNAME = "username";
         public const string PROPERTY_PWD = "pwd";
         public const string PROPERTY_MAINTAIN_LOGIN = "maintainlogin";
+        public const string PROPERTY_ASPECT_OR_FILL_IMGS = "aspectOrFillImgs";
         //public const string PROPERTY_REGISTERED = "registered";
 
         public App()
@@ -46,6 +47,7 @@ namespace ImageImprov
             Properties[PROPERTY_USERNAME] = GlobalStatusSingleton.username;
             Properties[PROPERTY_PWD] = GlobalStatusSingleton.password;
             Properties[PROPERTY_MAINTAIN_LOGIN] = GlobalStatusSingleton.maintainLogin.ToString();
+            Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
         }
 
         protected override void OnResume()
@@ -72,6 +74,9 @@ namespace ImageImprov
             if (properties.ContainsKey(PROPERTY_MAINTAIN_LOGIN)) {
                 GlobalStatusSingleton.maintainLogin = Convert.ToBoolean(properties[PROPERTY_MAINTAIN_LOGIN] as string);
                 //GlobalStatusSingleton.maintainLogin = false;
+            }
+            if (properties.ContainsKey(PROPERTY_ASPECT_OR_FILL_IMGS)) {
+                GlobalStatusSingleton.aspectOrFillImgs = ((properties[PROPERTY_ASPECT_OR_FILL_IMGS] as string).Equals("AspectFit") ? Aspect.AspectFit : Aspect.Fill);
             }
         }
     }

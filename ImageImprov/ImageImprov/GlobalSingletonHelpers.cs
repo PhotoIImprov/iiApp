@@ -32,5 +32,26 @@ namespace ImageImprov {
             }
             return result;
         }
+
+        /// <summary>
+        /// Given an input Aspect converts to a bool with
+        /// Aspect.AspectFit == true, Aspect.Fill == false and Aspect.AspectFill == false.
+        /// This is done to map to the user setting checkbox.
+        /// </summary>
+        /// <param name="inAspect"></param>
+        /// <returns></returns>
+        public static bool AspectSettingToBool(Aspect inAspect) {
+            return ((inAspect == Aspect.AspectFit) ? true : false);
+        }
+        
+        /// <summary>
+        /// Reverse look up of the AspectSettingToBool conversion.
+        /// </summary>
+        /// <param name="checkedStatus"></param>
+        /// <returns></returns>
+        public static Aspect BoolToAspectSetting(bool checkedStatus) {
+            return (checkedStatus ? Aspect.AspectFit : Aspect.Fill);
+        }
+
     }
 }
