@@ -109,6 +109,9 @@ namespace ImageImprov {
             // @todo remove this if constraint once I know harry has setup closed category results.
             if (activeCategory == -1) {
                 activeCategory = GlobalStatusSingleton.votingCategoryId;
+                leaderboardLabel.Text = "Category: " + GlobalStatusSingleton.votingCategoryDescription + "; voting still active";
+            } else {
+                leaderboardLabel.Text = "Category: " + GlobalStatusSingleton.mostRecentClosedCategoryDescription + "; voting closed";
             }
             string result = await requestLeaderboardAsync(activeCategory);
 

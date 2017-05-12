@@ -19,8 +19,10 @@ namespace ImageImprov {
         //< images.  Need both a portrait and a landscape instance due to different spans.
         // extents are bound to the object.  Since they differ for portrait and landscape I have two choices.
         // have to copies, or rebuild everything everytime.
-        Image currentSubmissionImg = new Image();
-        Image latestTakenImg = new Image();
+        Image currentSubmissionImgP = new Image();
+        Image currentSubmissionImgL = new Image();
+        Image latestTakenImgP = new Image();
+        Image latestTakenImgL = new Image();
 
         // filepath to the latest taken img
         string latestTakenPath;
@@ -38,31 +40,45 @@ namespace ImageImprov {
         // Used to inform the user of success/fail of previous submissions, etc.
         Label lastActionResultLabel;
 
-        Button takePicture;
+        Button takePictureP;
+        Button takePictureL;
         // @todo enable pictures from the camera roll
         //Button selectPictureFromCameraRoll;
-        Button submitCurrentPicture;
+        Button submitCurrentPictureP;
+        Button submitCurrentPictureL;
 
         Grid portraitView;
         Grid landscapeView;
 
-        KeyPageNavigator defaultNavigationButtons;
+        KeyPageNavigator defaultNavigationButtonsP;
+        KeyPageNavigator defaultNavigationButtonsL;
 
         public CameraContentPage() {
             categoryLabel = new Label { Text = "Waiting for current category from server" };
             
             lastActionResultLabel = new Label { Text = "No actions performed yet" };
-            takePicture = new Button {
+            takePictureP = new Button {
+                Text = "Take a picture to submit!",
+                Command = new Command(o => ShouldTakePicture()),
+            };
+            takePictureL = new Button {
                 Text = "Take a picture to submit!",
                 Command = new Command(o => ShouldTakePicture()),
             };
 
-            submitCurrentPicture = new Button {
+            submitCurrentPictureP = new Button {
                 Text = "Submit this image",
                 IsVisible = false
             };
-            submitCurrentPicture.Clicked += this.OnSubmitCurrentPicture;
-            defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            submitCurrentPictureL = new Button {
+                Text = "Submit this image",
+                IsVisible = false
+            };
+            submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
+            submitCurrentPictureL.Clicked += this.OnSubmitCurrentPicture;
+
+            defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            defaultNavigationButtonsL = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
 
             /*
             portraitLayout = new StackLayout {
@@ -80,8 +96,8 @@ namespace ImageImprov {
             */
             // only have one active at a time as grid properties bind to the ui elements, meaning
             // an element can only be defined correctly for one rotation at a time.
-            //buildPortraitView();
-            //buildLandscapeView();
+            buildPortraitView();
+            buildLandscapeView();
             setView();
         }
 
@@ -92,12 +108,12 @@ namespace ImageImprov {
             if ((width > height) && (inPortraitMode==true)) {
                 inPortraitMode = false;
                 GlobalStatusSingleton.inPortraitMode = false;
-                buildLandscapeView();
+                //buildLandscapeView();
                 Content = landscapeView;
             } else if ((height>width) && (inPortraitMode==false)) {
                 inPortraitMode = true;
                 GlobalStatusSingleton.inPortraitMode = true;
-                buildPortraitView();
+                //buildPortraitView();
                 Content = portraitView;
             }
         }
@@ -115,14 +131,14 @@ namespace ImageImprov {
                 portraitView.IsEnabled = true;
             }
             portraitView.Children.Add(categoryLabel, 0, 0);  // col, row
-            portraitView.Children.Add(takePicture, 0, 1);
-            portraitView.Children.Add(currentSubmissionImg, 0, 2);
-            Grid.SetRowSpan(currentSubmissionImg, 5);
-            portraitView.Children.Add(latestTakenImg, 0, 7);
-            Grid.SetRowSpan(latestTakenImg, 5);
-            portraitView.Children.Add(submitCurrentPicture, 0, 12);
+            portraitView.Children.Add(takePictureP, 0, 1);
+            portraitView.Children.Add(currentSubmissionImgP, 0, 2);
+            Grid.SetRowSpan(currentSubmissionImgP, 5);
+            portraitView.Children.Add(latestTakenImgP, 0, 7);
+            Grid.SetRowSpan(latestTakenImgP, 5);
+            portraitView.Children.Add(submitCurrentPictureP, 0, 12);
             portraitView.Children.Add(lastActionResultLabel, 0, 13);
-            portraitView.Children.Add(defaultNavigationButtons, 0, 14);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 14);
 
             return 1;
         }
@@ -145,14 +161,14 @@ namespace ImageImprov {
 
             landscapeView.Children.Add(categoryLabel, 0, 0);  // col, row
             landscapeView.Children.Add(lastActionResultLabel, 1, 0);
-            landscapeView.Children.Add(takePicture, 0, 1);
-            landscapeView.Children.Add(submitCurrentPicture, 1, 1);
-            landscapeView.Children.Add(currentSubmissionImg, 0, 2);
-            Grid.SetRowSpan(currentSubmissionImg, 7);
-            landscapeView.Children.Add(latestTakenImg, 1, 2);
-            Grid.SetRowSpan(latestTakenImg, 7);
-            landscapeView.Children.Add(defaultNavigationButtons, 0, 9);
-            Grid.SetColumnSpan(defaultNavigationButtons, 2);
+            landscapeView.Children.Add(takePictureL, 0, 1);
+            landscapeView.Children.Add(submitCurrentPictureL, 1, 1);
+            landscapeView.Children.Add(currentSubmissionImgL, 0, 2);
+            Grid.SetRowSpan(currentSubmissionImgL, 7);
+            landscapeView.Children.Add(latestTakenImgL, 1, 2);
+            Grid.SetRowSpan(latestTakenImgL, 7);
+            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);
+            Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
 
             return 1;
         }
@@ -198,7 +214,8 @@ namespace ImageImprov {
             PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
             if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
                 // success. update the UI
-                currentSubmissionImg.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
                 lastActionResultLabel.Text = "Current submission image updated.";
             }
 
@@ -261,9 +278,11 @@ namespace ImageImprov {
         //< ShowImage
         public void ShowImage(string filepath, byte[] imgBytes)
         {
-            submitCurrentPicture.IsVisible = true;
+            submitCurrentPictureP.IsVisible = true;
+            submitCurrentPictureL.IsVisible = true;
             latestTakenPath = filepath;
-            latestTakenImg.Source = ImageSource.FromFile(filepath);
+            latestTakenImgP.Source = ImageSource.FromFile(filepath);
+            latestTakenImgL.Source = ImageSource.FromFile(filepath);
             latestTakenImgBytes = imgBytes;
 
             //
