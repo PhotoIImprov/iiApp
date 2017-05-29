@@ -14,17 +14,20 @@ namespace ImageImprov
         JudgingContentPage judgingPage;
         PlayerContentPage playerPage;
         CameraContentPage cameraPage;
-        LeaderboardPage leaderboardPage;
+        //LeaderboardPage leaderboardPage;  handled through playerPage.
 
 
         public MainPageSwipeUI()
         {
+            BackgroundColor = Color.White;
+
             //var padding = new Thickness(0, Device.OnPlatform(40, 40, 0), 0, 0);
             playerPage = new PlayerContentPage();  // player page must be built before judging page sets up listeners.
             judgingPage = new JudgingContentPage();
             cameraPage = new CameraContentPage();
 
-
+            // TokenReceived is my successful login event.
+            playerPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
             playerPage.TokenReceived += new TokenReceivedEventHandler(judgingPage.TokenReceived);
 
             // both judgingPage and cameraPage are guaranteed to exist at this point.
@@ -33,11 +36,15 @@ namespace ImageImprov
             //judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.LeaderboardPage.OnCategoryLoad);
 
-            Children.Add(judgingPage);
+            // Change behavior. Don't want to be able to do stuff prior to successful login...
+            // Easiest to add these pages POST login.
+            //Children.Add(judgingPage);
             Children.Add(playerPage);
-            Children.Add(cameraPage);
+            //Children.Add(cameraPage);
+            
             // leaderboard is not part of the carousel.  It's reached from the player page only.
             this.CurrentPage = playerPage;
+            //this.IsEnabled = false;  // does this turn everything off, or just the carousel? does fuck all as far as i can tell.
         }
 
         public ICamera getCamera()
@@ -45,7 +52,7 @@ namespace ImageImprov
             return cameraPage;
         }
 
-        public void gotoJudgingPage() {
+        public void gotoJudgingPage(){ 
             this.CurrentPage = judgingPage;
         }
         // This takes the user to the PlayerContentPage.
@@ -55,6 +62,27 @@ namespace ImageImprov
         }
         public void gotoCameraPage() {
             this.CurrentPage = cameraPage;
+        }
+
+        public virtual void TokenReceived(object sender, EventArgs e) {
+            // ok, we're in. add pages.
+            this.Children.Insert(0, judgingPage);
+            this.Children.Add(cameraPage);
+            gotoJudgingPage();
+        }
+
+        // SPECIAL SERIALIZE/DESERIALIZE functions
+        public BallotJSON GetActiveBallot() {
+            return judgingPage.GetBallot();
+        }
+        public void SetActiveBallot(string ballotAsStr) {
+            judgingPage.SetBallot(ballotAsStr);
+        }
+        public Queue<string> GetBallotQueue() {
+            return judgingPage.GetBallotQueue();
+        }
+        public void SetBallotQueue(Queue<string> ballotQueue) {
+            judgingPage.SetPreloadedBallots(ballotQueue);
         }
     }
 }

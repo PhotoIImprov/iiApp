@@ -9,7 +9,9 @@ using System.Diagnostics;  // for debug assertions.
 using Newtonsoft.Json;
 
 using Xamarin.Forms;
+using System.Reflection;
 using ExifLib;
+using SkiaSharp;
 
 namespace ImageImprov {
     public delegate void LoadChallengeNameEventHandler(object sender, EventArgs e);
@@ -21,6 +23,9 @@ namespace ImageImprov {
     class JudgingContentPage : ContentPage {
         public static string LOAD_FAILURE = "No open voting category currently available.";
 
+        // A dummy object for controlling lock on ui resources
+        static readonly object uiLock = new object();
+
         Grid portraitView = null;
         Grid landscapeView = null;
         KeyPageNavigator defaultNavigationButtonsP;
@@ -31,15 +36,20 @@ namespace ImageImprov {
         Label challengeLabelP = new Label
         {
             Text = "Loading...",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
+            TextColor = Color.Black,
+            BackgroundColor = Color.FromRgb(252, 213, 21),
+            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
         Label challengeLabelL = new Label
         {
             Text = "Loading...",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-        };
+            TextColor = Color.Black,
+            BackgroundColor = Color.FromRgb(252, 213, 21),
+    };
         //> challengeLabel
         // This is the request to load.
         public event LoadChallengeNameEventHandler LoadChallengeName;
@@ -94,27 +104,32 @@ namespace ImageImprov {
         // tracks which ballots have not yet received a vote in the multi-img vote voting scenario.
         List<BallotCandidateJSON> unvotedImgs;
 
+        //
+        //   BEGIN Variables related/needed for images to place image rankings and backgrounds on screen.
+        //
+        AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
+        AbsoluteLayout layoutL;  // this lets us place a background image on the screen.
+        List<SKBitmap> rankImages = new List<SKBitmap>();
+        Assembly assembly = null;
+        Image backgroundImgP = null;
+        Image backgroundImgL = null;
+        string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
+                "ImageImprov.IconImages.third.png", "ImageImprov.IconImages.fourth.png"};
+        string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
+        //
+        //   END Variables related/needed for images to place image rankings and backgrounds on screen.
+        // 
 
         public JudgingContentPage() {
+            assembly = this.GetType().GetTypeInfo().Assembly;
+            ballot = new BallotJSON();
+
             preloadedBallots = new Queue<string>();
 
             ballotImgsP = new List<Image>();
             ballotImgsL = new List<Image>();
             buildPortraitView();
             buildLandscapeView();
-            //Content = challengeLabel;
-
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-            // listen for orientation changes, which are currently handled through size change.
-            //SizeChanged += (sender, e) => AdjustContentToRotation();
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-            // TURNED OFF TO TEST OVERRIDE OnSizeAllocated
-
-
-            //GlobalStatusSingleton.IsPortrait(this) ? { buildPortraitView(); portraitView; } : landscapeView;
 
             // set myself up to listen for the loading events...
             this.LoadChallengeName += new LoadChallengeNameEventHandler(OnLoadChallengeName);
@@ -126,6 +141,15 @@ namespace ImageImprov {
             this.Vote += new EventHandler(OnVote);
 
             eDummy = new EventArgs();
+
+            // used to merge with the base image to show the ranking number.
+            buildRankImages();
+        }
+
+        protected void buildRankImages() {
+            foreach (string filename in rankFilenames) {
+                rankImages.Add(GlobalSingletonHelpers.loadSKBitmapFromResourceName(filename, assembly));
+            }
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
@@ -135,7 +159,61 @@ namespace ImageImprov {
             }
         }
 
+        
         protected override void OnSizeAllocated(double width, double height) {
+            try {
+                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
+                // content null on first pass.  Do double de-locking.
+                lock (uiLock) {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
+                    base.OnSizeAllocated(width, height);
+                    if (width > height) {
+                        GlobalStatusSingleton.inPortraitMode = false;
+                        if (backgroundImgL == null) {
+                            backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                            layoutL = new AbsoluteLayout
+                            {
+                                Children = {
+                                    { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                    { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                }
+                            };
+                        }
+                        if (layoutL != null) {
+                            Content = layoutL;
+                        } else {
+                            Content = landscapeView;
+                        }
+                    } else {
+                        GlobalStatusSingleton.inPortraitMode = true;
+                        if (backgroundImgP == null) {
+                            backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                            layoutP = new AbsoluteLayout
+                            {
+                                Children = {
+                                    { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                    { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                }
+                            };
+                        }
+                        if (layoutP != null) {
+                            Content = layoutP;
+                        } else {
+                            Content = portraitView;
+                        }
+                    }
+                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated lock released");
+                }
+                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated end");
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated:Exception");
+                Debug.WriteLine(e.ToString());
+            }
+        }
+
+        /*
+        protected override void OnSizeAllocated(double width, double height) {
+            Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
             base.OnSizeAllocated(width, height);
             if (width > height) {
                 GlobalStatusSingleton.inPortraitMode = false;
@@ -144,29 +222,82 @@ namespace ImageImprov {
                 GlobalStatusSingleton.inPortraitMode = true;
                 Content = portraitView;
             }
+            Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated complete");
         }
+        */
+
+        /* I have better luck with onsizeallocated.
+        void OnPageSizeChanged(Object sender, EventArgs args) {
+            if ((backgroundImgP == null) && (Width>0.0) && (Height>0.0)) {
+                if (Height > Width) {
+                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Height, (int)Width);
+                } else {
+                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Height, (int)Width);
+                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                }
+                layoutP = new AbsoluteLayout
+                {
+                    Children = {
+                        { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                        { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                    }
+                };
+                layoutL = new AbsoluteLayout
+                {
+                    Children = {
+                        { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                        { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                    }
+                };
+                //Content = layout;
+                OnSizeAllocated(Width, Height);
+            }
+        }
+        */
 
         /// <summary>
         /// This is called whenever my underlying data for my layout has changed (e.g. for a vote)
+        /// This is the only function that updates this.
+        /// Unfortunately, we can have multiple threads reaching this point.
+        /// So we need to enforce atomicity of the action.
         /// Forcing a new layout to be drawn.
         /// </summary>
         private void AdjustContentToRotation() {
-            buildPortraitView();
-            buildLandscapeView();
+            Debug.WriteLine("DHB:JudgingContentPage:AdjustContentToRotation start");
+            lock (uiLock) {
+                buildPortraitView();
+                buildLandscapeView();
+            }
+            // how does this work with background?
+            // what purpose does this fcn serve?
+            /*
             if (GlobalStatusSingleton.IsPortrait(this)) {
                 Content = portraitView;
             } else {
                 Content = landscapeView;
             }
+            */
+            Debug.WriteLine("DHB:JudgingContentPage:AdjustContentToRotation end");
         }
 
         private void ClearContent() {
-            ballot.Clear();
+            Debug.WriteLine("DHB:JudgingContentPage:ClearContent() start");
+            if (ballot != null) {
+                ballot.Clear();
+            }
             ballotImgsP.Clear();  // does Content update? No
             ballotImgsL.Clear();  // does Content update? No
-            unvotedImgs.Clear();
-            votes.votes.Clear();
-            Content = new StackLayout() { Children = { challengeLabelP, } };
+            if (unvotedImgs != null) {
+                unvotedImgs.Clear();
+            }
+            if (votes != null) {
+                votes.votes.Clear();
+            }
+            // This next line causes blow ups.
+            // Shift to a strategy of only ever changing Content in a setContent fcn.
+            //Content = new StackLayout() { Children = { challengeLabelP, } };
+            Debug.WriteLine("DHB:JudgingContentPage:ClearContent() end");
         }
 
         // Turn of all images. voting is done.  Leave the selected image visible.
@@ -206,73 +337,79 @@ namespace ImageImprov {
         /// </summary>
         /// <returns>1 on success, -1 if there are the wrong number of ballot imgs.</returns>
         public int buildPortraitView() {
+            Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView begin");
             // ignoring orientation count for now.
             // the current implemented case is orientationCount == 0. (displays as a stack)
             // There are two other options... 
             //    orientationCount == 2 - displays as 2xstack or stackx2 per first img orientation
             //    orientationCount == 4 - display as a 2x2 grid
             int result = 1;
-            // all my elements are already members...
-            if (portraitView == null) {
-                portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-            } else {
-                // flush the old children.
-                portraitView.Children.Clear();
-                portraitView.IsEnabled = true;
-            }
-            if (defaultNavigationButtonsP==null) {
-                defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
-            }
-
-            // ok. Everything has been initialized. So now I just need to decide where to put it.
-            if (ballotImgsP.Count > 0) {
-                if (orientationCount < 2) {
-                    result = buildFourLandscapeImgPortraitView();
-                } else if (orientationCount > 2) {
-                    result = buildFourPortraitImgPortraitView();
+            try {
+                // all my elements are already members...
+                if (portraitView == null) {
+                    portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = Color.Transparent };
                 } else {
-                    result = buildTwoXTwoImgPortraitView();
+                    // flush the old children.
+                    portraitView.Children.Clear();
+                    portraitView.IsEnabled = true;
                 }
-            } else {
-                // Note: This is reached on ctor call, so don't put an assert here.
-                result = -1;
-                portraitView.RowDefinitions.Clear();
-                portraitView.ColumnDefinitions.Clear();
-                for (int i = 0; i < 26; i++) {
-                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                if (defaultNavigationButtonsP == null) {
+                    defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
                 }
 
-                /*
+                // ok. Everything has been initialized. So now I just need to decide where to put it.
                 if (ballotImgsP.Count > 0) {
-                    portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                    Grid.SetRowSpan(ballotImgsP[0], 6);
-                }
+                    if (orientationCount < 2) {
+                        result = buildFourLandscapeImgPortraitView();
+                    } else if (orientationCount > 2) {
+                        result = buildFourPortraitImgPortraitView();
+                    } else {
+                        result = buildTwoXTwoImgPortraitView();
+                    }
+                } else {
+                    // Note: This is reached on ctor call, so don't put an assert here.
+                    result = -1;
+                    portraitView.RowDefinitions.Clear();
+                    portraitView.ColumnDefinitions.Clear();
+                    for (int i = 0; i < 20; i++) {
+                        portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                    }
 
-                if (ballotImgsP.Count > 1) {
-                    portraitView.Children.Add(ballotImgsP[1], 0, 6);  // col, row format
-                    Grid.SetRowSpan(ballotImgsP[1], 6);
-                }
+                    /*
+                    if (ballotImgsP.Count > 0) {
+                        portraitView.Children.Add(ballotImgsP[0], 0, 0);
+                        Grid.SetRowSpan(ballotImgsP[0], 6);
+                    }
 
-                if (ballotImgsP.Count > 2) {
-                    portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-                    Grid.SetRowSpan(ballotImgsP[2], 6);
-                }
+                    if (ballotImgsP.Count > 1) {
+                        portraitView.Children.Add(ballotImgsP[1], 0, 6);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[1], 6);
+                    }
 
-                if (ballotImgsP.Count > 3) {
-                    portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
-                    Grid.SetRowSpan(ballotImgsP[3], 6);
-                }
-                */
+                    if (ballotImgsP.Count > 2) {
+                        portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[2], 6);
+                    }
+
+                    if (ballotImgsP.Count > 3) {
+                        portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[3], 6);
+                    }
+                    */
 #if DEBUG
-                challengeLabelP.Text += " no image case";
+                    challengeLabelP.Text += " no image case";
 #endif
 
-                portraitView.Children.Add(challengeLabelP, 0, 12);
-                Grid.SetColumnSpan(challengeLabelP, 1);
-                portraitView.Children.Add(defaultNavigationButtonsP, 0, 25);
-                Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
+                    portraitView.Children.Add(challengeLabelP, 0, 8);
+                    Grid.SetColumnSpan(challengeLabelP, 1);
+                    portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
+                    Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
+                    Grid.SetRowSpan(defaultNavigationButtonsP, 2);
+                }
+            } catch (Exception e) {
+                Debug.WriteLine(e.ToString());
             }
-
+            Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView end");
             return result;
         }
 
@@ -284,7 +421,7 @@ namespace ImageImprov {
         public int buildFourPortraitImgPortraitView() {
             portraitView.RowDefinitions.Clear();
             portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 26; i++) {
+            for (int i = 0; i < 20; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -292,25 +429,26 @@ namespace ImageImprov {
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             portraitView.Children.Add(ballotImgsP[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsP[0], 12);
+            Grid.SetRowSpan(ballotImgsP[0], 8);
 
             portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[1], 12);
+            Grid.SetRowSpan(ballotImgsP[1], 8);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[2], 12);
+            portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[2], 8);
 
-            portraitView.Children.Add(ballotImgsP[3], 1, 13);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[3], 12);
+            portraitView.Children.Add(ballotImgsP[3], 1, 10);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[3], 8);
 
 #if DEBUG
             challengeLabelP.Text += " 4P_P case";
 #endif
 
-            portraitView.Children.Add(challengeLabelP, 0, 12);
+            portraitView.Children.Add(challengeLabelP, 0, 8);
             Grid.SetColumnSpan(challengeLabelP, 2);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 25);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
+            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
             return 1;
         }
 
@@ -323,31 +461,32 @@ namespace ImageImprov {
             // setup rows.
             portraitView.RowDefinitions.Clear();
             portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 26; i++) {
+            for (int i = 0; i < 20; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             portraitView.Children.Add(ballotImgsP[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsP[0], 6);
+            Grid.SetRowSpan(ballotImgsP[0], 4);
 
-            portraitView.Children.Add(ballotImgsP[1], 0, 6);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[1], 6);
+            portraitView.Children.Add(ballotImgsP[1], 0, 5);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[1], 4);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[2], 6);
+            portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[2], 4);
 
-            portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[3], 6);
+            portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[3], 4);
 
 #if DEBUG
             challengeLabelP.Text += " 4L_P case";
 #endif
 
-            portraitView.Children.Add(challengeLabelP, 0, 12);
+            portraitView.Children.Add(challengeLabelP, 0, 9);
             Grid.SetColumnSpan(challengeLabelP, 1);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 25);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
+            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
 
             return 1;
         }
@@ -363,7 +502,7 @@ namespace ImageImprov {
             // regardless, 26 rows, 2 cols
             portraitView.RowDefinitions.Clear();
             portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 26; i++) {
+            for (int i = 0; i < 20; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -374,119 +513,125 @@ namespace ImageImprov {
             if (ballot.ballots[0].isPortrait() == BallotCandidateJSON.PORTRAIT) {
                 // portrait on top
                 portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                Grid.SetRowSpan(ballotImgsP[0], 12);
+                Grid.SetRowSpan(ballotImgsP[0], 8);
 
                 portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[1], 12);
+                Grid.SetRowSpan(ballotImgsP[1], 8);
 
-                portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[2], 6);
+                portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[2], 4);
                 Grid.SetColumnSpan(ballotImgsP[2], 2);
 
-                portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[3], 6);
+                portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[3], 4);
                 Grid.SetColumnSpan(ballotImgsP[3], 2);
             } else {
                 // landscape on top
                 portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                Grid.SetRowSpan(ballotImgsP[0], 6);
+                Grid.SetRowSpan(ballotImgsP[0], 4);
                 Grid.SetColumnSpan(ballotImgsP[0], 2);
 
-                portraitView.Children.Add(ballotImgsP[1], 0, 6);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[1], 6);
+                portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[1], 4);
                 Grid.SetColumnSpan(ballotImgsP[1], 2);
 
-                portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[2], 12);
+                portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[2], 8);
 
-                portraitView.Children.Add(ballotImgsP[3], 1, 13);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[3], 12);
+                portraitView.Children.Add(ballotImgsP[3], 1, 10);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[3], 8);
             }
 #if DEBUG
             challengeLabelP.Text += " 2x2P case";
 #endif
 
-            portraitView.Children.Add(challengeLabelP, 0, 12);
+            portraitView.Children.Add(challengeLabelP, 0, 8);
             Grid.SetColumnSpan(challengeLabelP, 2);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 25);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
+            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
 
 
             return 1;
         }
 
         public int buildLandscapeView() {
-            // the current implemented case is orientationCount == 0. (displays as a 2x2)
-            // There are two other options... 
-            //    orientationCount == 2 - displays as 2xstack or stackx2 per first img orientation
-            //    orientationCount == 4 - display as a 4x1 horizontally aligned portraits.
-
+            Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView begin");
             int result = 1;
+            try {
+                // the current implemented case is orientationCount == 0. (displays as a 2x2)
+                // There are two other options... 
+                //    orientationCount == 2 - displays as 2xstack or stackx2 per first img orientation
+                //    orientationCount == 4 - display as a 4x1 horizontally aligned portraits.
+                if (defaultNavigationButtonsL == null) {
+                    defaultNavigationButtonsL = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+                }
 
-            if (defaultNavigationButtonsL == null) {
-                defaultNavigationButtonsL = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
-            }
-
-            // all my elements are already members...
-            if (landscapeView == null) {
-                landscapeView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            } else {
-                // flush the old children.
-                landscapeView.Children.Clear();
-                landscapeView.IsEnabled = true;
-            }
-            // should I be flushing the children each time???
-            if (ballotImgsL.Count > 0) {
-                if (orientationCount < 2) {
-                    // landscape
-                    result = buildFourLandscapeImgLandscapeView();
-                } else if (orientationCount > 2) {
-                    // portrait
-                    result = buildFourPortraitImgLandscapeView();
+                // all my elements are already members...
+                if (landscapeView == null) {
+                    landscapeView = new Grid { ColumnSpacing = 0, RowSpacing = 0, BackgroundColor = Color.Transparent, };
                 } else {
-                    result = buildTwoXTwoImgLandscapeView();
+                    // flush the old children.
+                    landscapeView.Children.Clear();
+                    landscapeView.IsEnabled = true;
                 }
-            } else {
-                // Note: This is reached on ctor call, so don't put an assert here.
-                result = -1;
-                landscapeView.RowDefinitions.Clear();
-                landscapeView.ColumnDefinitions.Clear();
-                for (int i = 0; i < 26; i++) {
-                    landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                }
-                for (int i = 0; i < 2; i++) {
-                    landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                }
-                /*
+                // should I be flushing the children each time???
                 if (ballotImgsL.Count > 0) {
-                    landscapeView.Children.Add(ballotImgsL[0], 0, 0);
-                    Grid.SetRowSpan(ballotImgsL[0], 12);
-                }
+                    if (orientationCount < 2) {
+                        // landscape
+                        result = buildFourLandscapeImgLandscapeView();
+                    } else if (orientationCount > 2) {
+                        // portrait
+                        result = buildFourPortraitImgLandscapeView();
+                    } else {
+                        result = buildTwoXTwoImgLandscapeView();
+                    }
+                } else {
+                    // Note: This is reached on ctor call, so don't put an assert here.
+                    result = -1;
+                    landscapeView.RowDefinitions.Clear();
+                    landscapeView.ColumnDefinitions.Clear();
+                    for (int i = 0; i < 26; i++) {
+                        landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                    }
+                    for (int i = 0; i < 2; i++) {
+                        landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    }
+                    /*
+                    if (ballotImgsL.Count > 0) {
+                        landscapeView.Children.Add(ballotImgsL[0], 0, 0);
+                        Grid.SetRowSpan(ballotImgsL[0], 12);
+                    }
 
-                if (ballotImgsL.Count > 1) {
-                    landscapeView.Children.Add(ballotImgsL[1], 1, 0);  // col, row format
-                    Grid.SetRowSpan(ballotImgsL[1], 12);
-                }
-                if (ballotImgsL.Count > 2) {
-                    landscapeView.Children.Add(ballotImgsL[2], 0, 14);  // col, row format
-                    Grid.SetRowSpan(ballotImgsL[2], 12);
-                }
-                if (ballotImgsL.Count > 3) {
-                    landscapeView.Children.Add(ballotImgsL[3], 1, 14);  // col, row format
-                    Grid.SetRowSpan(ballotImgsL[3], 12);
-                }
-                */
+                    if (ballotImgsL.Count > 1) {
+                        landscapeView.Children.Add(ballotImgsL[1], 1, 0);  // col, row format
+                        Grid.SetRowSpan(ballotImgsL[1], 12);
+                    }
+                    if (ballotImgsL.Count > 2) {
+                        landscapeView.Children.Add(ballotImgsL[2], 0, 14);  // col, row format
+                        Grid.SetRowSpan(ballotImgsL[2], 12);
+                    }
+                    if (ballotImgsL.Count > 3) {
+                        landscapeView.Children.Add(ballotImgsL[3], 1, 14);  // col, row format
+                        Grid.SetRowSpan(ballotImgsL[3], 12);
+                    }
+                    */
 #if DEBUG
-                challengeLabelL.Text += " no image L case";
+                    challengeLabelL.Text += " no image L case";
 #endif
 
-                landscapeView.Children.Add(challengeLabelL, 0, 0);
-                Grid.SetColumnSpan(challengeLabelL, 2);
+                    landscapeView.Children.Add(challengeLabelL, 0, 0);
+                    Grid.SetColumnSpan(challengeLabelL, 2);
 
-                landscapeView.Children.Add(defaultNavigationButtonsL, 0, 25);  // going to wrong position for some reason...
-                Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
+                    landscapeView.Children.Add(defaultNavigationButtonsL, 0, 25);  // going to wrong position for some reason...
+                    Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
 
+                }
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView:Exception");
+                Debug.WriteLine(e.ToString());
             }
+            Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView end");
             return result;
         }
 
@@ -645,14 +790,26 @@ namespace ImageImprov {
         /////
 
         protected async virtual void OnLoadChallengeName(object sender, EventArgs e) {
-            challengeLabelP.Text = await requestChallengeNameAsync();
-            challengeLabelL.Text = challengeLabelP.Text;
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName start");
+
+            // Do I have a persisted ballot ready and waiting for me?
+            managePersistedBallot(sender, e);
+            // Do I have a persisted ballot ready and waiting for me?
+
+            // can't lock in an async fcn.
+            // can't update challengeLabel text here as it generates a ui race condition.
+            // This puts rubbish up anyway.  erase.
+            string ignorableResult = await requestChallengeNameAsync();
+            //challengeLabelP.Text = await requestChallengeNameAsync();
+            //challengeLabelL.Text = challengeLabelP.Text;
             if (CategoryLoadSuccess != null) {
                 CategoryLoadSuccess(sender, e);
             }
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName end");
         }
 
         protected async virtual void OnDequeueBallotRequest(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest start");
             // Note: sender maybe null! (when fired from processBallotString due to a no img ballot.
 
             // Fires a loadBallotPics if queue is empty.
@@ -662,12 +819,16 @@ namespace ImageImprov {
                 // should sleep me for 100 millisecs, then check again.
                 await Task.Delay(100);
             }
-            ClearContent();
-            processBallotString(preloadedBallots.Dequeue());
+            lock (ballot) {
+                ClearContent();
+                processBallotString(preloadedBallots.Dequeue());
+            }
+            Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest end");
         }
 
         //< requestChallengeNameAsync
         static async Task<string> requestChallengeNameAsync() {
+            Debug.WriteLine("DHB:JudgingContentPage:requestChallengeNameAsync start");
             string result = LOAD_FAILURE;
 
             /* on token received event.
@@ -717,14 +878,17 @@ namespace ImageImprov {
                     }
                 } else {
                     // no ok back from the server! gahh.
-                    bool anotherfakepause = false;
+                    Debug.WriteLine("DHB:JudgingContentPage:requestChallengeNameAsync err invalid status code: " + catResult.StatusCode.ToString());
                 }
             } catch (System.Net.WebException err) {
-
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync:Exception");
+                Debug.WriteLine(e.ToString());
             }
 
 
-
+            Debug.WriteLine("DHB:JudgingContentPage:requestChallengeNameAsync end");
             return result;
         }
         //> RequestTimeAsync
@@ -732,6 +896,7 @@ namespace ImageImprov {
          static int counter = 1;
         //<Ballot Loading
         protected async virtual void OnLoadBallotPics(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics start");
             /* waiting for event now.
             while ((GlobalStatusSingleton.loggedIn == false)
                    || (GlobalStatusSingleton.votingCategoryId == GlobalStatusSingleton.NO_CATEGORY_INFO)) {
@@ -739,18 +904,35 @@ namespace ImageImprov {
                 await Task.Delay(100);
             }
             */
+
+            // hmm... try doing this before sending the category request...
+            // Do I have a persisted ballot ready and waiting for me?
+            //managePersistedBallot(sender, e);
+            // Do I have a persisted ballot ready and waiting for me?
+
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre async call");
             string result = await requestBallotPicsAsync();
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post async call");
             if (!result.Equals("fail")) {
                 preloadedBallots.Enqueue(result);
-                if (ballot == null) {
-                    processBallotString(preloadedBallots.Dequeue());
+                // :(  can't lock on a null
+                //lock (ballot) {
+                Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre ballot read");
+                //if ((ballot == null) || (ballot.ballots==null) || (ballot.ballots.Count==0)) {
+                // ballot is now instantiated on startup
+                if ((ballot.ballots == null) || (ballot.ballots.Count == 0)) {
+                    // No, constrain to a single point of interest for thread safety.
+                    //processBallotString(preloadedBallots.Dequeue());
+                    DequeueBallotRequest(this, eDummy);
                 }
+                Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post ballot read");
             } else {
-                challengeLabelP.Text = "Currently unable to load ballots.  Attempts: " + counter;
-                challengeLabelL.Text = "Currently unable to load ballots.  Attempts: " + counter;
+                // @todo need to update labels inside the build ui functions only.
+                //challengeLabelP.Text = "Currently unable to load ballots.  Attempts: " + counter;
+                //challengeLabelL.Text = "Currently unable to load ballots.  Attempts: " + counter;
                 counter++;
                 if (counter > 2) {
-                    bool falsebreak = true;
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics " + counter + " load fails");
                 }
                 await Task.Delay(5000);
                 if (LoadBallotPics != null) {
@@ -758,10 +940,13 @@ namespace ImageImprov {
                 }
 
             }
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre while");
             // keep this thread going constantly, making sure we never run out.
             while (true) {
                 if (preloadedBallots.Count < GlobalStatusSingleton.minBallotsToLoad) {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre async call 2");
                     result = await requestBallotPicsAsync();
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post async call 2");
                     if (!result.Equals("fail")) {
                         preloadedBallots.Enqueue(result);
                     }
@@ -771,11 +956,37 @@ namespace ImageImprov {
                 }
                 // this happens when i run out of ballots
                 // but why??
-                // unhappy with this solution as it means I don't understand what's happening.
+                // unhappy with this solution as it means I don't understand what's happening.                
                 if ((ballot.ballots == null) && (preloadedBallots.Count > 1)) {
-                    processBallotString(preloadedBallots.Dequeue());
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics out of ballots, sending dqueue");
+                    //processBallotString(preloadedBallots.Dequeue());
+                    DequeueBallotRequest(this, eDummy);
                 }
+                //}
+            }
+            // This line gets tagged as unreachable, which it is... so just comment out.
+            //Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics end");
+        }
 
+        /// <summary>
+        /// Helper function for OnLoadBallotPics.
+        /// This function manages the processing around the queue and the ballot pre-existing.
+        /// Should not have race condition concerns as this should be called before the http request is
+        /// sent to the server.
+        /// Note, called from an async function!
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void managePersistedBallot(object sender, EventArgs e) {
+            if ((((ballot.ballots == null) || (ballot.ballots.Count == 0))) && (GlobalStatusSingleton.persistedBallotAsString != null)) {
+                preloadedBallots.Enqueue(GlobalStatusSingleton.persistedBallotAsString);
+                GlobalStatusSingleton.persistedBallotAsString = null;
+                DequeueBallotRequest(this, e);
+            }
+            if (GlobalStatusSingleton.persistedPreloadedBallots.Count>0) {
+                while (GlobalStatusSingleton.persistedPreloadedBallots.Count>0) {
+                    preloadedBallots.Enqueue(GlobalStatusSingleton.persistedPreloadedBallots.Dequeue());
+                }
             }
         }
 
@@ -802,6 +1013,7 @@ namespace ImageImprov {
                     }
                 } catch (Exception e) {
                     // will barf if there's an exif issue. so just accept result==0 and move on.
+                    Debug.WriteLine(e.ToString());
                 }
             }
             return result;
@@ -818,6 +1030,12 @@ namespace ImageImprov {
 
         }
 
+        /// <summary>
+        /// Currently, this also manages orientation Count.
+        /// This is what is called during the initial image setup.
+        /// </summary>
+        /// <param name="candidate"></param>
+        /// <returns></returns>
         protected Image setupImgFromBallotCandidate(BallotCandidateJSON candidate) {
             Image image = new Image();
             image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
@@ -825,9 +1043,33 @@ namespace ImageImprov {
             //image.Aspect = Aspect.AspectFit;
             image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
 
+            // This works. looks like a long press will be a pain in the ass.
+            TapGestureRecognizer tapGesture = new TapGestureRecognizer();
+            if (tapGesture == null) {
+                tapGesture = new TapGestureRecognizer();
+            }
+            tapGesture.Tapped += OnClicked;
+            image.GestureRecognizers.Add(tapGesture);
+
             // orientation info now sent from the server.
             //candidate.orientation = isPortraitOrientation(candidate.imgStr);
             orientationCount += candidate.isPortrait();
+            return image;
+        }
+
+        protected Image setupImgFromStream(MemoryStream imgStream) {
+            Image image = new Image();
+            //
+            //
+            // The line below is the line of death.
+            // The line below is the line of death.
+            // The line below is the line of death.
+            //
+            //  What happens is the imgStream will go out of scope, be collected, then unhandled excpetion ensues.
+            image.Source = ImageSource.FromStream(() => imgStream);
+            //image.Aspect = Aspect.AspectFill;
+            //image.Aspect = Aspect.AspectFit;
+            image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
 
             // This works. looks like a long press will be a pain in the ass.
             TapGestureRecognizer tapGesture = new TapGestureRecognizer();
@@ -840,12 +1082,32 @@ namespace ImageImprov {
         }
 
         /// <summary>
+        /// Adds the passed in rank image to the raw ballot, and then produces an image.
+        /// This is what is called when we add our ranking to the image.
+        /// 
+        /// NOT EVEN CLOSED TO FINISHED OR USABLE FUNCTION!!!
+        /// </summary>
+        /// <param name="candidate"></param>
+        /// <returns></returns>
+        protected Image setupImgWithRanking(byte[] rawImg, SKImage rankingImg) {
+            // build and merge rawImg and rankingImg.
+            // get stream
+            var res = new MemoryStream(rawImg);
+            // not impacting orientation count at this point in time.
+            Image image = setupImgFromStream(res);
+            //Image image = new Image();
+            //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
+
+            return image;
+        }
+        /// <summary>
         /// implmented as a function so it can be reused by the vote message response.
         /// Note: This function does NOT deal with the ballot queue.  It is assumed that whatever
         /// is coming into me has already undergone a preloadedBallots dequeue.
         /// </summary>
         /// <param name="result"></param>
         protected virtual void processBallotString(string result) {
+            Debug.WriteLine("DHB:JudgingContentPage:processBallotString begin");
 #if DEBUG
             int checkEmpty = ballotImgsP.Count;
 #endif // Debug            
@@ -857,6 +1119,7 @@ namespace ImageImprov {
                 challengeLabelP.Text = "Current category: " + ballot.category.description;
                 challengeLabelL.Text = "Current category: " + ballot.category.description;
                 // now handle ballot
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
                     Image imgP = setupImgFromBallotCandidate(candidate);
                     ballotImgsP.Add(imgP);
@@ -864,11 +1127,12 @@ namespace ImageImprov {
                     Image imgL = setupImgFromBallotCandidate(candidate);
                     ballotImgsL.Add(imgL);
                 }
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
                 if (orientationCount == 2) {
                     checkImgOrderAndReorderAsNeeded();
                 }
 
-                if (ballot.ballots.Count == 0) {
+                if ((ballot==null) || (ballot.ballots.Count == 0)) {
                     // bad ballot. fire a dequeue
                     if (DequeueBallotRequest != null) {
                         DequeueBallotRequest(this, eDummy);
@@ -881,7 +1145,7 @@ namespace ImageImprov {
 #endif // Debug            
             } catch (Exception e) {
                 // probably thrown by Deserialize.
-                bool falseBreak = false;
+                Debug.WriteLine(e.ToString());
             }
 
             // These are both built in AdjustContentToRotation
@@ -890,6 +1154,7 @@ namespace ImageImprov {
 
             // new images, content needs to be updated.
             AdjustContentToRotation();
+            Debug.WriteLine("DHB:JudgingContentPage:processBallotString complete");
         }
 
         /// <summary>
@@ -902,6 +1167,7 @@ namespace ImageImprov {
         /// </summary>
         /// <returns></returns>
         static async Task<string> requestBallotPicsAsync() {
+            Debug.WriteLine("DHB:JudgingContentPage:requestBallotPicsAsync started");
             string result = "fail";
             try {
                 HttpClient client = new HttpClient();
@@ -915,16 +1181,20 @@ namespace ImageImprov {
                 HttpResponseMessage ballotResult = await client.SendAsync(ballotRequest);
                 if (ballotResult.StatusCode == System.Net.HttpStatusCode.OK) {
                     result = await ballotResult.Content.ReadAsStringAsync();
+                    Debug.WriteLine("DHB:JudgingContentPage:requestBallotPicsAsync http read complete");
                 } else {
                     // no ok back from the server! gahh.
                     // @todo handle what happens when I request with an old/non-voting category_id
                     // @todo test this condition (old/non-voting category err).
-                    bool anotherfakepause = false;
+                    Debug.WriteLine("DHB:JudgingContentPage:requestBallotPicsAsync bad status code: "+ballotResult.StatusCode.ToString());
                 }
             } catch (System.Net.WebException err) {
-
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync:Exception");
+                Debug.WriteLine(e.ToString());
             }
-
+            Debug.WriteLine("DHB:JudgingContentPage:requestBallotPicsAsync complete");
             return result;
         }
         /////
@@ -934,13 +1204,35 @@ namespace ImageImprov {
         /////
 
         // Voting.
-        protected async virtual void OnVote(object sender, EventArgs e) {
+        protected virtual void OnVote(object sender, EventArgs e) {
             //SingleVoteGeneratesBallot(sender, e);
             MultiVoteGeneratesBallot(sender, e);
         }
 
         protected int findUnallocatedBid(List<VoteJSON> votes) {
             return 1;
+        }
+
+        protected void UpdateUIForFinalVote(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
+            // not sure how I do indexing...
+            //ClearContent(firstSelectedIndex);
+
+            SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[penultimateSelectedIndex].imgStr);
+            SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count-2]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
+
+            baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[ultimateSelectedIndex].imgStr);
+            mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
+
+            foreach (Image img in ballotImgsP) {
+                img.IsEnabled = false;
+            }
+            foreach (Image img in ballotImgsL) {
+                img.IsEnabled = false;
+            }
         }
 
         protected async virtual void SingleVoteGeneratesBallot(object sender, EventArgs e) {
@@ -1005,6 +1297,101 @@ namespace ImageImprov {
             }
         }
 
+        /// <summary>
+        /// Helper function for MultiVoteGeneratesBallot
+        /// Given the tapped image, find the index in the ballot.ballots array of that image and sets it to the selectionId variable.
+        /// And grabs the bid at the same time for easy use.
+        /// bleh, setting so many things this turned out to be more trouble than worth...
+        /// </summary>
+        /// <returns></returns>
+        private bool findSelectionIndexAndBid(object sender, ref int selectionId, ref long bid, ref BallotCandidateJSON votedOnCandidate) {
+            bool found = false;
+            int index = 0;
+            // ballotImgsP and L have same meta info, so only need this once.
+            // but I do need to search the correct one to id the sender.
+            var searchImgs = ballotImgsL;
+            if (GlobalStatusSingleton.inPortraitMode == true) {
+                searchImgs = ballotImgsP;
+            }
+            foreach (Image img in searchImgs) {
+                if (img == sender) {
+                    found = true;
+                    votedOnCandidate = ballot.ballots[index];
+                    bid = ballot.ballots[index].bidId;
+                    selectionId = index;
+                    break; // should break out of the foreach.
+                } else {
+                    index++;
+                }
+            }
+            return found;
+        }
+
+        private bool votedOn(long bid, ref int voteNum) {
+            bool res = false;
+            voteNum = 0;  // votes.votes are guaranteed to be in vote order.
+            if ((votes != null) && (votes.votes != null)) {
+                foreach (VoteJSON vote in votes.votes) {
+                    if (vote.bid == bid) {
+                        res = true;
+                        break;
+                    } else {
+                        voteNum++;
+                    }
+                }
+            }
+            return res;
+        }
+
+        private void rebuildAllImagesWithVotes() {
+            int ballotIndex = 0;
+            int voteNum = -1;
+            foreach (BallotCandidateJSON candidate in ballot.ballots) {
+                if (votedOn(candidate.bidId, ref voteNum)) {
+                    SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
+                    // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
+                    SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
+                } else {
+                    SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr));
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
+                }
+                ballotIndex++;
+            }
+        }
+
+        /// <summary>
+        /// Checks to see if this image was already voted on.
+        /// If yes, processes the uncheck.
+        /// If no, returns a false so that MultiVoteGeneratesBallot can handle the selection.
+        /// </summary>
+        /// <param name="selectionId"></param>
+        /// <param name="bid"></param>
+        /// <param name="votedOnCandidate"></param>
+        /// <returns></returns>
+        private bool uncheckCase(int selectionId, long bid, BallotCandidateJSON votedOnCandidate) {
+            int removePosn = 0;
+            bool res = votedOn(bid, ref removePosn);
+            if (res) {
+                // process the uncheck.
+                //    remove this bid from the votes object.
+                //    add back into the unvoted images list.
+                //    update the vote_id on the remaining votes
+                //    remove the numbers from the images
+                //    renumber all images
+                votes.votes.RemoveAt(removePosn);
+                unvotedImgs.Add(votedOnCandidate);
+                for (int i=removePosn;i<votes.votes.Count;i++) {
+                    votes.votes[i].vote--;
+                }
+                // brute force the images and do all four...
+                rebuildAllImagesWithVotes();
+            }
+            return res;
+        }
+
         protected async virtual void MultiVoteGeneratesBallot(object sender, EventArgs e) {
             if (votes == null) {
                 votes = new VotesJSON();
@@ -1014,109 +1401,110 @@ namespace ImageImprov {
             // ballots may have been cleared and this can be a dbl tap registration.
             // in which case, ignore.
             if (ballot.ballots.Count == 0) { return; }
-            bool found = false;
-            int index = 0;
             int selectionId = 0;
             long bid = -1;
-            // ballotImgsP and L have same meta info, so only need this once.
-            // but I do need to search the correct one to id the sender.
-            var searchImgs = ballotImgsL;
-            if (GlobalStatusSingleton.inPortraitMode == true) {
-                searchImgs = ballotImgsP;
-            }
             BallotCandidateJSON votedOnCandidate = null;
-            foreach (Image img in searchImgs) {
-                if (img == sender) {
-                    found = true;
-                    votedOnCandidate = ballot.ballots[index];
-                    bid = ballot.ballots[index].bidId;
-                    selectionId = index;
-                } else {
-                    index++;
-                }
-            }
+            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate);
+
 #if DEBUG
             if (found == false) {
                 throw new Exception("A button clicked on an image not in my ballots.");
             }
 #endif
-            VoteJSON vote = new ImageImprov.VoteJSON();
-            vote.bid = bid;
-            vote.vote = votes.votes.Count+1;
-            if (vote.vote == 1) {
-                // first selected save the selectionId;
-                firstSelectedIndex = selectionId;
-            }
-            vote.like = true;
-            votes.votes.Add(vote);
-            if (votedOnCandidate != null) {
-                unvotedImgs.Remove(votedOnCandidate);
-            }
-            // No. This fails for cases where num ballots != 4, which is allowed.
-            //if (vote.vote == PENULTIMATE_BALLOT_SELECTED) {
-            if (vote.vote == (ballot.ballots.Count-1)) {
-#if DEBUG
-                Debug.Assert(unvotedImgs.Count == 1, "We dont have just one image left!!");
-#endif
-                vote = new ImageImprov.VoteJSON();
-                // This has to be the only one left.
-                vote.bid = unvotedImgs[0].bidId;
+            if (uncheckCase(selectionId, bid, votedOnCandidate)) {
+
+            } else {
+                VoteJSON vote = new ImageImprov.VoteJSON();
+                vote.bid = bid;
                 vote.vote = votes.votes.Count + 1;
+                if (vote.vote == 1) {
+                    // first selected save the selectionId;
+                    firstSelectedIndex = selectionId;
+                }
                 vote.like = true;
                 votes.votes.Add(vote);
-
-                string jsonQuery = JsonConvert.SerializeObject(votes);
-                string origText = challengeLabelP.Text;
-                challengeLabelP.Text = "Vote submitted, loading new ballot";
-                challengeLabelL.Text = "Vote submitted, loading new ballot";
-                ClearContent(firstSelectedIndex);
-
-                // Ok. I want to be running the request right now!
-                // I want to wait a random amount of time then yank 1 from the queue right away.
-
-                // What I can easily do is:
-                //   yank one from the queue and fire the request.
-
-                // The solution is to fire of a pull from queue event while this trundles along...
-                // Or. Fire a load ballot event, while this pulls from queue.
-                // No, because load ballot doesn't send a vote.
-                // right now, do nothing.
-                if (DequeueBallotRequest != null) {
-                    DequeueBallotRequest(this, eDummy);
+                if (votedOnCandidate != null) {
+                    unvotedImgs.Remove(votedOnCandidate);
                 }
 
-                // keep refiring until success.
-                string result = "fail";
-                while (result.Equals("fail")) {
-                    result = await requestVoteAsync(jsonQuery);
-                    if (result.Equals("fail")) {
-                        // @todo This fail case is untested code. Does the UI come back?
-                        if (preloadedBallots.Count == 0) {
-                            challengeLabelP.Text = "No connection. Awaiting connection for more ballots.";
-                            challengeLabelL.Text = "No connection. Awaiting connection for more ballots.";
-                            AdjustContentToRotation();
-                        }
-                    } else {
-                        /* moved to queue processing.
-                        // only clear on success
-                        ClearContent();
-                        challengeLabelP.Text = origText;
-                        challengeLabelL.Text = origText;
-                        processBallotString(result);
-                        */
-                        preloadedBallots.Enqueue(result);
+                // Is this the last img to be voted on (on the ui second to last as fully defined order at that point)
+                // if so, send the votes in.
+                if (vote.vote == (ballot.ballots.Count - 1)) {
+#if DEBUG
+                    Debug.Assert(unvotedImgs.Count == 1, "We dont have just one image left!!");
+#endif
+                    vote = new ImageImprov.VoteJSON();
+                    // This has to be the only one left.
+                    vote.bid = unvotedImgs[0].bidId;
+                    vote.vote = votes.votes.Count + 1;
+                    vote.like = true;
+                    votes.votes.Add(vote);
+
+                    string jsonQuery = JsonConvert.SerializeObject(votes);
+                    string origText = challengeLabelP.Text;
+                    challengeLabelP.Text = "Vote submitted, loading new ballot";
+                    challengeLabelL.Text = "Vote submitted, loading new ballot";
+                    UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
+
+                    // Ok. I want to be running the request right now!
+                    // I want to wait a random amount of time then yank 1 from the queue right away.
+
+                    // What I can easily do is:
+                    //   yank one from the queue and fire the request.
+
+                    // The solution is to fire of a pull from queue event while this trundles along...
+                    // Or. Fire a load ballot event, while this pulls from queue.
+                    // No, because load ballot doesn't send a vote.
+                    // right now, do nothing.
+                    if (DequeueBallotRequest != null) {
+                        DequeueBallotRequest(this, eDummy);
                     }
+
+                    // keep refiring until success.
+                    string result = "fail";
+                    while (result.Equals("fail")) {
+                        result = await requestVoteAsync(jsonQuery);
+                        if (result.Equals("fail")) {
+                            // @todo This fail case is untested code. Does the UI come back?
+                            if (preloadedBallots.Count == 0) {
+                                challengeLabelP.Text = "No connection. Awaiting connection for more ballots.";
+                                challengeLabelL.Text = "No connection. Awaiting connection for more ballots.";
+                                AdjustContentToRotation();
+                            }
+                        } else {
+                            /* moved to queue processing.
+                            // only clear on success
+                            ClearContent();
+                            challengeLabelP.Text = origText;
+                            challengeLabelL.Text = origText;
+                            processBallotString(result);
+                            */
+                            preloadedBallots.Enqueue(result);
+                        }
+                    }
+                } else {
+                    // turn this image off and wait till all are selected.
+                    //ballotImgsP[selectionId].IsEnabled = false;
+                    //ballotImgsP[selectionId].IsVisible = false;
+                    //ballotImgsL[selectionId].IsEnabled = false;
+                    //ballotImgsL[selectionId].IsVisible = false;
+                    // New behavior: Leave the images on, but put ranking numbers on them.
+                    // @todo Leave enabled so I can uncheck.
+                    // bleh. do I have the imgStr still? Yes, it lives in Ballot.
+                    // hmm... 
+                    // vote.vote is indexed from 1. rankimages from 0.
+                    SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[selectionId].imgStr);
+                    SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
+                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[selectionId], mergedImage);
+
                 }
-            } else {
-                // turn this image off and wait till all are selected.
-                ballotImgsP[selectionId].IsEnabled = false;
-                ballotImgsP[selectionId].IsVisible = false;
-                ballotImgsL[selectionId].IsEnabled = false;
-                ballotImgsL[selectionId].IsVisible = false;
             }
         }
+
         // sends the vote in and waits for a new ballot.
         static async Task<string> requestVoteAsync(string jsonQuery) {
+            Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync start");
             string result = "fail";
             try {
                 HttpClient client = new HttpClient();
@@ -1139,16 +1527,68 @@ namespace ImageImprov {
                     // server failure. keep the msg as a fail for correct onVote processing
                     // do we get back json?
                     result = await voteResult.Content.ReadAsStringAsync();
-                    bool fakePause = false;
+                    Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync vote result recvd");
                 }
             } catch (System.Net.WebException err) {
                 //result = "exception";
                 // web failure. keep the msg as a simple fail for correct onVote processing
-
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync:Exception");
+                Debug.WriteLine(e.ToString());
             }
+            Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync end");
             return result;
         }
 
+        /// <summary>
+        /// Given a bidId, returns it's index in the current ballot array.
+        /// </summary>
+        /// <param name="bidId"></param>
+        /// <returns>The 0 based index of the bid, or -1 if not found</returns>
+        private int getIndexOfBid(long bidId) {
+            int found = -1;
+            int index = 0;
+            foreach (BallotCandidateJSON candidate in ballot.ballots) {
+                if (candidate.bidId == bidId) {
+                    found = index;
+                    break;
+                } else {
+                    index++;
+                }
+            }
+            return found;
+        }
+
+        // expose some members for serialization/deserialization on startup/shutdown.
+        public BallotJSON GetBallot() {
+            return ballot;
+        }
+        public void SetBallot(string storedBallot) {
+            // set the ballot here.
+            lock (uiLock) {
+                // dont have categories yet. maybe an invalid ballot...
+                // what should the ui do?
+                //
+                // doing nothing till i get behavior feedback.
+            }
+        }
+
+        public Queue<string> GetBallotQueue() {
+            return preloadedBallots;
+        }
+        public void SetPreloadedBallots(Queue<string> previouslyStoredBallots) {
+            // check each ballot to see if it is still a current category.
+            // if it is, add to queue.
+
+            // bleh, i'm not guaranteed to have the categories at this point.
+            // so... set preloadedBallots and let it get processed once categories come in.
+            lock (uiLock) {
+                foreach (string s in previouslyStoredBallots) {
+                    preloadedBallots.Enqueue(s);
+                }
+            }
+        }
     } // class
 } // namespace
 

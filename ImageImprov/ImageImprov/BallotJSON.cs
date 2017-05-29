@@ -22,7 +22,9 @@ namespace ImageImprov
 
         public void Clear() {
             // tbd. Do I need to clear category as well?
-            ballots.Clear();
+            if (ballots != null) {
+                ballots.Clear();
+            }
         }
     }
 }

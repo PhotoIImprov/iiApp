@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;  // for debug assertions.
 
 namespace ImageImprov {
     // provides helper functions around JSON.
@@ -24,13 +25,14 @@ namespace ImageImprov {
                         // the good
                         objectsList.Add(item.ToObject<T>());
                     } catch (Exception ex) {
+                        Debug.WriteLine(ex.ToString());
                         InvalidJsonElements = InvalidJsonElements ?? new List<string>();
                         InvalidJsonElements.Add(item.ToString());
                     }
                 }
             } catch (Exception e) {
                 // ignore. we received a null list.  users of the fcn will be responsible when nothing comes back.
-                bool falseBreak = false;
+                Debug.WriteLine(e.ToString());
             }
             return objectsList;
         }

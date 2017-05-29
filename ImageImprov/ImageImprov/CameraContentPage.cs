@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json;
+using System.Diagnostics;  // for debug assertions.
 
 using Xamarin.Forms;
 using ExifLib;
@@ -35,10 +37,12 @@ namespace ImageImprov {
         // provides category info for today's contest to the user...
         // bound to data in GlobalStatusSingleton
         // @todo bind to dat in globalstatussingleton
-        public Label categoryLabel;
+        public Label categoryLabelP;
+        public Label categoryLabelL;
 
         // Used to inform the user of success/fail of previous submissions, etc.
-        Label lastActionResultLabel;
+        Label lastActionResultLabelP;
+        Label lastActionResultLabelL;
 
         Button takePictureP;
         Button takePictureL;
@@ -54,24 +58,42 @@ namespace ImageImprov {
         KeyPageNavigator defaultNavigationButtonsL;
 
         public CameraContentPage() {
-            categoryLabel = new Label { Text = "Waiting for current category from server" };
-            
-            lastActionResultLabel = new Label { Text = "No actions performed yet" };
+            categoryLabelP = new Label {
+                Text = "Waiting for current category from server",
+                TextColor = Color.Black,
+            };
+            categoryLabelL = new Label {
+                Text = "Waiting for current category from server",
+                TextColor = Color.Black,
+            };
+
+            lastActionResultLabelP = new Label {
+                Text = "No actions performed yet",
+                TextColor = Color.Black,
+            };
+            lastActionResultLabelL = new Label {
+                Text = "No actions performed yet",
+                TextColor = Color.Black,
+            };
             takePictureP = new Button {
                 Text = "Take a picture to submit!",
+                TextColor = Color.Black,
                 Command = new Command(o => ShouldTakePicture()),
             };
             takePictureL = new Button {
                 Text = "Take a picture to submit!",
+                TextColor = Color.Black,
                 Command = new Command(o => ShouldTakePicture()),
             };
 
             submitCurrentPictureP = new Button {
                 Text = "Submit this image",
+                TextColor = Color.Black,
                 IsVisible = false
             };
             submitCurrentPictureL = new Button {
                 Text = "Submit this image",
+                TextColor = Color.Black,
                 IsVisible = false
             };
             submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
@@ -130,14 +152,14 @@ namespace ImageImprov {
                 portraitView.Children.Clear();
                 portraitView.IsEnabled = true;
             }
-            portraitView.Children.Add(categoryLabel, 0, 0);  // col, row
+            portraitView.Children.Add(categoryLabelP, 0, 0);  // col, row
             portraitView.Children.Add(takePictureP, 0, 1);
             portraitView.Children.Add(currentSubmissionImgP, 0, 2);
             Grid.SetRowSpan(currentSubmissionImgP, 5);
             portraitView.Children.Add(latestTakenImgP, 0, 7);
             Grid.SetRowSpan(latestTakenImgP, 5);
             portraitView.Children.Add(submitCurrentPictureP, 0, 12);
-            portraitView.Children.Add(lastActionResultLabel, 0, 13);
+            portraitView.Children.Add(lastActionResultLabelP, 0, 13);
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 14);
 
             return 1;
@@ -159,8 +181,8 @@ namespace ImageImprov {
                 landscapeView.IsEnabled = true;
             }
 
-            landscapeView.Children.Add(categoryLabel, 0, 0);  // col, row
-            landscapeView.Children.Add(lastActionResultLabel, 1, 0);
+            landscapeView.Children.Add(categoryLabelL, 0, 0);  // col, row
+            landscapeView.Children.Add(lastActionResultLabelL, 1, 0);
             landscapeView.Children.Add(takePictureL, 0, 1);
             landscapeView.Children.Add(submitCurrentPictureL, 1, 1);
             landscapeView.Children.Add(currentSubmissionImgL, 0, 2);
@@ -195,7 +217,8 @@ namespace ImageImprov {
         }
 
         public virtual void OnCategoryLoad(object sender, EventArgs e) {
-            categoryLabel.Text = "Today's category: " + GlobalStatusSingleton.uploadCategoryDescription;
+            categoryLabelP.Text = "Today's category: " + GlobalStatusSingleton.uploadCategoryDescription;
+            categoryLabelL.Text = "Today's category: " + GlobalStatusSingleton.uploadCategoryDescription;
         }
 
 
@@ -208,7 +231,8 @@ namespace ImageImprov {
         protected async virtual void OnSubmitCurrentPicture(object sender, EventArgs e) {
             // prevent multiple click attempts; we heard ya
             ((Button)sender).IsEnabled = false;
-            lastActionResultLabel.Text = "Uploading image to server...";
+            lastActionResultLabelP.Text = "Uploading image to server...";
+            lastActionResultLabelL.Text = "Uploading image to server...";
 
             string result = await sendSubmitAsync(latestTakenImgBytes);
             PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
@@ -216,7 +240,8 @@ namespace ImageImprov {
                 // success. update the UI
                 currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
                 currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
-                lastActionResultLabel.Text = "Current submission image updated.";
+                lastActionResultLabelP.Text = "Current submission image updated.";
+                lastActionResultLabelL.Text = "Current submission image updated.";
             }
 
             ((Button)sender).IsEnabled = true;
@@ -265,8 +290,10 @@ namespace ImageImprov {
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
+                Debug.WriteLine(err.ToString());
                 result = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
+                Debug.WriteLine(err.ToString());
                 // do something!!
                 result = "login failure";
             }
@@ -274,6 +301,11 @@ namespace ImageImprov {
             return result;
         }
 
+
+        // tmp helpers during exif debug.
+        ExifOrientation imgExifO;
+        int imgExifWidth;
+        int imgExifHeight;
 
         //< ShowImage
         public void ShowImage(string filepath, byte[] imgBytes)
@@ -286,18 +318,42 @@ namespace ImageImprov {
             latestTakenImgBytes = imgBytes;
 
             //
-            /*  exiflib is exposed at this level. filestream does not appear to be.
+            /*  exiflib is exposed at this level. filestream does not appear to be.  */ 
             var jpegInfo = new JpegInfo();
-            using (var myFStream = new System.IO.FileStream(file.Path, FileMode.Open)) {
+            //using (var myFStream = new System.IO.FileStream(file.Path, FileMode.Open)) {
+            using (var myFStream = new System.IO.MemoryStream(imgBytes)) {
                 jpegInfo = ExifReader.ReadJpeg(myFStream);
                 // portrait. upright. ExifLib.ExifOrientation.TopRight;
                 // portrait. upside down. ExifLib.ExifOrientation.BottomLeft;
                 // landscape. top to the right. ExifLib.ExifOrientation.BottomRight;
                 // Landscape. Top (where the samsung is) rotated to the left. ExifLib.ExifOrientation.TopLeft;
+
+                imgExifO = jpegInfo.Orientation;
+                imgExifWidth = jpegInfo.Width;
+                imgExifHeight = jpegInfo.Height;
+                
+                lastActionResultLabelP.Text = "Orient:"+imgExifO.ToString()+"  W:"+imgExifWidth+", H:"+imgExifHeight;
+                lastActionResultLabelL.Text = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
+
+                // test if we got location data...
+                // yes we did.
+                //double[] latitudeDMS = jpegInfo.GpsLatitude;
+                //double[] longitudeDMS = jpegInfo.GpsLongitude;
+                //ExifGpsLatitudeRef latitudeRef = jpegInfo.GpsLatitudeRef;
+                //ExifGpsLongitudeRef longitudeRef = jpegInfo.GpsLongitudeRef;
+
+                // attempt a correction here...
+                //if ((jpegInfo.Orientation == ExifOrientation.TopRight) && (jpegInfo.)
+                // does the thumbnail tell me what I want to know for correcting samsung's fubarness?
+                //    Nope.
+                //using (var thumbStream = new System.IO.MemoryStream(jpegInfo.ThumbnailData)) {
+                //    var thumbInfo = ExifReader.ReadJpeg(thumbStream);
+                //    bool falseBreak = true;
+                //}
             }
-            */
+            //*/
         }
         //> ShowImage
-
+        
     }
 }

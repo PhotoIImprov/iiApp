@@ -43,7 +43,7 @@ namespace ImageImprov {
                 checkbox.textLabel.FontSize = (double)newValue;
             });
 
-        static int count = 0;
+        //static int count = 0;
         public static readonly BindableProperty IsCheckedProperty =
         BindableProperty.Create(
             "IsChecked",
@@ -67,7 +67,7 @@ namespace ImageImprov {
         public CheckBox() {
             //InitializeComponent();
             boxImage = uncheckedImage;
-            textLabel = new Label();
+            textLabel = new Label { TextColor = Color.Black, };
             checkboxObj = new StackLayout
             {
                 Orientation = StackOrientation.Horizontal,

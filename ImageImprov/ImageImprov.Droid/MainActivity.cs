@@ -11,10 +11,9 @@ using Java.Util;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 
+using System.Diagnostics;
 
-
-namespace ImageImprov.Droid
-{
+namespace ImageImprov.Droid {
     [Activity(Label = "ImageImprov", 
         Icon = "@drawable/icon", 
         //Theme = "@style/MainTheme", 
@@ -25,13 +24,25 @@ namespace ImageImprov.Droid
     public class MainActivity : FormsApplicationActivity
     {
         //< file
-        static readonly File file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
-                                        Android.OS.Environment.DirectoryPictures), "tmp.jpg");
-        //> file
+        // creation here occurs before GlobalStatusSingleton.imgsTakenTracker is guaranteed to have been set.
+        static File file;//   = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
+                         //               Android.OS.Environment.DirectoryPictures), "ImageImprov_"+GlobalStatusSingleton.imgsTakenTracker+".jpg");
+                         //> file
+
+        static void HandleExceptions(object sender, UnhandledExceptionEventArgs e) {
+            System.Console.WriteLine(e.ToString());
+        }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+
+            AppDomain currentDomain = AppDomain.CurrentDomain;
+            currentDomain.UnhandledException += HandleExceptions;
+
+            GlobalStatusSingleton.imgsTakenTracker++;
+            file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
+                Android.OS.Environment.DirectoryPictures), "ImageImprov_" + GlobalStatusSingleton.imgsTakenTracker + ".jpg");
 
             Forms.Init(this, savedInstanceState);
             
@@ -86,6 +97,7 @@ namespace ImageImprov.Droid
             
             //< OnActivityResult
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, bytes);
+
             //> OnActivityResult
         }
     }

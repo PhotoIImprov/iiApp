@@ -17,6 +17,8 @@ namespace ImageImprov {
         readonly static string LEADERBOARD = "leaderboard";
         readonly static string CATEGORY = "?category_id=";
 
+        static object uiLock = new object();
+
         KeyPageNavigator defaultNavigationButtons;
 
         public event EventHandler RequestLeaderboard;
@@ -28,6 +30,7 @@ namespace ImageImprov {
             Text = "Leaderboard category: ",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
+            TextColor = Color.Black,
         };
 
         // tracks what category I'm showing
@@ -83,9 +86,9 @@ namespace ImageImprov {
                     Children =
                     {
                         leaderImgs[j],
-                        new Label { Text = System.Convert.ToString(leader.rank) },
-                        new Label { Text = uname },
-                        new Label { Text = System.Convert.ToString(leader.score) }
+                        new Label { Text = System.Convert.ToString(leader.rank),TextColor = Color.Black, },
+                        new Label { Text = uname,TextColor = Color.Black, },
+                        new Label { Text = System.Convert.ToString(leader.score),TextColor = Color.Black, }
                     }
                 };
                 leaderStack.Children.Add(leaderRow);
@@ -95,11 +98,13 @@ namespace ImageImprov {
 
             portraitView.Children.Add(leaderboardLabel, 0, 0);
             portraitView.Children.Add(leadersScroll, 0, 1);
-            Grid.SetRowSpan(leadersScroll, 18);
-            portraitView.Children.Add(defaultNavigationButtons, 0, 19);
+            Grid.SetRowSpan(leadersScroll, 17);
+            portraitView.Children.Add(defaultNavigationButtons, 0, 18);
+            Grid.SetRowSpan(defaultNavigationButtons, 2);
 
             return result;
         }
+
         protected async virtual void OnRequestLeaderboard(object sender, EventArgs e) {
             // the current category command does not send back a category in leaderboard state.
             // for now, the system is only going to support Yesterday's and Today's leaderboard.
@@ -139,16 +144,21 @@ namespace ImageImprov {
 
                     leaderImgs.Add(image);
                 }
-                buildPortraitView();
-                //buildLandscapeView();
-                // new images, content needs to be updated.
-                Content = portraitView;
-                
+                try {
+                    buildPortraitView();
+                    //buildLandscapeView();
+                    // new images, content needs to be updated.
+                    Content = portraitView;
+                } catch (Exception err) {
+                    Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard:Exception");
+                    Debug.WriteLine(err.ToString());
+                }
             }
         }
 
 
         static async Task<string> requestLeaderboardAsync(long category_id) {
+            Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync start");
             string result = LOAD_FAILURE;
 
             try {
@@ -162,11 +172,16 @@ namespace ImageImprov {
                     result = await catResult.Content.ReadAsStringAsync();
                 } else {
                     // no ok back from the server! gahh.
-                    bool anotherfakepause = false;
+                    Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync invalid result code: " + catResult.StatusCode.ToString());
                 }
             } catch (System.Net.WebException err) {
-                bool anotherfakepause = false;
+                Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync:WebException");
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:LeaderboardPage:Exception");
+                Debug.WriteLine(e.ToString());
             }
+            Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync end");
             return result;
         }
     }

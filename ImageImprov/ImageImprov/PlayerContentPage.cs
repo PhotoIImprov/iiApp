@@ -38,6 +38,7 @@ namespace ImageImprov
             Text = "Connecting...",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
+            TextColor = Color.Black,
         };
         //> loggedInLabel
 
@@ -46,20 +47,24 @@ namespace ImageImprov
             Text = "Already a member? Login below",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
+            TextColor = Color.Black,
         };
 
         readonly Label blankRowLabel = new Label
         { // blank row in ui.
-            Text = " "
+            Text = " ",
+            TextColor = Color.Black,
         };
 
         Entry usernameEntry = new Entry { Placeholder = "email",
             Text = GlobalStatusSingleton.username,
+            TextColor = Color.Black,
             HorizontalTextAlignment = TextAlignment.Start,
             HorizontalOptions = LayoutOptions.FillAndExpand,
         };
         Entry passwordEntry = new Entry { Placeholder = "Password",
             IsPassword = true,
+            TextColor = Color.Black,
             HorizontalTextAlignment = TextAlignment.Start,
             HorizontalOptions = LayoutOptions.FillAndExpand,
         };
@@ -84,7 +89,7 @@ namespace ImageImprov
         // There are 3 potential UIs to display when logging in.
         // This is what is displayed on an automatic login setting.
         // This is also the default ui for registered users on successful login
-        //StackLayout autoLoginLayout;
+        Grid preConnectAutoLoginLayout;
         Grid autoLoginLayout;
         // This is what is displayed if this is a new device.
         StackLayout newDeviceLayout;
@@ -111,6 +116,8 @@ namespace ImageImprov
         public event TokenReceivedEventHandler TokenReceived;
 
         EventArgs eDummy = null;
+
+        static int loginAttemptCounter = 0;
 
         public PlayerContentPage() {
             // set myself up to listen for the login events...
@@ -156,7 +163,7 @@ namespace ImageImprov
                 if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
                     Content = createAnonLoggedInLayout();
                 } else { 
-                    Content = createAutoLoginLayout();
+                    Content = createPreConnectAutoLoginLayout();
                 }
                 // fire a loginRequestEvent.
                 if (MyLogin != null) {
@@ -173,6 +180,32 @@ namespace ImageImprov
                     Content = createForceLoginLayout();
                 }
             }
+        }
+
+        protected Layout<View> createPreConnectAutoLoginLayout() {
+
+            logoutButton = new Button { Text = "Logout" };
+
+            StackLayout upperPortionOfGrid = new StackLayout
+            {
+                VerticalOptions = LayoutOptions.Center,
+                Children =
+                {
+                    loggedInLabel,
+                    //CenterConsole,
+                    //new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting" },
+                    //new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos" },
+                    //maintainLoginCheckbox,
+                    logoutButton,
+                }
+            };
+            preConnectAutoLoginLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            preConnectAutoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
+            preConnectAutoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            preConnectAutoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
+            //autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
+
+            return preConnectAutoLoginLayout;
         }
 
         protected Layout<View> createAutoLoginLayout() {
@@ -197,8 +230,8 @@ namespace ImageImprov
                 }
             };
             autoLoginLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
-            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
+            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             autoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
             autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
 
@@ -212,7 +245,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Username" },
+                    new Label { Text = "Username", TextColor = Color.Black, },
                     usernameEntry,
                 }
             };
@@ -225,7 +258,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Password" },
+                    new Label { Text = "Password",TextColor = Color.Black, },
                     passwordEntry,
                 }
             };
@@ -281,9 +314,9 @@ namespace ImageImprov
                     usernameRow(),
                     passwordRow(),
                     connectButton,
-                    new Label { Text = " " },
+                    new Label { Text = " ", TextColor = Color.Black, },
                     anonymousPlayButton,
-                    new Label { Text = " " },
+                    new Label { Text = " ", TextColor = Color.Black, },
                     registerButton,
                 }
             };
@@ -303,14 +336,14 @@ namespace ImageImprov
                 Children =
                 {
                     loggedInLabel,
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = " " },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Register for these benefits: " },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play from any device" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play with friends" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Secure your account" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Enable password recovery" },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = " ", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Register for these benefits: ", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play from any device", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play with friends", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Secure your account", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Enable password recovery", TextColor = Color.Black, },
                     gotoRegistrationButton,
                 }
             };
@@ -318,8 +351,8 @@ namespace ImageImprov
                 createDefaultNavigationButtons();
             }
             anonLoggedInLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
-            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             anonLoggedInLayout.Children.Add(upperPortionOfGrid, 0, 0);
             anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
             return anonLoggedInLayout;
@@ -342,13 +375,13 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Enter your email for your login name" },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "And choose your password" },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Enter your email for your login name", TextColor = Color.Black, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "And choose your password", TextColor = Color.Black, },
                     usernameRow(),
                     passwordRow(),
                     blankRowLabel,
                     registerButton,
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  " },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  ", TextColor = Color.Black, },
                     cancelRegistrationButton,
                 }
             };
@@ -360,7 +393,7 @@ namespace ImageImprov
         public void goHome() {
             Debug.Assert(GlobalStatusSingleton.loggedIn, "Not logged and creating a loggedin page");
             if (GlobalStatusSingleton.loggedIn == false) {
-                bool falsebreak = true;
+                Debug.WriteLine("DHB:PlayerContentPage:goHome fyi - not logged in");
             }
 
             if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
@@ -373,9 +406,10 @@ namespace ImageImprov
 
         protected async virtual void OnMyLogin(object sender, EventArgs e) {
             //string loginResult = await requestLoginAsync();
+            loginAttemptCounter++;
             string loginResult = await requestTokenAsync();
             if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
-                loggedInLabel.Text = loginResult;
+                loggedInLabel.Text = loginResult +"("+loginAttemptCounter+")";
                 // if I was in autologin and failed (may have happened from a pwd theft, or because of a db wipe in testing), need to reset ui.
                 Content = createForceLoginLayout();
             } else {
@@ -504,9 +538,11 @@ namespace ImageImprov
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
+                Debug.WriteLine(err.ToString());
                 resultMsg = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
                 // do something!!
+                Debug.WriteLine(err.ToString());
                 resultMsg = REGISTRATION_FAILURE;
             }
             return resultMsg;
@@ -577,9 +613,11 @@ namespace ImageImprov
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
+                Debug.WriteLine(err.ToString());
                 resultMsg = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
                 // do something!!
+                Debug.WriteLine(err.ToString());
                 resultMsg = REGISTRATION_FAILURE;
             }
             return resultMsg;
@@ -611,9 +649,11 @@ namespace ImageImprov
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
+                Debug.WriteLine(err.ToString());
                 result = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
                 // do something!!
+                Debug.WriteLine(err.ToString());
                 result = "login failure";
             }
             return result;

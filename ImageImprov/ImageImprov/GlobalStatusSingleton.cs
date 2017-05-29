@@ -32,9 +32,11 @@ namespace ImageImprov
 
         // @todo undo these defaults!
         // username
-        public static string username = "hcollins@gmail.com";
+        //public static string username = "hcollins@gmail.com";
+        public static string username = "";
         // user password
-        public static string password = "pa55w0rd";
+        //public static string password = "pa55w0rd";
+        public static string password = "";
 
         /////////////////////////////////// 
         /// BEGIN PREFERENCES SECTION
@@ -59,6 +61,11 @@ namespace ImageImprov
         /// Regardless of user behavior, we never preload more than 6 ballots.
         /// </summary>
         public const int MAX_BALLOTS_TO_LOAD = 6;
+
+        /// <summary>
+        /// Tracks how many images taken on this device for image improv so we don't overwrite previous images.
+        /// </summary>
+        public static int imgsTakenTracker = 0;
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
         /// END PREFERENCES SECTION
@@ -82,10 +89,13 @@ namespace ImageImprov
 
         public static AuthenticationToken authToken;
 
-// static ip completely off right now.
-//#if DEBUG
-//        public static string activeURL = "http://104.198.176.198:8080/";
-//#else
+
+        public static string persistedBallotAsString;
+        public static Queue<string> persistedPreloadedBallots;
+        // static ip completely off right now.
+        //#if DEBUG
+        //        public static string activeURL = "http://104.198.176.198:8080/";
+        //#else
         public static string activeURL = "https://api.imageimprov.com/";
 //#endif
 
@@ -93,6 +103,9 @@ namespace ImageImprov
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }
         // single place to track if we are in portrait or landscape.
         public static bool inPortraitMode;
+
+        // Pct of screen covered by pattern. (remainder reserved for ui stuff)
+        public const double PATTERN_PCT = 0.9;
 
         // will be set to false by android or iOS if the device has no camera.
         // need to check this in cameraContentPage still. (is that created before or after ios/android contexts?)

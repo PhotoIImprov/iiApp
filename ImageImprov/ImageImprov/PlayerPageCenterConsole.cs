@@ -39,7 +39,7 @@ namespace ImageImprov {
 
             gotoLeaderboardButton= new Image
             {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard_icon.jpg")
+                Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png")
             };
             gotoPurchasesButton = new Image
             {
@@ -60,7 +60,7 @@ namespace ImageImprov {
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
-            Children.Add(gotoLeaderboardButton, 0, 0);
+            Children.Add(gotoLeaderboardButton, 0, 0);  // col, row
             Children.Add(gotoPurchasesButton, 1, 0);
             Children.Add(gotoSettingsButton, 2, 0);
         }
