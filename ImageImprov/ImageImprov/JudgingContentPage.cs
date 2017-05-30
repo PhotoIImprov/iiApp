@@ -45,11 +45,12 @@ namespace ImageImprov {
         Label challengeLabelL = new Label
         {
             Text = "Loading...",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
             TextColor = Color.Black,
             BackgroundColor = Color.FromRgb(252, 213, 21),
-    };
+            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+        };
         //> challengeLabel
         // This is the request to load.
         public event LoadChallengeNameEventHandler LoadChallengeName;
@@ -510,7 +511,7 @@ namespace ImageImprov {
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             // am I in two landscape on top or two portrait on top?
-            if (ballot.ballots[0].isPortrait() == BallotCandidateJSON.PORTRAIT) {
+            if (ballot.ballots[0].isPortrait == BallotCandidateJSON.PORTRAIT) {
                 // portrait on top
                 portraitView.Children.Add(ballotImgsP[0], 0, 0);
                 Grid.SetRowSpan(ballotImgsP[0], 8);
@@ -591,7 +592,7 @@ namespace ImageImprov {
                     result = -1;
                     landscapeView.RowDefinitions.Clear();
                     landscapeView.ColumnDefinitions.Clear();
-                    for (int i = 0; i < 26; i++) {
+                    for (int i = 0; i < 10; i++) {
                         landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                     }
                     for (int i = 0; i < 2; i++) {
@@ -623,7 +624,7 @@ namespace ImageImprov {
                     landscapeView.Children.Add(challengeLabelL, 0, 0);
                     Grid.SetColumnSpan(challengeLabelL, 2);
 
-                    landscapeView.Children.Add(defaultNavigationButtonsL, 0, 25);  // going to wrong position for some reason...
+                    landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
                     Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
 
                 }
@@ -639,7 +640,7 @@ namespace ImageImprov {
             landscapeView.RowDefinitions.Clear();
             landscapeView.ColumnDefinitions.Clear();
 
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 10; i++) {
                 landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             // 4 columns, 25% each
@@ -648,16 +649,16 @@ namespace ImageImprov {
             }
 
             landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-            Grid.SetRowSpan(ballotImgsL[0], 18);
+            Grid.SetRowSpan(ballotImgsL[0], 8);
 
             landscapeView.Children.Add(ballotImgsL[1], 1, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[1], 18);
+            Grid.SetRowSpan(ballotImgsL[1], 8);
 
             landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[2], 18);
+            Grid.SetRowSpan(ballotImgsL[2], 8);
 
             landscapeView.Children.Add(ballotImgsL[3], 3, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[3], 18);
+            Grid.SetRowSpan(ballotImgsL[3], 8);
 
 #if DEBUG
             challengeLabelL.Text += " 4P L Case";
@@ -666,7 +667,7 @@ namespace ImageImprov {
             landscapeView.Children.Add(challengeLabelL, 0, 0);
             Grid.SetColumnSpan(challengeLabelL, 4);
 
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 19);  // going to wrong position for some reason...
+            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
             Grid.SetColumnSpan(defaultNavigationButtonsL, 4);
 
             return 1;
@@ -679,7 +680,7 @@ namespace ImageImprov {
             // bot left img3 48%H 50%W; bot right img4 48%H 50%W
             // 25 rows of 4% each.
             // No, go with an extra row so the full text shows.  Went to 28 rows for nav buttons.
-            for (int i = 0; i < 14; i++) {
+            for (int i = 0; i < 10; i++) {
                 landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             // 2 columns, 50% each
@@ -688,26 +689,26 @@ namespace ImageImprov {
             landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             landscapeView.Children.Add(ballotImgsL[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsL[0], 6);
+            Grid.SetRowSpan(ballotImgsL[0], 4);
 
             landscapeView.Children.Add(ballotImgsL[1], 1, 0);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[1], 6);
+            Grid.SetRowSpan(ballotImgsL[1], 4);
 
-            landscapeView.Children.Add(ballotImgsL[2], 0, 7);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[2], 6);
+            landscapeView.Children.Add(ballotImgsL[2], 0, 5);  // col, row format
+            Grid.SetRowSpan(ballotImgsL[2], 4);
 
-            landscapeView.Children.Add(ballotImgsL[3], 1, 7);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[3], 6);
+            landscapeView.Children.Add(ballotImgsL[3], 1, 5);  // col, row format
+            Grid.SetRowSpan(ballotImgsL[3], 4);
 
 #if DEBUG
             challengeLabelL.Text += " 4L L case";
 #endif
 
-            landscapeView.Children.Add(challengeLabelL, 0, 6);
+            landscapeView.Children.Add(challengeLabelL, 0, 4);
             Grid.SetColumnSpan(challengeLabelL, 2);
             //Grid.SetRowSpan(challengeLabel, 2);
 
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 13);  // going to wrong position for some reason...
+            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
             Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
             //Grid.SetRowSpan(defaultNavigationButtons, 2); no, this generates a nightmare
 
@@ -726,7 +727,7 @@ namespace ImageImprov {
                 landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
 
-            if (ballot.ballots[0].isPortrait() == BallotCandidateJSON.PORTRAIT) {
+            if (ballot.ballots[0].isPortrait == BallotCandidateJSON.PORTRAIT) {
                 // 2 portraits, then 2 landscape
                 landscapeView.Children.Add(ballotImgsL[0], 0, 1);
                 Grid.SetRowSpan(ballotImgsL[0], 18);
@@ -1037,8 +1038,18 @@ namespace ImageImprov {
         /// <param name="candidate"></param>
         /// <returns></returns>
         protected Image setupImgFromBallotCandidate(BallotCandidateJSON candidate) {
-            Image image = new Image();
-            image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
+            // TEST
+            // TEST
+            // TEST
+            // Do this so I can confirm bad bids for harry
+            //SKBitmap testBitmap = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
+            // TEST
+            // TEST
+            // TEST
+
+            //Image image = new Image();
+            //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
+            Image image = GlobalSingletonHelpers.buildFixedRotationImage(candidate);
             //image.Aspect = Aspect.AspectFill;
             //image.Aspect = Aspect.AspectFit;
             image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
@@ -1051,9 +1062,10 @@ namespace ImageImprov {
             tapGesture.Tapped += OnClicked;
             image.GestureRecognizers.Add(tapGesture);
 
-            // orientation info now sent from the server.
+            // orientation info is based on the relative w/h of the image.
+            // square images are all considered "landscape"
             //candidate.orientation = isPortraitOrientation(candidate.imgStr);
-            orientationCount += candidate.isPortrait();
+            orientationCount += candidate.isPortrait;
             return image;
         }
 
@@ -1217,12 +1229,12 @@ namespace ImageImprov {
             // not sure how I do indexing...
             //ClearContent(firstSelectedIndex);
 
-            SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[penultimateSelectedIndex].imgStr);
+            SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[penultimateSelectedIndex].imgStr);
             SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count-2]);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
 
-            baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[ultimateSelectedIndex].imgStr);
+            baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[ultimateSelectedIndex].imgStr);
             mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
@@ -1493,7 +1505,7 @@ namespace ImageImprov {
                     // bleh. do I have the imgStr still? Yes, it lives in Ballot.
                     // hmm... 
                     // vote.vote is indexed from 1. rankimages from 0.
-                    SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(ballot.ballots[selectionId].imgStr);
+                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[selectionId].imgStr);
                     SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[selectionId], mergedImage);

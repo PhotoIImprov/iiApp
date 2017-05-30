@@ -5,7 +5,7 @@ using Xamarin.Forms;
 using SkiaSharp;
 using System.IO;
 using System.Reflection;
-
+using ExifLib;
 
 namespace ImageImprov {
     // a collection of static helper functions that are used throughout the app.
@@ -200,6 +200,100 @@ namespace ImageImprov {
             }
             */
             return bitmap;
+        }
+
+        public static SKBitmap buildFixedRotationSKBitmapFromStr(byte[] imgBits) {
+            SKBitmap rotatedBmp = null;
+            using (var resource = new MemoryStream(imgBits)) {
+                //using (var stream = new SKManagedStream(resource)) {
+                //using (var stream = new MemoryStream((resource)) {
+
+                JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
+                // What exif lib associates each orientation with num in spec:
+                // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
+                // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
+                // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
+                // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
+
+                // What each image I set the exif on resulted in:
+                // (note: what I set should be correct as it displays right in programs that adjust for exif)
+                // Unchd: 1
+                // ImgRotLeft: 6
+                // ImgRotRight: 8
+                // ImgRot180: 3
+                // Cool. These all tie out with images in Dave Perret article.
+                ExifOrientation imgExifO = jpegInfo.Orientation;
+                //int imgExifWidth = jpegInfo.Width;
+                //int imgExifHeight = jpegInfo.Height;
+
+                //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
+                //string res2 = res + "dummy";
+
+                try {
+                    SKBitmap baseBmp = SKBitmapFromString(imgBits);
+                    //SKBitmap rotatedBmp = null;
+                    if (imgExifO == ExifLib.ExifOrientation.TopRight) {
+                        rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                        using (var canvas = new SKCanvas(rotatedBmp)) {
+                            canvas.Translate(rotatedBmp.Width, 0);
+                            canvas.RotateDegrees(90);
+                            canvas.DrawBitmap(baseBmp, 0, 0);
+                        }
+                    } else if (imgExifO == ExifLib.ExifOrientation.BottomLeft) {
+                        rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                        using (var canvas = new SKCanvas(rotatedBmp)) {
+                            // currently upside down. with w, 90.
+                            // failures:   -W, 270    w,-90    -W,90     0,90  0,270
+                            //   h, 270  -> soln is to think about the corner I'm told is important...
+                            //canvas.Translate(-rotatedBmp.Width, 0);
+                            canvas.Translate(0, rotatedBmp.Height);
+                            canvas.RotateDegrees(270);
+                            canvas.DrawBitmap(baseBmp, 0, 0);
+                        }
+                    } else if (imgExifO == ExifLib.ExifOrientation.BottomRight) {
+                        rotatedBmp = new SKBitmap(baseBmp.Width, baseBmp.Height);
+                        using (var canvas = new SKCanvas(rotatedBmp)) {
+                            canvas.Translate(rotatedBmp.Width, rotatedBmp.Height);
+                            canvas.RotateDegrees(180);
+                            canvas.DrawBitmap(baseBmp, 0, 0);
+                        }
+                    } else {
+                        rotatedBmp = baseBmp;
+                    }
+                } catch (Exception e) {
+                    string msg = e.ToString();
+                }
+            }
+            return rotatedBmp;
+        }
+
+        public static Image buildFixedRotationImageFromStr(byte[] inImg) {
+            Image result = new Image();
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromStr(inImg);
+            if (rotatedBmp != null) {
+                result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Additionally sets the rotation(orientation) in the candidate object.
+        /// </summary>
+        /// <param name="candidate"></param>
+        /// <returns></returns>
+        public static Image buildFixedRotationImage(BallotCandidateJSON candidate) {
+            Image result = new Image();
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromStr(candidate.imgStr);
+            if (rotatedBmp != null) { 
+                // > means square images are treated as landscape.
+                if (rotatedBmp.Height > rotatedBmp.Width) {
+                    candidate.isPortrait = BallotCandidateJSON.PORTRAIT;
+                } else {
+                    candidate.isPortrait = BallotCandidateJSON.LANDSCAPE;
+                }
+                result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
+            }
+            return result;
         }
         //
         //

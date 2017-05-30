@@ -143,7 +143,7 @@ namespace ImageImprov {
         protected int buildPortraitView() {
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-                for (int i = 0; i < 15; i++) {
+                for (int i = 0; i < 11; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -155,12 +155,12 @@ namespace ImageImprov {
             portraitView.Children.Add(categoryLabelP, 0, 0);  // col, row
             portraitView.Children.Add(takePictureP, 0, 1);
             portraitView.Children.Add(currentSubmissionImgP, 0, 2);
-            Grid.SetRowSpan(currentSubmissionImgP, 5);
-            portraitView.Children.Add(latestTakenImgP, 0, 7);
-            Grid.SetRowSpan(latestTakenImgP, 5);
-            portraitView.Children.Add(submitCurrentPictureP, 0, 12);
-            portraitView.Children.Add(lastActionResultLabelP, 0, 13);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 14);
+            Grid.SetRowSpan(currentSubmissionImgP, 3);
+            portraitView.Children.Add(latestTakenImgP, 0, 5);
+            Grid.SetRowSpan(latestTakenImgP, 3);
+            portraitView.Children.Add(submitCurrentPictureP, 0, 8);
+            portraitView.Children.Add(lastActionResultLabelP, 0, 9);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 10);
 
             return 1;
         }
@@ -238,10 +238,19 @@ namespace ImageImprov {
             PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
             if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
                 // success. update the UI
-                currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
-                currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                //currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                //currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                currentSubmissionImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
+                currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
                 lastActionResultLabelP.Text = "Current submission image updated.";
                 lastActionResultLabelL.Text = "Current submission image updated.";
+
+                // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
+                // also update when image is taken when fixing this.
+                buildPortraitView();
+                buildLandscapeView();
+                setView();
+
             }
 
             ((Button)sender).IsEnabled = true;
@@ -313,12 +322,20 @@ namespace ImageImprov {
             submitCurrentPictureP.IsVisible = true;
             submitCurrentPictureL.IsVisible = true;
             latestTakenPath = filepath;
-            latestTakenImgP.Source = ImageSource.FromFile(filepath);
-            latestTakenImgL.Source = ImageSource.FromFile(filepath);
+            //latestTakenImgP.Source = ImageSource.FromFile(filepath);
+            //latestTakenImgL.Source = ImageSource.FromFile(filepath);
             latestTakenImgBytes = imgBytes;
 
+            latestTakenImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(imgBytes);
+            latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(imgBytes);
+            // @todo hmm, shifting what these point to doesn't update the ui. the below seems like an expensive approach...
+            // also update when submission completes when fixing this.
+            buildPortraitView();
+            buildLandscapeView();
+            setView();
+
             //
-            /*  exiflib is exposed at this level. filestream does not appear to be.  */ 
+            /*  exiflib is exposed at this level. filestream does not appear to be.  
             var jpegInfo = new JpegInfo();
             //using (var myFStream = new System.IO.FileStream(file.Path, FileMode.Open)) {
             using (var myFStream = new System.IO.MemoryStream(imgBytes)) {
@@ -354,6 +371,6 @@ namespace ImageImprov {
             //*/
         }
         //> ShowImage
-        
+
     }
 }
