@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Diagnostics;  // for debug assertions.
@@ -129,8 +130,9 @@ namespace ImageImprov {
 
             ballotImgsP = new List<Image>();
             ballotImgsL = new List<Image>();
-            buildPortraitView();
-            buildLandscapeView();
+            //buildPortraitView();
+            //buildLandscapeView();
+            buildUI();
 
             // set myself up to listen for the loading events...
             this.LoadChallengeName += new LoadChallengeNameEventHandler(OnLoadChallengeName);
@@ -168,7 +170,7 @@ namespace ImageImprov {
                 lock (uiLock) {
                     Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
                     base.OnSizeAllocated(width, height);
-                    if (width > height) {
+                    if ((width > height) && (landscapeView != null)) {
                         GlobalStatusSingleton.inPortraitMode = false;
                         if (backgroundImgL == null) {
                             backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
@@ -187,7 +189,7 @@ namespace ImageImprov {
                         }
                     } else {
                         GlobalStatusSingleton.inPortraitMode = true;
-                        if (backgroundImgP == null) {
+                        if ((backgroundImgP == null) && (width>0) && (portraitView!=null)) {
                             backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
                             layoutP = new AbsoluteLayout
                             {
@@ -199,7 +201,7 @@ namespace ImageImprov {
                         }
                         if (layoutP != null) {
                             Content = layoutP;
-                        } else {
+                        } else if (portraitView != null) {
                             Content = portraitView;
                         }
                     }
@@ -266,10 +268,11 @@ namespace ImageImprov {
         /// </summary>
         private void AdjustContentToRotation() {
             Debug.WriteLine("DHB:JudgingContentPage:AdjustContentToRotation start");
-            lock (uiLock) {
-                buildPortraitView();
-                buildLandscapeView();
-            }
+            //lock (uiLock) {
+            //  buildPortraitView();
+            //  buildLandscapeView();
+            //}
+            buildUI();
             // how does this work with background?
             // what purpose does this fcn serve?
             /*
@@ -333,11 +336,23 @@ namespace ImageImprov {
             highlightCorrectImg(ballotImgsL, index);
         }
 
+        public int buildUI() {
+            int res = 0;
+            int res2 = 0;
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                res = buildPortraitView();
+                res2 = buildLandscapeView();
+                //OnSizeAllocated(Width, Height);
+            });
+            return ((res<res2)?res:res2);
+        }
+
         /// <summary>
         /// Builds/updates the portrait view
         /// </summary>
         /// <returns>1 on success, -1 if there are the wrong number of ballot imgs.</returns>
-        public int buildPortraitView() {
+        private int buildPortraitView() {
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView begin");
             // ignoring orientation count for now.
             // the current implemented case is orientationCount == 0. (displays as a stack)
@@ -409,6 +424,7 @@ namespace ImageImprov {
                 }
             } catch (Exception e) {
                 Debug.WriteLine(e.ToString());
+                result = -1;
             }
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView end");
             return result;
@@ -820,10 +836,24 @@ namespace ImageImprov {
                 // should sleep me for 100 millisecs, then check again.
                 await Task.Delay(100);
             }
-            lock (ballot) {
-                ClearContent();
-                processBallotString(preloadedBallots.Dequeue());
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                lock (ballot) {
+                    ClearContent();
+                    processBallotString(preloadedBallots.Dequeue());
+                }
+            });
+            // should be ok at this point. however, sometimes an invalid status gets saved.
+            // this is how I pick that up and prevent it.
+            if (ballot.ballots == null) {
+                // apparently can't fire again from here. just hangs here continually calling this.
+                //DequeueBallotRequest(this, e);
+                if (preloadedBallots.Count > 0) {
+                    //processBallotString(preloadedBallots.Dequeue());
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest bad read. do I autofix with OnLoadBallotPics?");
+                }
             }
+
             Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest end");
         }
 
@@ -979,7 +1009,10 @@ namespace ImageImprov {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         protected virtual void managePersistedBallot(object sender, EventArgs e) {
-            if ((((ballot.ballots == null) || (ballot.ballots.Count == 0))) && (GlobalStatusSingleton.persistedBallotAsString != null)) {
+            if ((((ballot.ballots == null) || (ballot.ballots.Count == 0))) 
+                && (GlobalStatusSingleton.persistedBallotAsString != null) && (!GlobalStatusSingleton.persistedBallotAsString.Equals(""))) {
+                // check that persisted ballot is a valid string.
+
                 preloadedBallots.Enqueue(GlobalStatusSingleton.persistedBallotAsString);
                 GlobalStatusSingleton.persistedBallotAsString = null;
                 DequeueBallotRequest(this, e);
@@ -1144,6 +1177,9 @@ namespace ImageImprov {
                     checkImgOrderAndReorderAsNeeded();
                 }
 
+                if ((ballot.ballots.Count < 4) || (ballotImgsP.Count != ballot.ballots.Count)) {
+                    Debug.WriteLine("DHB:JudgingContentPage:processBallotString wtf. mismatch in drawing.");
+                }
                 if ((ballot==null) || (ballot.ballots.Count == 0)) {
                     // bad ballot. fire a dequeue
                     if (DequeueBallotRequest != null) {
@@ -1158,6 +1194,10 @@ namespace ImageImprov {
             } catch (Exception e) {
                 // probably thrown by Deserialize.
                 Debug.WriteLine(e.ToString());
+                //Image imgX = setupImgFromBallotCandidate(ballot.ballots[0]);
+                //imgX = setupImgFromBallotCandidate(ballot.ballots[1]);
+                //imgX = setupImgFromBallotCandidate(ballot.ballots[2]);
+                //imgX = setupImgFromBallotCandidate(ballot.ballots[3]);
             }
 
             // These are both built in AdjustContentToRotation
@@ -1228,23 +1268,30 @@ namespace ImageImprov {
         protected void UpdateUIForFinalVote(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
             // not sure how I do indexing...
             //ClearContent(firstSelectedIndex);
+            //Device.BeginInvokeOnMainThread(() => {
+                SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[penultimateSelectedIndex].imgStr);
+                SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
+                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
+                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
 
-            SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[penultimateSelectedIndex].imgStr);
-            SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count-2]);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
+                baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[ultimateSelectedIndex].imgStr);
+                mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
+                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
+                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
 
-            baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[ultimateSelectedIndex].imgStr);
-            mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
-
-            foreach (Image img in ballotImgsP) {
-                img.IsEnabled = false;
-            }
-            foreach (Image img in ballotImgsL) {
-                img.IsEnabled = false;
-            }
+                foreach (Image img in ballotImgsP) {
+                    img.IsEnabled = false;
+                // clearing these prevents ui from updating for some reason.
+                // so instead, I catch a tap and ignore it.
+                    //img.GestureRecognizers.Clear();
+                }
+                foreach (Image img in ballotImgsL) {
+                    img.IsEnabled = false;
+                    //img.GestureRecognizers.Clear();
+                }
+                AdjustContentToRotation();
+            //});
+            Debug.WriteLine("DHB:JudgingContentPage:UpdateUIForFinalVote done");
         }
 
         protected async virtual void SingleVoteGeneratesBallot(object sender, EventArgs e) {
@@ -1356,25 +1403,29 @@ namespace ImageImprov {
         }
 
         private void rebuildAllImagesWithVotes() {
-            int ballotIndex = 0;
-            int voteNum = -1;
-            foreach (BallotCandidateJSON candidate in ballot.ballots) {
-                if (votedOn(candidate.bidId, ref voteNum)) {
-                    SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
-                    // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
-                    SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
-                } else {
-                    SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr));
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                int ballotIndex = 0;
+                int voteNum = -1;
+                foreach (BallotCandidateJSON candidate in ballot.ballots) {
+                    if (votedOn(candidate.bidId, ref voteNum)) {
+                        SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
+                        // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
+                        SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
+                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
+                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
+                    } else {
+                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr));
+                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
+                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
+                    }
+                    ballotIndex++;
                 }
-                ballotIndex++;
-            }
+            });
         }
 
         /// <summary>
+        /// Check for 4 votes already, as Enabled=false seems to fail... (maybe I need to turn of the gestures?)
         /// Checks to see if this image was already voted on.
         /// If yes, processes the uncheck.
         /// If no, returns a false so that MultiVoteGeneratesBallot can handle the selection.
@@ -1408,6 +1459,10 @@ namespace ImageImprov {
             if (votes == null) {
                 votes = new VotesJSON();
                 votes.votes = new List<VoteJSON>();
+            }
+            if (votes.votes.Count == ballot.ballots.Count) {
+                // everything already voted on. ignore the tap.
+                return;
             }
 
             // ballots may have been cleared and this can be a dbl tap registration.
@@ -1457,6 +1512,7 @@ namespace ImageImprov {
                     challengeLabelP.Text = "Vote submitted, loading new ballot";
                     challengeLabelL.Text = "Vote submitted, loading new ballot";
                     UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
+                    await Task.Delay(500);
 
                     // Ok. I want to be running the request right now!
                     // I want to wait a random amount of time then yank 1 from the queue right away.

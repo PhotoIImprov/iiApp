@@ -18,7 +18,7 @@ namespace ImageImprov.Droid {
         Icon = "@drawable/icon", 
         //Theme = "@style/MainTheme", 
         //Theme = "@android:Theme.Holo.Light.NoActionBar",
-        MainLauncher = true, 
+        //MainLauncher = true, // removed to enable splash screen...
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
         ScreenOrientation = ScreenOrientation.FullSensor)]
     public class MainActivity : FormsApplicationActivity

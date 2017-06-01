@@ -29,6 +29,7 @@ namespace ImageImprov
             // TokenReceived is my successful login event.
             playerPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
             playerPage.TokenReceived += new TokenReceivedEventHandler(judgingPage.TokenReceived);
+            playerPage.LogoutClicked += new LogoutClickedEventHandler(this.OnLogoutClicked);
 
             // both judgingPage and cameraPage are guaranteed to exist at this point.
             // is categoryLoad?
@@ -69,6 +70,12 @@ namespace ImageImprov
             this.Children.Insert(0, judgingPage);
             this.Children.Add(cameraPage);
             gotoJudgingPage();
+        }
+
+        public virtual void OnLogoutClicked(object sender, EventArgs e) {
+            this.CurrentPage = playerPage;
+            this.Children.Remove(judgingPage);
+            this.Children.Remove(cameraPage);
         }
 
         // SPECIAL SERIALIZE/DESERIALIZE functions

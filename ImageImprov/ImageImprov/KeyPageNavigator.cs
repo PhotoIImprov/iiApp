@@ -20,7 +20,7 @@ namespace ImageImprov {
         //StackLayout defaultNavigationButtons;
         //Grid defaultNavigationButtons;
 
-        public KeyPageNavigator() {
+        public KeyPageNavigator(bool horizontalOrientation=true) {
             gotoVotingImgButton = new Image {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png")
             };
@@ -37,13 +37,23 @@ namespace ImageImprov {
             goHomeImgButton.GestureRecognizers.Add(tapGesture);
             gotoCameraImgButton.GestureRecognizers.Add(tapGesture);
 
-            // ColumnSpacing = 1; RowSpacing = 1;
-            ColumnDefinitions.Add(new ColumnDefinition());
-            ColumnDefinitions.Add(new ColumnDefinition());
-            ColumnDefinitions.Add(new ColumnDefinition());
-            Children.Add(gotoVotingImgButton, 0, 0);
-            Children.Add(goHomeImgButton, 1, 0);
-            Children.Add(gotoCameraImgButton, 2, 0);
+            if (horizontalOrientation) {
+                // ColumnSpacing = 1; RowSpacing = 1;
+                ColumnDefinitions.Add(new ColumnDefinition());
+                ColumnDefinitions.Add(new ColumnDefinition());
+                ColumnDefinitions.Add(new ColumnDefinition());
+                Children.Add(gotoVotingImgButton, 0, 0);
+                Children.Add(goHomeImgButton, 1, 0);
+                Children.Add(gotoCameraImgButton, 2, 0);
+            } else {
+                // ColumnSpacing = 1; RowSpacing = 1;
+                RowDefinitions.Add(new RowDefinition());
+                RowDefinitions.Add(new RowDefinition());
+                RowDefinitions.Add(new RowDefinition());
+                Children.Add(gotoVotingImgButton, 0, 0);
+                Children.Add(goHomeImgButton, 0, 1);
+                Children.Add(gotoCameraImgButton, 0, 2);
+            }
         }
 
         public void OnClicked(object sender, EventArgs e) {

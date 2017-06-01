@@ -21,6 +21,7 @@ namespace ImageImprov
     public delegate void RegisterNowEventHandler(object sender, EventArgs e);
     public delegate void RegisterSuccessEventHandler(object sender, EventArgs e);
     public delegate void TokenReceivedEventHandler(object sender, EventArgs e);
+    public delegate void LogoutClickedEventHandler(object sender, EventArgs e);
 
     /*
      * @todo Store user's credentials for login on app restart
@@ -114,6 +115,7 @@ namespace ImageImprov
         public event RegisterNowEventHandler RegisterNow;
         public event RegisterSuccessEventHandler RegisterSuccess;
         public event TokenReceivedEventHandler TokenReceived;
+        public event LogoutClickedEventHandler LogoutClicked;
 
         EventArgs eDummy = null;
 
@@ -125,6 +127,7 @@ namespace ImageImprov
             this.AnonPlay += new AnonPlayEventHandler(OnAnonPlay);
             this.RegisterNow += new RegisterNowEventHandler(OnRegisterNow);
             this.RegisterSuccess += new RegisterSuccessEventHandler(OnRegisterSuccess);
+            this.LogoutClicked += new LogoutClickedEventHandler(OnLogoutClicked);
             // Note: I fire token received events, but don't consume them.
 
             eDummy = new EventArgs();
@@ -182,9 +185,15 @@ namespace ImageImprov
             }
         }
 
-        protected Layout<View> createPreConnectAutoLoginLayout() {
 
+        protected Layout<View> createPreConnectAutoLoginLayout() {
             logoutButton = new Button { Text = "Logout" };
+            logoutButton.Clicked += (sender, args) =>
+            {
+                if (LogoutClicked != null) {
+                    LogoutClicked(this, eDummy);
+                }
+            };
 
             StackLayout upperPortionOfGrid = new StackLayout
             {
@@ -208,14 +217,21 @@ namespace ImageImprov
             return preConnectAutoLoginLayout;
         }
 
-        protected Layout<View> createAutoLoginLayout() {
 
+        protected Layout<View> createAutoLoginLayout() {
             logoutButton = new Button { Text = "Logout" };
+            logoutButton.Clicked += (sender, args) => {
+                if (LogoutClicked != null) {
+                    LogoutClicked(this, eDummy);
+                }
+            };
+
 
             if (defaultNavigationButtons == null) {
                 createDefaultNavigationButtons();
             }
 
+            /*
             StackLayout upperPortionOfGrid = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Center,
@@ -229,11 +245,18 @@ namespace ImageImprov
                     logoutButton,
                 }
             };
+            */
             autoLoginLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
-            autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
-            autoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
-            autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
+            //autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
+            //autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+            for (int i=0;i<10;i++) {
+                autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            //autoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
+            autoLoginLayout.Children.Add(logoutButton, 0, 0);
+            autoLoginLayout.Children.Add(loggedInLabel, 0, 1);
+            autoLoginLayout.Children.Add(CenterConsole, 0, 8);
+            autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 
             return autoLoginLayout;
         }
@@ -698,6 +721,21 @@ namespace ImageImprov
             } // else ignore goHomeImgButton
         }
         */
+
+        protected virtual void OnLogoutClicked(object sender, EventArgs e) {
+            // Anonymous users can't logout...
+            if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
+                // can't logout in this scenario...
+                loggedInLabel.Text = "Sorry, Anonymous users can't log out.";
+            } else {
+                // deactivate the carousel. - happens in MainPageUISwipe, who also consumes this event
+                // make sure this is the active page - happens in MainPageUISwipe, who also consumes this event
+                // change to the force login page
+                Device.BeginInvokeOnMainThread(() => {
+                    Content = createForceLoginLayout();
+                });
+            }
+        }
     }  // class
 
 }  // namespace

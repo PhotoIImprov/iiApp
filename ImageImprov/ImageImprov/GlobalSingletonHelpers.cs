@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Diagnostics;  // for debug assertions.
 using Xamarin.Forms;
 
 using SkiaSharp;
@@ -103,7 +104,9 @@ namespace ImageImprov {
             return result;
         }
 
-        public static Image buildBackground(string patternSource, Assembly assembly, int Width, int Height) {
+        public static Image buildBackground(string patternSource, Assembly assembly, int Width, int Height, 
+            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) 
+        {
             Image result = null;
             if ((Width == -1) || (Height == -1)) {
                 return result;
@@ -112,8 +115,8 @@ namespace ImageImprov {
             using (var resource = assembly.GetManifestResourceStream(patternSource))
             using (var stream = new SKManagedStream(resource)) {
                 var bitmap = SKBitmap.Decode(stream);
-                int tilesWide = (int)(Width / bitmap.Width);
-                int tilesHigh = (int)((Height*GlobalStatusSingleton.PATTERN_PCT)/ bitmap.Height);
+                int tilesWide = (int)((Width*sideAdjustment) / bitmap.Width);
+                int tilesHigh = (int)((Height* bottomAdjustment) / bitmap.Height);
                 try {
                     using (var tempSurface = SKSurface.Create(new SKImageInfo((int)Width, (int)Height))) {
                         var canvas = tempSurface.Canvas;
@@ -122,8 +125,8 @@ namespace ImageImprov {
                         SKBitmap bottomEdge = new SKBitmap();
                         SKBitmap rightEdge = new SKBitmap();
                         SKBitmap corner = new SKBitmap();
-                        int excessH = (int)(Height*GlobalStatusSingleton.PATTERN_PCT) - (tilesHigh * bitmap.Height);
-                        int excessW = (int)Width - (tilesWide * bitmap.Width);
+                        int excessH = (int)(Height*bottomAdjustment) - (tilesHigh * bitmap.Height);
+                        int excessW = (int)(Width*sideAdjustment) - (tilesWide * bitmap.Width);
                         if (excessH > 0) {
                             bitmap.ExtractSubset(bottomEdge, new SKRectI(0, 0, bitmap.Width, excessH));
                         }
@@ -207,27 +210,32 @@ namespace ImageImprov {
             using (var resource = new MemoryStream(imgBits)) {
                 //using (var stream = new SKManagedStream(resource)) {
                 //using (var stream = new MemoryStream((resource)) {
+                ExifOrientation imgExifO = ExifLib.ExifOrientation.TopLeft;
+                try {
+                    JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
+                    // What exif lib associates each orientation with num in spec:
+                    // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
+                    // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
+                    // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
+                    // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
 
-                JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
-                // What exif lib associates each orientation with num in spec:
-                // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
-                // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
-                // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
-                // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
+                    // What each image I set the exif on resulted in:
+                    // (note: what I set should be correct as it displays right in programs that adjust for exif)
+                    // Unchd: 1
+                    // ImgRotLeft: 6
+                    // ImgRotRight: 8
+                    // ImgRot180: 3
+                    // Cool. These all tie out with images in Dave Perret article.
+                    imgExifO = jpegInfo.Orientation;
+                    //int imgExifWidth = jpegInfo.Width;
+                    //int imgExifHeight = jpegInfo.Height;
 
-                // What each image I set the exif on resulted in:
-                // (note: what I set should be correct as it displays right in programs that adjust for exif)
-                // Unchd: 1
-                // ImgRotLeft: 6
-                // ImgRotRight: 8
-                // ImgRot180: 3
-                // Cool. These all tie out with images in Dave Perret article.
-                ExifOrientation imgExifO = jpegInfo.Orientation;
-                //int imgExifWidth = jpegInfo.Width;
-                //int imgExifHeight = jpegInfo.Height;
-
-                //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
-                //string res2 = res + "dummy";
+                    //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
+                    //string res2 = res + "dummy";
+                } catch (Exception e) {
+                    Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
+                    Debug.WriteLine(e.ToString());
+                }
 
                 try {
                     SKBitmap baseBmp = SKBitmapFromString(imgBits);

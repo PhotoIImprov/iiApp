@@ -106,6 +106,7 @@ namespace ImageImprov
 
         // Pct of screen covered by pattern. (remainder reserved for ui stuff)
         public const double PATTERN_PCT = 0.9;
+        public const double PATTERN_FULL_COVERAGE = 1.0;
 
         // will be set to false by android or iOS if the device has no camera.
         // need to check this in cameraContentPage still. (is that created before or after ios/android contexts?)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using System.Net.Http;
@@ -21,8 +22,9 @@ namespace ImageImprov {
         //< images.  Need both a portrait and a landscape instance due to different spans.
         // extents are bound to the object.  Since they differ for portrait and landscape I have two choices.
         // have to copies, or rebuild everything everytime.
-        Image currentSubmissionImgP = new Image();
-        Image currentSubmissionImgL = new Image();
+
+        //Image currentSubmissionImgP = new Image();
+        //Image currentSubmissionImgL = new Image();
         Image latestTakenImgP = new Image();
         Image latestTakenImgL = new Image();
 
@@ -57,43 +59,90 @@ namespace ImageImprov {
         KeyPageNavigator defaultNavigationButtonsP;
         KeyPageNavigator defaultNavigationButtonsL;
 
+        //
+        //   BEGIN Variables related/needed for images to place background on screen.
+        //
+        AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
+        AbsoluteLayout layoutL;  // this lets us place a background image on the screen.
+        Assembly assembly = null;
+        Image backgroundImgP = null;
+        Image backgroundImgL = null;
+        string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
+        //
+        //   END Variables related/needed for images to place background on screen.
+        // 
+
         public CameraContentPage() {
+            assembly = this.GetType().GetTypeInfo().Assembly;
+
             categoryLabelP = new Label {
                 Text = "Waiting for current category from server",
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             categoryLabelL = new Label {
                 Text = "Waiting for current category from server",
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
 
             lastActionResultLabelP = new Label {
                 Text = "No actions performed yet",
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             lastActionResultLabelL = new Label {
                 Text = "No actions performed yet",
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             takePictureP = new Button {
-                Text = "Take a picture to submit!",
+                Text = "Start Camera!",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 21, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 Command = new Command(o => ShouldTakePicture()),
             };
             takePictureL = new Button {
-                Text = "Take a picture to submit!",
+                Text = "Start Camera!",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 21, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 Command = new Command(o => ShouldTakePicture()),
             };
 
             submitCurrentPictureP = new Button {
                 Text = "Submit this image",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 21, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
             submitCurrentPictureL = new Button {
                 Text = "Submit this image",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 21, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
             submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
@@ -118,9 +167,10 @@ namespace ImageImprov {
             */
             // only have one active at a time as grid properties bind to the ui elements, meaning
             // an element can only be defined correctly for one rotation at a time.
-            buildPortraitView();
-            buildLandscapeView();
-            setView();
+            //buildPortraitView();
+            //buildLandscapeView();
+            buildUI();
+            //setView();
         }
 
         protected override void OnSizeAllocated(double width, double height) {
@@ -131,13 +181,55 @@ namespace ImageImprov {
                 inPortraitMode = false;
                 GlobalStatusSingleton.inPortraitMode = false;
                 //buildLandscapeView();
-                Content = landscapeView;
+                //Content = landscapeView;
+                if (backgroundImgL == null) {
+                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                    layoutL = new AbsoluteLayout
+                    {
+                        Children = {
+                                    { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                    { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                }
+                    };
+                }
+                if (layoutL != null) {
+                    Content = layoutL;
+                } else {
+                    Content = landscapeView;
+                }
+
             } else if ((height>width) && (inPortraitMode==false)) {
                 inPortraitMode = true;
                 GlobalStatusSingleton.inPortraitMode = true;
                 //buildPortraitView();
-                Content = portraitView;
+                //Content = portraitView;
+                if ((backgroundImgP == null) && (width > 0) && (portraitView != null)) {
+                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)width, (int)height);
+                    layoutP = new AbsoluteLayout
+                    {
+                        Children = {
+                                    { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                    { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                }
+                    };
+                }
+                if (layoutP != null) {
+                    Content = layoutP;
+                } else if (portraitView != null) {
+                    Content = portraitView;
+                } // otherwise don't change content.
             }
+        }
+
+        protected int buildUI() {
+            int res = 0;
+            int res2 = 0;
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                res = buildPortraitView();
+                res2 = buildLandscapeView();
+            });
+            return ((res < res2) ? res : res2);
         }
 
         protected int buildPortraitView() {
@@ -154,10 +246,10 @@ namespace ImageImprov {
             }
             portraitView.Children.Add(categoryLabelP, 0, 0);  // col, row
             portraitView.Children.Add(takePictureP, 0, 1);
-            portraitView.Children.Add(currentSubmissionImgP, 0, 2);
-            Grid.SetRowSpan(currentSubmissionImgP, 3);
-            portraitView.Children.Add(latestTakenImgP, 0, 5);
-            Grid.SetRowSpan(latestTakenImgP, 3);
+            //portraitView.Children.Add(currentSubmissionImgP, 0, 2);
+            //Grid.SetRowSpan(currentSubmissionImgP, 3);
+            portraitView.Children.Add(latestTakenImgP, 0, 2);
+            Grid.SetRowSpan(latestTakenImgP, 6);
             portraitView.Children.Add(submitCurrentPictureP, 0, 8);
             portraitView.Children.Add(lastActionResultLabelP, 0, 9);
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 10);
@@ -172,26 +264,40 @@ namespace ImageImprov {
                     landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 // 2 columns, 50% each
-                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                //landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 // I can add none, but if i add one, then i just have 1. So here's 2. :)
-                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                //landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             } else {
                 // flush the old children.
                 landscapeView.Children.Clear();
                 landscapeView.IsEnabled = true;
             }
-
+            /*
             landscapeView.Children.Add(categoryLabelL, 0, 0);  // col, row
             landscapeView.Children.Add(lastActionResultLabelL, 1, 0);
             landscapeView.Children.Add(takePictureL, 0, 1);
             landscapeView.Children.Add(submitCurrentPictureL, 1, 1);
-            landscapeView.Children.Add(currentSubmissionImgL, 0, 2);
-            Grid.SetRowSpan(currentSubmissionImgL, 7);
-            landscapeView.Children.Add(latestTakenImgL, 1, 2);
-            Grid.SetRowSpan(latestTakenImgL, 7);
+            //landscapeView.Children.Add(currentSubmissionImgL, 0, 2);
+            //Grid.SetRowSpan(currentSubmissionImgL, 7);
+            //landscapeView.Children.Add(latestTakenImgL, 1, 2);
+            //Grid.SetRowSpan(latestTakenImgL, 7);
+            landscapeView.Children.Add(latestTakenImgL, 0, 2);
+            Grid.SetRowSpan(latestTakenImgL, 14);
             landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);
             Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
-
+            */
+            landscapeView.Children.Add(categoryLabelL, 0, 0);  // col, row
+            landscapeView.Children.Add(lastActionResultLabelL, 0, 1);
+            landscapeView.Children.Add(takePictureL, 0, 2);
+            landscapeView.Children.Add(submitCurrentPictureL, 0, 8);
+            //landscapeView.Children.Add(currentSubmissionImgL, 0, 2);
+            //Grid.SetRowSpan(currentSubmissionImgL, 7);
+            //landscapeView.Children.Add(latestTakenImgL, 1, 2);
+            //Grid.SetRowSpan(latestTakenImgL, 7);
+            landscapeView.Children.Add(latestTakenImgL, 0, 3);
+            Grid.SetRowSpan(latestTakenImgL, 5);
+            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);
+            Grid.SetColumnSpan(defaultNavigationButtonsL, 1);
             return 1;
         }
 
@@ -232,7 +338,7 @@ namespace ImageImprov {
             // prevent multiple click attempts; we heard ya
             ((Button)sender).IsEnabled = false;
             lastActionResultLabelP.Text = "Uploading image to server...";
-            lastActionResultLabelL.Text = "Uploading image to server...";
+            lastActionResultLabelL.Text = "Uploading image to server(may take a while)...";
 
             string result = await sendSubmitAsync(latestTakenImgBytes);
             PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
@@ -240,16 +346,17 @@ namespace ImageImprov {
                 // success. update the UI
                 //currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
                 //currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
-                currentSubmissionImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
-                currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
-                lastActionResultLabelP.Text = "Current submission image updated.";
-                lastActionResultLabelL.Text = "Current submission image updated.";
+                //currentSubmissionImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
+                //currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
+                lastActionResultLabelP.Text = "Congratulations, you're in!";
+                lastActionResultLabelL.Text = "Congratulations, you're in!";
 
                 // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
                 // also update when image is taken when fixing this.
-                buildPortraitView();
-                buildLandscapeView();
-                setView();
+                //buildPortraitView();
+                //buildLandscapeView();
+                buildUI();
+                //setView();
 
             }
 
@@ -312,9 +419,9 @@ namespace ImageImprov {
 
 
         // tmp helpers during exif debug.
-        ExifOrientation imgExifO;
-        int imgExifWidth;
-        int imgExifHeight;
+        //ExifOrientation imgExifO;
+        //int imgExifWidth;
+        //int imgExifHeight;
 
         //< ShowImage
         public void ShowImage(string filepath, byte[] imgBytes)
@@ -330,9 +437,10 @@ namespace ImageImprov {
             latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(imgBytes);
             // @todo hmm, shifting what these point to doesn't update the ui. the below seems like an expensive approach...
             // also update when submission completes when fixing this.
-            buildPortraitView();
-            buildLandscapeView();
-            setView();
+            //buildPortraitView();
+            //buildLandscapeView();
+            buildUI();
+            //setView();
 
             //
             /*  exiflib is exposed at this level. filestream does not appear to be.  

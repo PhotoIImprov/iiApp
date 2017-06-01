@@ -60,12 +60,17 @@ namespace ImageImprov
 
             // Is this the correct way to access this stuff?
             // I think so. Retrieval is more complex.
-            Properties[PROPERTY_ACTIVE_BALLOT] = JsonConvert.SerializeObject(((MainPageSwipeUI)this.MainPage).GetActiveBallot());
-            Properties[PROPERTY_QUEUE_SIZE] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count.ToString();
-            for (int i=0;i< ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count;i++) {
-                Properties[PROPERTY_BALLOT_QUEUE+"_"+i] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Dequeue();
-            }
-            
+            // Note: Not guaranteed to have an active ballot, so check before saving a null.
+            if (((MainPageSwipeUI)this.MainPage).GetActiveBallot().ballots != null) {
+                Properties[PROPERTY_ACTIVE_BALLOT] = JsonConvert.SerializeObject(((MainPageSwipeUI)this.MainPage).GetActiveBallot());
+                Properties[PROPERTY_QUEUE_SIZE] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count.ToString();
+                for (int i = 0; i < ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count; i++) {
+                    Properties[PROPERTY_BALLOT_QUEUE + "_" + i] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Dequeue();
+                }
+            } else {
+                Properties[PROPERTY_ACTIVE_BALLOT] = "";
+                Properties[PROPERTY_QUEUE_SIZE] = 0;
+            }            
         }
 
         protected override void OnResume()
