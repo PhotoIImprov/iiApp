@@ -132,7 +132,6 @@ namespace ImageImprov {
             ballotImgsL = new List<Image>();
             //buildPortraitView();
             //buildLandscapeView();
-            buildUI();
 
             // set myself up to listen for the loading events...
             this.LoadChallengeName += new LoadChallengeNameEventHandler(OnLoadChallengeName);
@@ -147,6 +146,11 @@ namespace ImageImprov {
 
             // used to merge with the base image to show the ranking number.
             buildRankImages();
+
+            // Do I have a persisted ballot ready and waiting for me?
+            managePersistedBallot(this, eDummy);
+            // Do I have a persisted ballot ready and waiting for me?
+            buildUI();
         }
 
         protected void buildRankImages() {
@@ -170,7 +174,7 @@ namespace ImageImprov {
                 lock (uiLock) {
                     Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
                     base.OnSizeAllocated(width, height);
-                    if ((width > height) && (landscapeView != null)) {
+                    if ((width > height) && (height>0) && (landscapeView != null)) {
                         GlobalStatusSingleton.inPortraitMode = false;
                         if (backgroundImgL == null) {
                             backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
@@ -184,7 +188,7 @@ namespace ImageImprov {
                         }
                         if (layoutL != null) {
                             Content = layoutL;
-                        } else {
+                        } else if (landscapeView != null) {
                             Content = landscapeView;
                         }
                     } else {
@@ -486,7 +490,7 @@ namespace ImageImprov {
             portraitView.Children.Add(ballotImgsP[0], 0, 0);
             Grid.SetRowSpan(ballotImgsP[0], 4);
 
-            portraitView.Children.Add(ballotImgsP[1], 0, 5);  // col, row format
+            portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
             Grid.SetRowSpan(ballotImgsP[1], 4);
 
             portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
@@ -499,8 +503,8 @@ namespace ImageImprov {
             challengeLabelP.Text += " 4L_P case";
 #endif
 
-            portraitView.Children.Add(challengeLabelP, 0, 9);
-            Grid.SetColumnSpan(challengeLabelP, 1);
+            portraitView.Children.Add(challengeLabelP, 0, 8);
+            Grid.SetRowSpan(challengeLabelP, 2);
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
             Grid.SetRowSpan(defaultNavigationButtonsP, 2);
@@ -809,8 +813,10 @@ namespace ImageImprov {
         protected async virtual void OnLoadChallengeName(object sender, EventArgs e) {
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName start");
 
+            // Moved to the ctor so I don't have to wait for http requests to load images
+            // i have on my machine.
             // Do I have a persisted ballot ready and waiting for me?
-            managePersistedBallot(sender, e);
+            //managePersistedBallot(sender, e);
             // Do I have a persisted ballot ready and waiting for me?
 
             // can't lock in an async fcn.
@@ -1017,7 +1023,7 @@ namespace ImageImprov {
                 GlobalStatusSingleton.persistedBallotAsString = null;
                 DequeueBallotRequest(this, e);
             }
-            if (GlobalStatusSingleton.persistedPreloadedBallots.Count>0) {
+            if ((GlobalStatusSingleton.persistedPreloadedBallots != null) && (GlobalStatusSingleton.persistedPreloadedBallots.Count>0)) {
                 while (GlobalStatusSingleton.persistedPreloadedBallots.Count>0) {
                     preloadedBallots.Enqueue(GlobalStatusSingleton.persistedPreloadedBallots.Dequeue());
                 }

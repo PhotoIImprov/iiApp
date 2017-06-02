@@ -109,7 +109,7 @@ namespace ImageImprov {
                 }
                 if (layoutL != null) {
                     Content = layoutL;
-                } else {
+                } else if (landscapeView !=null) {
                     Content = landscapeView;
                 }
             } else {
@@ -233,14 +233,27 @@ namespace ImageImprov {
                 leaderStack.Children.Add(leaderRow);
                 */
                 //leaderStack.Children.Add(leaderImgsL[j]);
-                StackLayout leaderRow = new StackLayout
-                {
-                    Orientation = StackOrientation.Horizontal,
-                    VerticalOptions = LayoutOptions.Center,
-                    Children = {
-                        leaderImgsL[j], leaderImgsL[j+1],
-                    }
-                };
+                // stepping by 2, so need to make sure count < j+1
+                StackLayout leaderRow;
+                if (j + 1 < leaderImgsL.Count) {
+                    leaderRow = new StackLayout
+                    {
+                        Orientation = StackOrientation.Horizontal,
+                        VerticalOptions = LayoutOptions.Center,
+                        Children = {
+                            leaderImgsL[j], leaderImgsL[j+1],
+                        }
+                    };
+                } else {
+                    leaderRow = new StackLayout
+                    {
+                        Orientation = StackOrientation.Horizontal,
+                        VerticalOptions = LayoutOptions.Center,
+                        Children = {
+                            leaderImgsL[j], // just add 1 img. odd number in leaderboard.
+                        }
+                    };
+                }
                 leaderStack.Children.Add(leaderRow);
                 //j++;
             }

@@ -177,7 +177,7 @@ namespace ImageImprov {
             // need to have portrait mode local rather than global or i can't
             // tell if I've updated for this page yet or not.
             base.OnSizeAllocated(width, height);
-            if ((width > height) && (inPortraitMode==true)) {
+            if ((width > height) && (inPortraitMode==true) && (landscapeView != null)) {
                 inPortraitMode = false;
                 GlobalStatusSingleton.inPortraitMode = false;
                 //buildLandscapeView();
@@ -194,11 +194,11 @@ namespace ImageImprov {
                 }
                 if (layoutL != null) {
                     Content = layoutL;
-                } else {
+                } else if (landscapeView != null) {
                     Content = landscapeView;
                 }
 
-            } else if ((height>width) && (inPortraitMode==false)) {
+            } else if ((height>width) && (inPortraitMode==false) && (portraitView!= null)) {
                 inPortraitMode = true;
                 GlobalStatusSingleton.inPortraitMode = true;
                 //buildPortraitView();
