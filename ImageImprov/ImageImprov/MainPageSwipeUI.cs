@@ -91,5 +91,9 @@ namespace ImageImprov
         public void SetBallotQueue(Queue<string> ballotQueue) {
             judgingPage.SetPreloadedBallots(ballotQueue);
         }
+
+        public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
+            return playerPage.GetLeaderboardList();
+        }
     }
 }

@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace ImageImprov {
     [JsonObject]
-    class LeaderboardJSON {
+    public class LeaderboardJSON {
         [JsonProperty("image")]
         public Byte[] imgStr { get; set; }
 

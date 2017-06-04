@@ -395,7 +395,8 @@ namespace ImageImprov {
                         portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                     }
 
-                    /*
+                    // want to show the instruction!
+                    loadInstructions();
                     if (ballotImgsP.Count > 0) {
                         portraitView.Children.Add(ballotImgsP[0], 0, 0);
                         Grid.SetRowSpan(ballotImgsP[0], 6);
@@ -415,7 +416,7 @@ namespace ImageImprov {
                         portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
                         Grid.SetRowSpan(ballotImgsP[3], 6);
                     }
-                    */
+                    
 #if DEBUG
                     challengeLabelP.Text += " no image case";
 #endif
@@ -902,15 +903,18 @@ namespace ImageImprov {
                     // iterate through the categories till i reach one that 
                     foreach (CategoryJSON cat in categories) {
                         if (cat.state.Equals(CategoryJSON.VOTING)) {
-                            GlobalStatusSingleton.votingCategoryId = cat.categoryId;
-                            GlobalStatusSingleton.votingCategoryDescription = cat.description;
+                            //GlobalStatusSingleton.votingCategoryId = cat.categoryId;
+                            //GlobalStatusSingleton.votingCategoryDescription = cat.description;
+                            GlobalStatusSingleton.votingCategories.Add(cat);
                             result = cat.description;
                         } else if (cat.state.Equals(CategoryJSON.UPLOAD)) {
-                            GlobalStatusSingleton.uploadingCategoryId = cat.categoryId;
-                            GlobalStatusSingleton.uploadCategoryDescription = cat.description;
+                            //GlobalStatusSingleton.uploadingCategoryId = cat.categoryId;
+                            //GlobalStatusSingleton.uploadCategoryDescription = cat.description;
+                            GlobalStatusSingleton.uploadingCategories.Add(cat);
                         } else if (cat.state.Equals(CategoryJSON.CLOSED)) {
-                            GlobalStatusSingleton.mostRecentClosedCategoryId = cat.categoryId;
-                            GlobalStatusSingleton.mostRecentClosedCategoryDescription = cat.description;
+                            //GlobalStatusSingleton.mostRecentClosedCategoryId = cat.categoryId;
+                            //GlobalStatusSingleton.mostRecentClosedCategoryDescription = cat.description;
+                            GlobalStatusSingleton.closedCategories.Add(cat);
                         }
                     }
                 } else {
@@ -1006,6 +1010,31 @@ namespace ImageImprov {
         }
 
         /// <summary>
+        /// Helper for managePersistedBallot that loads instructions on startup if
+        /// there is no ballot.
+        /// </summary>
+        protected virtual void loadInstructions() {
+            ballot.ballots = new List<BallotCandidateJSON>();
+            challengeLabelP.Text = "Instructions";
+            challengeLabelL.Text = "Instructions";
+            // now handle ballot
+            Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
+            for (int i=1;i<5; i++) { 
+                Image imgP = new Image {
+                    Source = ImageSource.FromResource("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png"),
+                };
+                ballotImgsP.Add(imgP);
+
+                Image imgL = new Image
+                {
+                    Source = ImageSource.FromResource("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png"),
+                };
+                ballotImgsL.Add(imgL);
+            }
+
+        }
+
+        /// <summary>
         /// Helper function for OnLoadBallotPics.
         /// This function manages the processing around the queue and the ballot pre-existing.
         /// Should not have race condition concerns as this should be called before the http request is
@@ -1022,6 +1051,9 @@ namespace ImageImprov {
                 preloadedBallots.Enqueue(GlobalStatusSingleton.persistedBallotAsString);
                 GlobalStatusSingleton.persistedBallotAsString = null;
                 DequeueBallotRequest(this, e);
+            } else {
+                // draw the instructions.
+                loadInstructions();
             }
             if ((GlobalStatusSingleton.persistedPreloadedBallots != null) && (GlobalStatusSingleton.persistedPreloadedBallots.Count>0)) {
                 while (GlobalStatusSingleton.persistedPreloadedBallots.Count>0) {
@@ -1066,8 +1098,46 @@ namespace ImageImprov {
         /// images are grouped together in the datasets.
         /// </summary>
         protected void checkImgOrderAndReorderAsNeeded() {
-            // I decided not to implement this for now.
+            // assume I am only called if orientation count == 2.
+            // assume: img lookup against the ballot is by object, not index
+            // assume ballot count == 4
 
+            /*
+            if (ballotImgsP.Count != 4) { return; }
+            if (ballotImgsP[0].Width > ballotImgsP[0].Height) {
+                // first img is landscape
+                if (ballotImgsP[1].Width > ballotImgsP[1].Height) {
+                    return;
+                } else {
+                    if (ballotImgsP[2].Width > ballotImgsP[2].Height) {
+                        Image tmp = ballotImgsP[2];
+                        ballotImgsP.RemoveAt(2);
+                        ballotImgsP.Insert(1, tmp);
+                    } else {
+                        // fourth image must be the fourth landscape
+                        Image tmp = ballotImgsP[3];
+                        ballotImgsP.RemoveAt(3);
+                        ballotImgsP.Insert(1, tmp);
+                    }
+                }
+            } else {
+                // first img in portrait
+                if (ballotImgsP[1].Width < ballotImgsP[1].Height) {
+                    return;
+                } else {
+                    if (ballotImgsP[2].Width < ballotImgsP[2].Height) {
+                        Image tmp = ballotImgsP[2];
+                        ballotImgsP.RemoveAt(2);
+                        ballotImgsP.Insert(1, tmp);
+                    } else {
+                        // fourth image must be the fourth landscape
+                        Image tmp = ballotImgsP[3];
+                        ballotImgsP.RemoveAt(3);
+                        ballotImgsP.Insert(1, tmp);
+                    }
+                }
+            }
+            */
         }
 
         /// <summary>
@@ -1275,12 +1345,12 @@ namespace ImageImprov {
             // not sure how I do indexing...
             //ClearContent(firstSelectedIndex);
             //Device.BeginInvokeOnMainThread(() => {
-                SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[penultimateSelectedIndex].imgStr);
+                SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[penultimateSelectedIndex].imgStr);
                 SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
                 GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
                 GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
 
-                baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[ultimateSelectedIndex].imgStr);
+                baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[ultimateSelectedIndex].imgStr);
                 mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
                 GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
                 GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
@@ -1415,13 +1485,13 @@ namespace ImageImprov {
                 int voteNum = -1;
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
                     if (votedOn(candidate.bidId, ref voteNum)) {
-                        SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
+                        SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromBytes(candidate.imgStr);
                         // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
                         SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
                     } else {
-                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr));
+                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromBytes(candidate.imgStr));
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
                     }
@@ -1567,7 +1637,7 @@ namespace ImageImprov {
                     // bleh. do I have the imgStr still? Yes, it lives in Ballot.
                     // hmm... 
                     // vote.vote is indexed from 1. rankimages from 0.
-                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromStr(ballot.ballots[selectionId].imgStr);
+                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[selectionId].imgStr);
                     SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[selectionId], mergedImage);

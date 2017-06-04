@@ -76,16 +76,22 @@ namespace ImageImprov
 
         // The category id currently open for voting.
         // A -1 indicates the category id has not been received from the server yet.
-        public static long votingCategoryId = NO_CATEGORY_INFO;
-        public static string votingCategoryDescription = "";
+        //public static long votingCategoryId = NO_CATEGORY_INFO;
+        //public static string votingCategoryDescription = "";
+        public static IList<CategoryJSON> votingCategories = new List<CategoryJSON>();
 
         // The category id currently open for uploading.
         // A -1 indicates the category id has not been received from the server yet.
-        public static long uploadingCategoryId = NO_CATEGORY_INFO;
-        public static string uploadCategoryDescription = "";
+        //public static long uploadingCategoryId = NO_CATEGORY_INFO;
+        //public static string uploadCategoryDescription = "";
+        public static IList<CategoryJSON> uploadingCategories = new List<CategoryJSON>();
 
-        public static long mostRecentClosedCategoryId = NO_CATEGORY_INFO;
-        public static string mostRecentClosedCategoryDescription = "";
+        //public static long mostRecentClosedCategoryId = NO_CATEGORY_INFO;
+        //public static string mostRecentClosedCategoryDescription = "";
+        public static IList<CategoryJSON> closedCategories = new List<CategoryJSON>();
+
+        // Key is CategoryJson, value is the associated leaderboard.
+        public static IDictionary<CategoryJSON, IList<LeaderboardJSON>> persistedLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
 
         public static AuthenticationToken authToken;
 

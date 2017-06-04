@@ -104,9 +104,8 @@ namespace ImageImprov {
             return result;
         }
 
-        public static Image buildBackground(string patternSource, Assembly assembly, int Width, int Height, 
-            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) 
-        {
+        public static Image buildBackground(string patternSource, Assembly assembly, int Width, int Height,
+            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) {
             Image result = null;
             if ((Width == -1) || (Height == -1)) {
                 return result;
@@ -115,18 +114,19 @@ namespace ImageImprov {
             using (var resource = assembly.GetManifestResourceStream(patternSource))
             using (var stream = new SKManagedStream(resource)) {
                 var bitmap = SKBitmap.Decode(stream);
-                int tilesWide = (int)((Width*sideAdjustment) / bitmap.Width);
-                int tilesHigh = (int)((Height* bottomAdjustment) / bitmap.Height);
+                int tilesWide = (int)((Width * sideAdjustment) / bitmap.Width);
+                int tilesHigh = (int)((Height * bottomAdjustment) / bitmap.Height);
+
                 try {
                     using (var tempSurface = SKSurface.Create(new SKImageInfo((int)Width, (int)Height))) {
                         var canvas = tempSurface.Canvas;
                         canvas.Clear(SKColors.White);
-
+                        
                         SKBitmap bottomEdge = new SKBitmap();
                         SKBitmap rightEdge = new SKBitmap();
                         SKBitmap corner = new SKBitmap();
-                        int excessH = (int)(Height*bottomAdjustment) - (tilesHigh * bitmap.Height);
-                        int excessW = (int)(Width*sideAdjustment) - (tilesWide * bitmap.Width);
+                        int excessH = (int)(Height * bottomAdjustment) - (tilesHigh * bitmap.Height);
+                        int excessW = (int)(Width * sideAdjustment) - (tilesWide * bitmap.Width);
                         if (excessH > 0) {
                             bitmap.ExtractSubset(bottomEdge, new SKRectI(0, 0, bitmap.Width, excessH));
                         }
@@ -146,12 +146,14 @@ namespace ImageImprov {
                                 canvas.DrawBitmap(bottomEdge, SKRect.Create(i * bitmap.Width, tilesHigh * bitmap.Height, bitmap.Width, excessH));
                             }
                         }
+
                         // this is the far side, but not lower right corner.
                         if (Width > tilesWide * bitmap.Width) {
                             for (int k = 0; k < tilesHigh; k++) {
                                 canvas.DrawBitmap(rightEdge, SKRect.Create(tilesWide * bitmap.Width, k * bitmap.Height, excessW, bitmap.Height));
                             }
                         }
+
                         // and finally the bottom right corner.
                         if ((Height > tilesHigh * bitmap.Height) && (Width > tilesWide * bitmap.Width)) {
                             canvas.DrawBitmap(corner, SKRect.Create(tilesWide * bitmap.Width, tilesHigh * bitmap.Height, excessW, excessH));
@@ -162,6 +164,72 @@ namespace ImageImprov {
                 } catch (Exception e) {
                     string msg = e.ToString();
                 }
+            }
+            return result;
+        }
+
+        public static Image buildBackgroundFromBytes(byte[] patternSource, Assembly assembly, int Width, int Height, 
+            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) 
+        {
+            Image result = null;
+            if ((Width == -1) || (Height == -1)) {
+                return result;
+            }
+
+            SKBitmap bitmap = new SKBitmap(new SKImageInfo(Width, Height));
+            var bitmapFullSize = buildFixedRotationSKBitmapFromBytes(patternSource);
+            if ((bitmapFullSize.Width>Width) || (bitmapFullSize.Height>Height)) {
+                // passed in image is larger than the screen.  shrink to fit.
+                bitmapFullSize.Resize(bitmap, SKBitmapResizeMethod.Box);
+            } else {
+                bitmap = bitmapFullSize;
+            }
+            int tilesWide = (int)((Width*sideAdjustment) / bitmap.Width);
+            int tilesHigh = (int)((Height* bottomAdjustment) / bitmap.Height);
+            try {
+                using (var tempSurface = SKSurface.Create(new SKImageInfo((int)Width, (int)Height))) {
+                    var canvas = tempSurface.Canvas;
+                    canvas.Clear(SKColors.White);
+
+                    SKBitmap bottomEdge = new SKBitmap();
+                    SKBitmap rightEdge = new SKBitmap();
+                    SKBitmap corner = new SKBitmap();
+                    int excessH = (int)(Height*bottomAdjustment) - (tilesHigh * bitmap.Height);
+                    int excessW = (int)(Width*sideAdjustment) - (tilesWide * bitmap.Width);
+                    if (excessH > 0) {
+                        bitmap.ExtractSubset(bottomEdge, new SKRectI(0, 0, bitmap.Width, excessH));
+                    }
+                    if (excessW > 0) {
+                        bitmap.ExtractSubset(rightEdge, new SKRectI(0, 0, excessW, bitmap.Height));
+                    }
+                    if ((excessH > 0) && (excessW > 0)) {
+                        bitmap.ExtractSubset(corner, new SKRectI(0, 0, excessW, excessH));
+                    }
+
+                    for (int i = 0; i < tilesWide; i++) {
+                        for (int j = 0; j < tilesHigh; j++) {
+                            canvas.DrawBitmap(bitmap, SKRect.Create(i * bitmap.Width, j * bitmap.Height, bitmap.Width, bitmap.Height));
+                        }
+                        // this covers the bottom except lower right corner.
+                        if (Height > tilesHigh * bitmap.Height) {
+                            canvas.DrawBitmap(bottomEdge, SKRect.Create(i * bitmap.Width, tilesHigh * bitmap.Height, bitmap.Width, excessH));
+                        }
+                    }
+                    // this is the far side, but not lower right corner.
+                    if (Width > tilesWide * bitmap.Width) {
+                        for (int k = 0; k < tilesHigh; k++) {
+                            canvas.DrawBitmap(rightEdge, SKRect.Create(tilesWide * bitmap.Width, k * bitmap.Height, excessW, bitmap.Height));
+                        }
+                    }
+                    // and finally the bottom right corner.
+                    if ((Height > tilesHigh * bitmap.Height) && (Width > tilesWide * bitmap.Width)) {
+                        canvas.DrawBitmap(corner, SKRect.Create(tilesWide * bitmap.Width, tilesHigh * bitmap.Height, excessW, excessH));
+                    }
+                    SKImage skImage = tempSurface.Snapshot();
+                    result = SKImageToXamarinImage(skImage);
+                }
+            } catch (Exception e) {
+                string msg = e.ToString();
             }
             return result;
         }
@@ -190,7 +258,7 @@ namespace ImageImprov {
             return finalImage;
         }
 
-        public static SKBitmap SKBitmapFromString(byte[] imgBits) {
+        public static SKBitmap SKBitmapFromBytes(byte[] imgBits) {
             SKBitmap bitmap = null;
             MemoryStream mems = new MemoryStream(imgBits);
             bitmap = SKBitmap.Decode(mems);
@@ -205,7 +273,7 @@ namespace ImageImprov {
             return bitmap;
         }
 
-        public static SKBitmap buildFixedRotationSKBitmapFromStr(byte[] imgBits) {
+        public static SKBitmap buildFixedRotationSKBitmapFromBytes(byte[] imgBits) {
             SKBitmap rotatedBmp = null;
             using (var resource = new MemoryStream(imgBits)) {
                 //using (var stream = new SKManagedStream(resource)) {
@@ -238,7 +306,7 @@ namespace ImageImprov {
                 }
 
                 try {
-                    SKBitmap baseBmp = SKBitmapFromString(imgBits);
+                    SKBitmap baseBmp = SKBitmapFromBytes(imgBits);
                     //SKBitmap rotatedBmp = null;
                     if (imgExifO == ExifLib.ExifOrientation.TopRight) {
                         rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
@@ -275,9 +343,9 @@ namespace ImageImprov {
             return rotatedBmp;
         }
 
-        public static Image buildFixedRotationImageFromStr(byte[] inImg) {
+        public static Image buildFixedRotationImageFromBytes(byte[] inImg) {
             Image result = new Image();
-            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromStr(inImg);
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg);
             if (rotatedBmp != null) {
                 result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
             }
@@ -291,7 +359,7 @@ namespace ImageImprov {
         /// <returns></returns>
         public static Image buildFixedRotationImage(BallotCandidateJSON candidate) {
             Image result = new Image();
-            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromStr(candidate.imgStr);
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(candidate.imgStr);
             if (rotatedBmp != null) { 
                 // > means square images are treated as landscape.
                 if (rotatedBmp.Height > rotatedBmp.Width) {

@@ -63,6 +63,8 @@ namespace ImageImprov {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
             } else if (sender == gotoCameraImgButton) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
+                // want to go instantly to this...
+                //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
             } else {
                 // go home for default.
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();

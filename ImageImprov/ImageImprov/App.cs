@@ -21,6 +21,9 @@ namespace ImageImprov
         public const string PROPERTY_ACTIVE_BALLOT = "activeBallot";
         public const string PROPERTY_QUEUE_SIZE = "ballotQueueSize";
         public const string PROPERTY_BALLOT_QUEUE = "ballotQueue";
+        public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE = "leaderboardCategoryListSize";
+        public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY = "leaderboardCategoryListKey";
+        public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE = "leaderboardCategoryListValue";
         //public const string PROPERTY_REGISTERED = "registered";
 
         public App()
@@ -50,6 +53,7 @@ namespace ImageImprov
         protected override void OnSleep()
         {
             // Handle when your app sleeps
+            // This isn't getting called on older devices.
             Properties[PROPERTY_UUID] = GlobalStatusSingleton.UUID;
             Properties[PROPERTY_USERNAME] = GlobalStatusSingleton.username;
             Properties[PROPERTY_PWD] = GlobalStatusSingleton.password;
@@ -58,6 +62,11 @@ namespace ImageImprov
             Properties[PROPERTY_MIN_BALLOTS_TO_LOAD] = GlobalStatusSingleton.minBallotsToLoad.ToString();
             Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
 
+            storeBallot();
+            storeCategories();
+        }
+
+        private void storeBallot() {
             // Is this the correct way to access this stuff?
             // I think so. Retrieval is more complex.
             // Note: Not guaranteed to have an active ballot, so check before saving a null.
@@ -70,7 +79,24 @@ namespace ImageImprov
             } else {
                 Properties[PROPERTY_ACTIVE_BALLOT] = "";
                 Properties[PROPERTY_QUEUE_SIZE] = 0;
-            }            
+            }
+        }
+
+        /// <summary>
+        /// Helper for OnSleep for category specific saving.
+        /// </summary>
+        private void storeCategories() {
+            // pull from leaderboard.  Alternative is to put leaderboard into GlobalSingleton... which I don't like since not a shared asset.
+            IDictionary<CategoryJSON, IList<LeaderboardJSON>> ldrBoard = (((MainPageSwipeUI)this.MainPage).GetLeaderboardList());
+            if (ldrBoard != null) {
+                Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] = ldrBoard.Count;
+                int i = 0;
+                foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> board in ldrBoard) {
+                    Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i] = JsonConvert.SerializeObject(board.Key);
+                    Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] = JsonConvert.SerializeObject(board.Value);
+                    i++;
+                }
+            }
         }
 
         protected override void OnResume()
@@ -126,7 +152,33 @@ namespace ImageImprov
                 //((MainPageSwipeUI)this.MainPage).SetBallotQueue(loadedQueue);
                 GlobalStatusSingleton.persistedPreloadedBallots = loadedQueue;
             }
-            
+            loadCategories();
+        }
+
+        private void loadCategories() {
+            IDictionary<string, object> properties = Application.Current.Properties;
+            // this gets called before the leaderboard page is instantiated. so we set it in GlobalStatusSingleton for later retrieval.
+            if (Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE)) {
+                //string sanityCheck = Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] as string;
+                //object sanityCheck2 = Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE];
+                //int sanityCheck2 = (int)Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE];
+                //int listSize = Convert.ToInt32(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] as string);
+                //int listSize2 = Convert.ToInt32(properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] as string);
+                // most of the above failed. The reason is I wasn't converting the property to a string. this works though, so I'm not seeing a need to convert.
+                int listSize = (int)Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE];  
+                IDictionary<CategoryJSON, IList<LeaderboardJSON>> boards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>(listSize);
+                for (int i = 0; i < listSize; i++) {
+                    //if (Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST+"_"+i)) {
+                    //boards.Add(JsonHelper.DeserializeToList<LeaderboardJSON>(
+                    //  Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST + "_" + i] as string));
+                    //}
+                    CategoryJSON key = JsonConvert.DeserializeObject<CategoryJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i] as string);
+                    IList<LeaderboardJSON> value =
+                        JsonHelper.DeserializeToList<LeaderboardJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] as string);
+                    boards.Add(key, value);
+                }
+                GlobalStatusSingleton.persistedLeaderboards = boards;
+            }
         }
     }
 }

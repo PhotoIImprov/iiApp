@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Diagnostics;  // for debug assertions.
+using System.Reflection;
 
 
 using Newtonsoft.Json;
@@ -29,6 +30,16 @@ namespace ImageImprov
      * @todo Build registration UI and interactions
      */
     class PlayerContentPage : ContentPage {
+        const int LAYOUT_NOT_SET = 0;
+        const int LAYOUT_PRE_CONNECT_AUTO_LOGIN = 1;
+        const int LAYOUT_CONNECTED_AUTO = 2;
+        const int LAYOUT_CONNECTED_ANON = 3;
+        const int LAYOUT_PRE_CONNECT_FORCE_LOGIN = 4;
+        const int LAYOUT_REGISTRATION = 5;
+        const int LAYOUT_NEW_DEVICE = 6;
+        int activeLayout = LAYOUT_NOT_SET;
+
+
         public static string REGISTRATION_FAILURE = "Registration failure";
         public static string BAD_PASSWORD_LOGIN_FAILURE = "Sorry, invalid username/password";
         public static string ANON_REGISTRATION_FAILURE = "Sorry, only one anonymous registration per device is supported.";
@@ -39,9 +50,17 @@ namespace ImageImprov
             Text = "Connecting...",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
+            BackgroundColor = Color.FromRgb(252, 213, 21),
             TextColor = Color.Black,
         };
         //> loggedInLabel
+        Label versionLabel = new Label
+        {
+            HorizontalOptions = LayoutOptions.CenterAndExpand,
+            VerticalOptions = LayoutOptions.CenterAndExpand,
+            BackgroundColor = Color.FromRgb(252, 213, 21),
+            TextColor = Color.Black,
+        };
 
         readonly Label alreadyAMemberLabel = new Label
         {
@@ -60,12 +79,14 @@ namespace ImageImprov
         Entry usernameEntry = new Entry { Placeholder = "email",
             Text = GlobalStatusSingleton.username,
             TextColor = Color.Black,
+            BackgroundColor = Color.White,
             HorizontalTextAlignment = TextAlignment.Start,
             HorizontalOptions = LayoutOptions.FillAndExpand,
         };
         Entry passwordEntry = new Entry { Placeholder = "Password",
             IsPassword = true,
             TextColor = Color.Black,
+            BackgroundColor = Color.White,
             HorizontalTextAlignment = TextAlignment.Start,
             HorizontalOptions = LayoutOptions.FillAndExpand,
         };
@@ -90,8 +111,10 @@ namespace ImageImprov
         // There are 3 potential UIs to display when logging in.
         // This is what is displayed on an automatic login setting.
         // This is also the default ui for registered users on successful login
-        Grid preConnectAutoLoginLayout;
-        Grid autoLoginLayout;
+
+        //Grid preConnectAutoLoginLayout;
+        AbsoluteLayout preConnectAutoLoginLayout = new AbsoluteLayout();
+        Layout<View> autoLoginLayout =new AbsoluteLayout();
         // This is what is displayed if this is a new device.
         StackLayout newDeviceLayout;
         // This is what is displayed if the user forces login everytime.
@@ -121,6 +144,10 @@ namespace ImageImprov
 
         static int loginAttemptCounter = 0;
 
+        // I should look into reusing background img across pages...
+        const string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
+        Image backgroundImg = null;
+
         public PlayerContentPage() {
             // set myself up to listen for the login events...
             this.MyLogin += new MyLoginEventHandler(OnMyLogin);
@@ -132,11 +159,15 @@ namespace ImageImprov
 
             eDummy = new EventArgs();
 
+            setVersionLabelText();
+
             playerPageCenterConsole = new PlayerPageCenterConsole(this);
 
             connectButton = new Button
             {
-                Text = "Connect now"
+                Text = "Connect now",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
             };
             connectButton.Clicked += (sender, args) =>
             {
@@ -149,7 +180,9 @@ namespace ImageImprov
 
             anonymousPlayButton = new Button
             {
-                Text = "Play anonymously now"
+                Text = "Play anonymously now",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
             };
             anonymousPlayButton.Clicked += (sender, args) =>
             {
@@ -185,9 +218,55 @@ namespace ImageImprov
             }
         }
 
+        protected override void OnSizeAllocated(double width, double height) {
+            // need to have portrait mode local rather than global or i can't
+            // tell if I've updated for this page yet or not.
+            base.OnSizeAllocated(width, height);
+            if (backgroundImg == null) {
+                if (activeLayout == LAYOUT_PRE_CONNECT_AUTO_LOGIN) {
+                    Content = createPreConnectAutoLoginLayout();
+                } else if (activeLayout == LAYOUT_CONNECTED_AUTO) {
+                    Content = createAutoLoginLayout();
+                } else if (activeLayout == LAYOUT_CONNECTED_ANON) {
+                    Content = createAnonLoggedInLayout();
+                } else if (activeLayout == LAYOUT_PRE_CONNECT_FORCE_LOGIN) {
+                    Content = createForceLoginLayout();
+                } else if (activeLayout == LAYOUT_REGISTRATION) {
+                    Content = createRegistrationLayout();
+                } else if (activeLayout == LAYOUT_NEW_DEVICE) {
+                    Content = createNewDeviceLayout();
+                }
+            }
+
+        }
+
+        protected void buildBackground(double verticalExtent = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) {
+            if (backgroundImg == null) {
+                int w = (int)Width;
+                int h = (int)Height;
+                if (w > h) {
+                    int tmp = w;
+                    w = h;
+                    h = w;
+                }
+                backgroundImg = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, this.GetType().GetTypeInfo().Assembly, w, h, verticalExtent);
+            }
+        }
+
+        private void setVersionLabelText() {
+            // see answer at this forum page for more details on what's in full name.
+            //https://forums.xamarin.com/discussion/26522/how-to-get-application-runtime-version-build-version-using-xamarin-forms
+            string version = this.GetType().GetTypeInfo().Assembly.FullName;
+            string[] splitString = version.Split(',');
+            versionLabel.Text = splitString[1];
+        }
 
         protected Layout<View> createPreConnectAutoLoginLayout() {
-            logoutButton = new Button { Text = "Logout" };
+            activeLayout = LAYOUT_PRE_CONNECT_AUTO_LOGIN;
+            logoutButton = new Button {
+                Text = "Logout",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21), };
             logoutButton.Clicked += (sender, args) =>
             {
                 if (LogoutClicked != null) {
@@ -208,18 +287,31 @@ namespace ImageImprov
                     logoutButton,
                 }
             };
-            preConnectAutoLoginLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            preConnectAutoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
-            preConnectAutoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            preConnectAutoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
+            
+            Grid controls = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
+            controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            controls.Children.Add(upperPortionOfGrid, 0, 0);
             //autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
+
+            buildBackground();
+            preConnectAutoLoginLayout.Children.Clear();
+            if (backgroundImg != null) {
+                preConnectAutoLoginLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            preConnectAutoLoginLayout.Children.Add(controls, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             return preConnectAutoLoginLayout;
         }
 
 
         protected Layout<View> createAutoLoginLayout() {
-            logoutButton = new Button { Text = "Logout" };
+            activeLayout = LAYOUT_CONNECTED_AUTO;
+            logoutButton = new Button {
+                Text = "Logout",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+            };
             logoutButton.Clicked += (sender, args) => {
                 if (LogoutClicked != null) {
                     LogoutClicked(this, eDummy);
@@ -246,17 +338,28 @@ namespace ImageImprov
                 }
             };
             */
-            autoLoginLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            Grid controls = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
             //autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
             //autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             for (int i=0;i<10;i++) {
-                autoLoginLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             //autoLoginLayout.Children.Add(upperPortionOfGrid, 0, 0);
-            autoLoginLayout.Children.Add(logoutButton, 0, 0);
-            autoLoginLayout.Children.Add(loggedInLabel, 0, 1);
-            autoLoginLayout.Children.Add(CenterConsole, 0, 8);
-            autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
+            controls.Children.Add(logoutButton, 0, 1);
+            controls.Children.Add(loggedInLabel, 0, 2);
+            controls.Children.Add(versionLabel, 0, 3);
+            controls.Children.Add(CenterConsole, 0, 8);
+            controls.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
+
+            // always assume background is for one of the others... so rebuild.
+            // none of them are reachable if I get here unless I logout, where I handle this again.
+            backgroundImg = null;
+            buildBackground(.7);
+            ((AbsoluteLayout)autoLoginLayout).Children.Clear();
+            if (backgroundImg != null) {
+                ((AbsoluteLayout)autoLoginLayout).Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            ((AbsoluteLayout)autoLoginLayout).Children.Add(controls, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             return autoLoginLayout;
         }
@@ -268,7 +371,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Username", TextColor = Color.Black, },
+                    new Label { Text = "Username", TextColor = Color.Black, BackgroundColor=Color.White, },
                     usernameEntry,
                 }
             };
@@ -281,14 +384,18 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Password",TextColor = Color.Black, },
+                    new Label { Text = "Password",TextColor = Color.Black, BackgroundColor=Color.White, },
                     passwordEntry,
                 }
             };
         }
         
         protected void createRegisterButton() {
-            registerButton = new Button { Text = "Register" };
+            registerButton = new Button {
+                Text = "Register",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+            };
             registerButton.Clicked += (sender, args) =>
             {
                 GlobalStatusSingleton.username = usernameEntry.Text;
@@ -304,7 +411,8 @@ namespace ImageImprov
             return defaultNavigationButtons;
         }
 
-        protected StackLayout createNewDeviceLayout() {
+        protected Layout<View> createNewDeviceLayout() {
+            activeLayout = LAYOUT_NEW_DEVICE;
             newDeviceLayout = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Center,
@@ -318,15 +426,25 @@ namespace ImageImprov
                     anonymousPlayButton,
                 }
             };
-            return newDeviceLayout;
+            buildBackground();
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
+            if (backgroundImg != null) {
+                ((AbsoluteLayout)fullLayout).Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            ((AbsoluteLayout)fullLayout).Children.Add(newDeviceLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+
+            //return newDeviceLayout;
+            return fullLayout;
         }
 
-        protected StackLayout createForceLoginLayout() {
+        protected Layout<View> createForceLoginLayout() {
+            activeLayout = LAYOUT_PRE_CONNECT_FORCE_LOGIN;
             if (registerButton == null) {
                 createRegisterButton();
             }
 
             alreadyAMemberLabel.Text = "Enter password to play";
+            loggedInLabel.Text = "";
             forceLoginLayout = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Center,
@@ -343,11 +461,24 @@ namespace ImageImprov
                     registerButton,
                 }
             };
-            return forceLoginLayout;
+            buildBackground();
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
+            if (backgroundImg != null) {
+                fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            fullLayout.Children.Add(forceLoginLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+
+            //return forceLoginLayout;
+            return fullLayout;
         }
 
         protected Layout<View> createAnonLoggedInLayout() {
-            gotoRegistrationButton = new Button { Text = "Register me now!" };
+            activeLayout = LAYOUT_CONNECTED_ANON;
+            gotoRegistrationButton = new Button {
+                Text = "Register me now!",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+            };
             gotoRegistrationButton.Clicked += (sender, args) =>
             {
                 Content = createRegistrationLayout();
@@ -378,16 +509,29 @@ namespace ImageImprov
             anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             anonLoggedInLayout.Children.Add(upperPortionOfGrid, 0, 0);
             anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
-            return anonLoggedInLayout;
+
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
+            if (backgroundImg != null) {
+                fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            fullLayout.Children.Add(newDeviceLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+
+            //return anonLoggedInLayout;
+            return fullLayout;
 
         }
 
-        protected StackLayout createRegistrationLayout() {
+        protected Layout<View> createRegistrationLayout() {
+            activeLayout = LAYOUT_REGISTRATION;
             if (registerButton == null) {
                 createRegisterButton();
             }
 
-            cancelRegistrationButton = new Button { Text = "Never mind; I'll register later" };
+            cancelRegistrationButton = new Button {
+                Text = "Never mind; I'll register later",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+            };
             cancelRegistrationButton.Clicked += (sender, args) =>
             {
                 Content = anonLoggedInLayout;
@@ -409,7 +553,17 @@ namespace ImageImprov
                 }
             };
             usernameEntry.Text = "";
-            return registrationLayout;
+
+            buildBackground(.9);
+
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
+            if (backgroundImg != null) {
+                fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
+            fullLayout.Children.Add(newDeviceLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+
+            //return registrationLayout;
+            return fullLayout;
         }
 
         // resets my ui as it may have been changed to a subpage.
@@ -732,10 +886,16 @@ namespace ImageImprov
                 // make sure this is the active page - happens in MainPageUISwipe, who also consumes this event
                 // change to the force login page
                 Device.BeginInvokeOnMainThread(() => {
+                    backgroundImg = null;
                     Content = createForceLoginLayout();
                 });
             }
         }
+
+        public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
+            return CenterConsole.LeaderboardPage.GetLeaderboardList();
+        }
+
     }  // class
 
 }  // namespace

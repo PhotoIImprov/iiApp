@@ -29,6 +29,12 @@ namespace ImageImprov {
         Grid portraitView = null;
         Grid landscapeView = null;
 
+        StackLayout selectBoardButtonsStackP = new StackLayout();
+        StackLayout selectBoardButtonsStackL = new StackLayout();
+
+        ScrollView selectBoardScrollP = new ScrollView();
+        ScrollView selectBoardScrollL = new ScrollView();
+
         Label leaderboardLabelP = new Label {
             Text = "BEST OF: ",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
@@ -48,11 +54,32 @@ namespace ImageImprov {
         };
 
         // tracks what category I'm showing
-        long activeCategory;
+        //long activeCategory;
 
-        IList<LeaderboardJSON> leaders;
+        //IList<LeaderboardJSON> leaders;
+        IDictionary<CategoryJSON, IList<LeaderboardJSON>> listOfLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
+        // hmm... need to be careful is we delete from listOfLeaderboards.
+        //int activeLeaderboardIndex;
+        CategoryJSON activeLeaderboard = null;
+        // First button is P, Second button is L
+        Tuple<Button,Button> activeButton = null;
+        IDictionary<long, Button> selectLeaderboardDictP = new Dictionary<long, Button>();
+        IDictionary<long, Button> selectLeaderboardDictL = new Dictionary<long, Button>();
+
         IList<Image> leaderImgsP = null;
         IList<Image> leaderImgsL = null;
+        StackLayout leaderStackP = new StackLayout() {
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.FillAndExpand,
+        };
+        StackLayout leaderStackL = new StackLayout {
+            Orientation = StackOrientation.Vertical,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.FillAndExpand,
+        };
+
+        ScrollView leadersScrollP = new ScrollView();
+        ScrollView leadersScrollL = new ScrollView();
 
         //
         //   BEGIN Variables related/needed for images to place background on screen.
@@ -81,15 +108,160 @@ namespace ImageImprov {
             eDummy = new EventArgs();
 
             // place holder.
-            Content = leaderboardLabelP;
+            //Content = leaderboardLabelP;
+            managePersistedLeaderboard();
+            buildUI();
+        }
+
+        //private void createSelectButton(CategoryJSON newCategory, StackLayout container, IDictionary<long, Button> buttonDict, bool isLoading = false) {
+        // only have to add to a single container, but have to change both buttons... how does that happen?
+        private Button createSelectButton(CategoryJSON newCategory, StackLayout container, IDictionary<long, Button> buttonDict) {
+            /* just update this when making call to the server
+            string buttonText = newCategory.description;
+            if (isLoading) {
+                buttonText += " Loading...";
+            }
+            */
+            Button newButton = new Button {
+                //Text = buttonText,
+                Text = newCategory.description,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                TextColor = Color.Black,
+                BackgroundColor = Color.FromRgb(252, 213, 21),
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+            };
+            newButton.Clicked += (sender, args) => {
+                // when the button is clicked... 
+                //    prev activeButton decolors as active category.
+                //    this button colors as the active category
+                //    this category becomes active. on leaerboard
+                // also...
+                //   if leaderboard age > 5 mins reload
+                //   if < 5 mins, play the clavicle game...
+                if (activeButton != null) {
+                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 213, 21);
+                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 213, 21);
+                }
+                //activeButton = newButton;
+                //currentButton.BackgroundColor = Color.FromRgb(252, 21, 21);
+                activeLeaderboard = newCategory; // I'll believe this line when I see it! Wow, it works.
+                activeButton = Tuple.Create(selectLeaderboardDictP[newCategory.categoryId], selectLeaderboardDictL[newCategory.categoryId]);
+                activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
+                activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                drawLeaderImages();
+                buildUI();
+
+                // @todo test for reload and clavicle...
+                // if reloading, we'll trigger another drawLeaderImages asynchronously.
+                // as reload will take time, it comes below the buildUI call
+            };
+            container.Children.Add(newButton);
+            try {
+                buttonDict.Add(newCategory.categoryId, newButton);
+            } catch (Exception e) {
+                Debug.WriteLine(e.ToString());
+            }
+            return newButton;
+        }
+
+        private void drawLeaderImages() {
+            if (leaderImgsP == null) {
+                leaderImgsP = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+            } else {
+                leaderImgsP.Clear();
+                // need to clear the stack as well or the image is held onto...
+                leaderStackP.Children.Clear();
+            }
+            if (leaderImgsL == null) {
+                leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+            } else {
+                leaderImgsL.Clear();
+                leaderStackL.Children.Clear();
+            }
+
+            foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
+                Image image = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr);
+                // did not implement click recognition on the images.
+                leaderImgsP.Add(image);
+
+                Image imageL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr);
+                leaderImgsL.Add(imageL);
+            }
+        }
+
+        public void managePersistedLeaderboard() {
+            // move every leaderboard into listOfLeaderboards
+            // create selection buttons for every leaderboard
+            // create images for the element at dict[0]
+            if (GlobalStatusSingleton.persistedLeaderboards.Count > 0) {
+                // clear everything in case this was a sleep...
+                listOfLeaderboards.Clear();
+                selectBoardButtonsStackP.Children.Clear();
+                selectBoardButtonsStackL.Children.Clear();
+                selectLeaderboardDictP.Clear();
+                selectLeaderboardDictL.Clear();
+                activeButton = null;
+                foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> leaderboard in GlobalStatusSingleton.persistedLeaderboards) {
+                    listOfLeaderboards.Add(leaderboard);
+                    Button pButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackP, selectLeaderboardDictP);
+                    Button lButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackL, selectLeaderboardDictL);
+                }
+                activeLeaderboard = listOfLeaderboards.ElementAt(0).Key;
+                if (activeButton == null) {
+                    long catId = activeLeaderboard.categoryId;
+                    activeButton = Tuple.Create(selectLeaderboardDictP[catId], selectLeaderboardDictL[catId]);
+                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                }
+                drawLeaderImages();
+            }
+        }
+
+        private bool ListOfLeaderboardsContains(long categoryId) {
+            bool found = false;
+            foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> kvp in listOfLeaderboards) {
+                if (kvp.Key.categoryId == categoryId) {
+                    found = true;
+                    break;
+                }
+            }
+            return found;
+        }
+
+        private void CheckCategoryListLoaded(IList<CategoryJSON> categoryList) {
+            foreach (CategoryJSON category in categoryList) {
+                if (ListOfLeaderboardsContains(category.categoryId) == false) {
+                    if (activeLeaderboard == null) {
+                        // nothing in memory. make this one the active.
+                        activeLeaderboard = category;
+                    }
+                    // category not found. 
+                    // create a button for it!
+                    // then load it up!
+                    Button pButton = createSelectButton(category, selectBoardButtonsStackP, selectLeaderboardDictP);
+                    Button lButton = createSelectButton(category, selectBoardButtonsStackL, selectLeaderboardDictL);
+                    if (activeButton == null) {
+                        activeButton = Tuple.Create(pButton, lButton);
+                    }
+
+                    RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
+                    if (RequestLeaderboard != null) {
+                        RequestLeaderboard(this, evtArgs);
+                    }
+                } else {
+                    // @todo check to see if I should reload this category anyway.
+                }
+            }
         }
 
         public virtual void OnCategoryLoad(object sender, EventArgs e) {
             //categoryLabel.Text = "Today's category: " + GlobalStatusSingleton.uploadCategoryDescription;
-            if (RequestLeaderboard != null) {
-                RequestLeaderboard(sender, e);
-            }
+            // check for categories I don't already have the leaderboard for, then send load requests.
+            CheckCategoryListLoaded(GlobalStatusSingleton.votingCategories);
+            CheckCategoryListLoaded(GlobalStatusSingleton.closedCategories);
         }
+
         //protected override void OnSizeAllocated(double width, double height) {
         //protected void OnPageSizeChanged(object sender, EventArgs e) {
         protected override void OnSizeAllocated(double width, double height) {
@@ -135,8 +307,7 @@ namespace ImageImprov {
         public int buildUI() {
             int res = 0;
             int res2 = 0;
-            Device.BeginInvokeOnMainThread(() =>
-            {
+            Device.BeginInvokeOnMainThread(() => {
                 res = buildPortraitView();
                 res2 = buildLandscapeView();
                 OnSizeAllocated(Width, Height);
@@ -156,9 +327,126 @@ namespace ImageImprov {
             if (defaultNavigationButtonsP == null) {
                 defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
             }
+
+            // selectBoardButtonsStackP build by clicks.
+            selectBoardScrollP.Content = selectBoardButtonsStackP;
+
+            leaderStackP.Children.Clear();
+            if (activeLeaderboard != null) {
+                // only do this if activeLeaderboard has been set; and then check it has been loaded!!
+                if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
+                    int j = 0;
+                    foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
+                        leaderStackP.Children.Add(leaderImgsP[j]);
+                        j++;
+                    }
+                }
+            }
+            leadersScrollP.Content = leaderStackP;
+
+            portraitView.Children.Add(leaderboardLabelP, 0, 0);
+            portraitView.Children.Add(selectBoardScrollP, 0, 1);
+            Grid.SetRowSpan(selectBoardScrollP, 3);
+            portraitView.Children.Add(leadersScrollP, 0, 4);
+            Grid.SetRowSpan(leadersScrollP, 14);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
+            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
+
+            return result;
+        }
+        public int buildLandscapeView() {
+            int result = 1;
+            // all my elements are already members...
+            if (landscapeView == null) {
+                landscapeView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                //for (int i = 0; i < 20; i++) {
+                //    landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                //}
+                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(7, GridUnitType.Star) });
+                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                //landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                //landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+                //landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(7, GridUnitType.Star) });
+                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(9, GridUnitType.Star) });
+            }
+            if (defaultNavigationButtonsL == null) {
+                defaultNavigationButtonsL = new KeyPageNavigator(false) { ColumnSpacing = 1, RowSpacing = 1 };
+            }
+
+            selectBoardScrollL.Content = selectBoardButtonsStackL;
+
+            //StackLayout leaderStack = new StackLayout { Orientation = StackOrientation.Horizontal, VerticalOptions = LayoutOptions.FillAndExpand, };
+            // Has to be vertical because of the carousel 
+            leaderStackL.Children.Clear();
+            if (activeLeaderboard != null) {
+                if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
+                    IList<LeaderboardJSON> activeBoard = listOfLeaderboards[activeLeaderboard];
+
+                    for (int j = 0; j < activeBoard.Count; j = j + 2) {
+                        StackLayout leaderRow;
+                        if (j + 1 < leaderImgsL.Count) {
+                            leaderRow = new StackLayout
+                            {
+                                Orientation = StackOrientation.Horizontal,
+                                VerticalOptions = LayoutOptions.Center,
+                                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                                Children = {
+                                    leaderImgsL[j], leaderImgsL[j+1],
+                                }
+                            };
+                        } else {
+                            leaderRow = new StackLayout
+                            {
+                                Orientation = StackOrientation.Horizontal,
+                                VerticalOptions = LayoutOptions.Center,
+                                Children = {
+                                    leaderImgsL[j], // just add 1 img. odd number in leaderboard.
+                                }
+                            };
+                        }
+                        leaderStackL.Children.Add(leaderRow);
+                    }
+                }
+            }
+            leadersScrollL.Content = leaderStackL;
+
+            /* This lays out for bestof across the whole top...
+            landscapeView.Children.Add(leaderboardLabelL, 0, 0);
+            //Grid.SetColumnSpan(leaderboardLabelL, 17);
+            landscapeView.Children.Add(selectBoardScrollL, 0, 1);
+            landscapeView.Children.Add(leadersScrollL, 0, 2);
+            //Grid.SetColumnSpan(leadersScroll, 17);
+            landscapeView.Children.Add(defaultNavigationButtonsL, 1, 0);
+            Grid.SetRowSpan(defaultNavigationButtonsL, 3);
+            //Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
+            */
+            landscapeView.Children.Add(leaderboardLabelL, 0, 0);
+            landscapeView.Children.Add(selectBoardScrollL, 0, 1);
+            landscapeView.Children.Add(leadersScrollL, 1, 0);
+            Grid.SetRowSpan(leadersScrollL, 2);
+            landscapeView.Children.Add(defaultNavigationButtonsL, 2, 0);
+            Grid.SetRowSpan(defaultNavigationButtonsL, 2);
+            return result;
+
+        }
+
+        public int buildPortraitViewOld() {
+            int result = 1;
+            // all my elements are already members...
+            if (portraitView == null) {
+                portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                for (int i = 0; i < 20; i++) {
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+            }
+            if (defaultNavigationButtonsP == null) {
+                defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            }
             StackLayout leaderStack = new StackLayout { HorizontalOptions = LayoutOptions.FillAndExpand, };
             int j = 0;
-            foreach (LeaderboardJSON leader in leaders) {
+            foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
                 string uname = leader.username;
                 if (uname == null) {
                     uname = "empty name";
@@ -191,7 +479,7 @@ namespace ImageImprov {
             return result;
         }
 
-        public int buildLandscapeView() {
+        public int buildLandscapeViewOld() {
             int result = 1;
             // all my elements are already members...
             if (landscapeView == null) {
@@ -201,8 +489,8 @@ namespace ImageImprov {
                 //}
                 landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(9, GridUnitType.Star) });
                 landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(9, GridUnitType.Star) });
+                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
+                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(7, GridUnitType.Star) });
             }
             if (defaultNavigationButtonsL == null) {
                 defaultNavigationButtonsL = new KeyPageNavigator(false) { ColumnSpacing = 1, RowSpacing = 1 };
@@ -212,8 +500,10 @@ namespace ImageImprov {
             StackLayout leaderStack = new StackLayout { Orientation = StackOrientation.Vertical, VerticalOptions = LayoutOptions.FillAndExpand, };
             //int j = 0;
             //foreach (LeaderboardJSON leader in leaders) {
-            for (int j=0; j<leaders.Count; j=j+2) { 
-                string uname = leaders[j].username;
+            IList<LeaderboardJSON> activeBoard = listOfLeaderboards[activeLeaderboard];
+            
+            for (int j=0; j<activeBoard.Count; j=j+2) { 
+                string uname = activeBoard[j].username;
                 if (uname == null) {
                     uname = "empty name";
                 }
@@ -233,6 +523,7 @@ namespace ImageImprov {
                 leaderStack.Children.Add(leaderRow);
                 */
                 //leaderStack.Children.Add(leaderImgsL[j]);
+
                 // stepping by 2, so need to make sure count < j+1
                 StackLayout leaderRow;
                 if (j + 1 < leaderImgsL.Count) {
@@ -240,6 +531,7 @@ namespace ImageImprov {
                     {
                         Orientation = StackOrientation.Horizontal,
                         VerticalOptions = LayoutOptions.Center,
+                        HorizontalOptions= LayoutOptions.CenterAndExpand,
                         Children = {
                             leaderImgsL[j], leaderImgsL[j+1],
                         }
@@ -275,6 +567,7 @@ namespace ImageImprov {
             // the current category command does not send back a category in leaderboard state.
             // for now, the system is only going to support Yesterday's and Today's leaderboard.
 
+            /*
             // @todo Add ui to switch between yesterday and today
             activeCategory = GlobalStatusSingleton.mostRecentClosedCategoryId;
             // @todo remove this if constraint once I know harry has setup closed category results.
@@ -286,7 +579,14 @@ namespace ImageImprov {
                 leaderboardLabelP.Text = "BEST OF: " + GlobalStatusSingleton.mostRecentClosedCategoryDescription + "; voting closed";
                 leaderboardLabelL.Text = "BEST OF: " + GlobalStatusSingleton.mostRecentClosedCategoryDescription + "; voting closed";
             }
-            string result = await requestLeaderboardAsync(activeCategory);
+            */
+            Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard start");
+            long loadCategory = ((RequestLeaderboardEventArgs)e).Category.categoryId;
+            string categoryName = ((RequestLeaderboardEventArgs)e).Category.description;
+            // change button to say loading...
+            selectLeaderboardDictP[loadCategory].Text = categoryName + "  Loading...";
+            selectLeaderboardDictL[loadCategory].Text = categoryName + "  Loading...";
+            string result = await requestLeaderboardAsync(loadCategory);
 
             if (result.Equals(LOAD_FAILURE)) {
                 // @todo This fail case is untested code. Does the UI come back?
@@ -295,12 +595,28 @@ namespace ImageImprov {
                 while (result.Equals(LOAD_FAILURE)) {
                     await Task.Delay(3000);
                     Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard sending re-request.");
-                    result = await requestLeaderboardAsync(activeCategory);
+                    result = await requestLeaderboardAsync(loadCategory);
                 }
             } 
-            // nolonder an else case, as I stay in fail till i can reach here.
+
             // process successful leaderboard result string
-            leaders = JsonHelper.DeserializeToList<LeaderboardJSON>(result);
+            IList<LeaderboardJSON> newLeaderBoard = JsonHelper.DeserializeToList<LeaderboardJSON>(result);
+            listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
+            // no need to add a button here.  That is created in the request to load the leaderboard.
+            // I do, however, need to update the button to remove the loading message.
+            selectLeaderboardDictP[loadCategory].Text = categoryName;
+            selectLeaderboardDictL[loadCategory].Text = categoryName;
+
+            // I do need to update the ui if this is the active leaderboard.
+            if (activeLeaderboard == ((RequestLeaderboardEventArgs)e).Category) {
+                drawLeaderImages();
+                if (activeButton == null) {
+                    activeButton = new Tuple<Button, Button>(selectLeaderboardDictP[activeLeaderboard.categoryId], selectLeaderboardDictL[activeLeaderboard.categoryId]);
+                }
+                activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
+                activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                buildUI();
+            }
 #if DEBUG
             // will be null if everything went ok.
             if (JsonHelper.InvalidJsonElements != null) {
@@ -308,6 +624,7 @@ namespace ImageImprov {
                 throw new Exception("Invalid leaderboard parse from server in Leaderboard get.");
             }
 #endif // DEBUG
+            /* No longer build the images when a leaderboard load is completed. Do that when switching to a leaderboard.
             // iterate through the leaders and build the ui output.
             foreach (LeaderboardJSON leader in leaders) {
                 Image image = GlobalSingletonHelpers.buildFixedRotationImageFromStr(leader.imgStr);
@@ -327,6 +644,8 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard:Exception");
                 Debug.WriteLine(err.ToString());
             }
+            */
+            Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard end");
         }
         
 
@@ -357,6 +676,10 @@ namespace ImageImprov {
             }
             Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync end");
             return result;
+        }
+
+        public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
+            return listOfLeaderboards;
         }
     }
 }
