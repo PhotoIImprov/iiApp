@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Diagnostics;  // for debug assertions.
+using System.Threading;
+using System.Threading.Tasks;
 using Xamarin.Forms;
 
 using SkiaSharp;
@@ -91,7 +94,14 @@ namespace ImageImprov {
             MemoryStream ms = new MemoryStream();
             data.SaveTo(ms);
             var bytes = ms.ToArray();
+            // test setting min sizing to eliminate flicker...
+            //  nothing noticeable.
+            //existing.MinimumWidthRequest = existing.Width;
+            //existing.MinimumHeightRequest = existing.Height;
+            // neither is doing in the main thread - I was already doing in the main thread. Thus the lack of difference.
+            //Device.BeginInvokeOnMainThread(() => {
             existing.Source = ImageSource.FromStream(() => new MemoryStream(bytes));
+            //});
             //return outImage;
         }
 
@@ -273,38 +283,42 @@ namespace ImageImprov {
             return bitmap;
         }
 
-        public static SKBitmap buildFixedRotationSKBitmapFromBytes(byte[] imgBits) {
+        public static SKBitmap buildFixedRotationSKBitmapFromBytes(byte[] imgBits, ExifOrientation imgExifO = ExifOrientation.Undefined) {
             SKBitmap rotatedBmp = null;
+            DateTime step0 = DateTime.Now;
             using (var resource = new MemoryStream(imgBits)) {
                 //using (var stream = new SKManagedStream(resource)) {
                 //using (var stream = new MemoryStream((resource)) {
-                ExifOrientation imgExifO = ExifLib.ExifOrientation.TopLeft;
-                try {
-                    JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
-                    // What exif lib associates each orientation with num in spec:
-                    // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
-                    // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
-                    // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
-                    // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
+                DateTime step1 = DateTime.Now;
+                if (imgExifO == ExifOrientation.Undefined) {
+                    imgExifO = ExifLib.ExifOrientation.TopLeft;
+                    try {
+                        JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
+                        // What exif lib associates each orientation with num in spec:
+                        // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
+                        // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
+                        // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
+                        // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
 
-                    // What each image I set the exif on resulted in:
-                    // (note: what I set should be correct as it displays right in programs that adjust for exif)
-                    // Unchd: 1
-                    // ImgRotLeft: 6
-                    // ImgRotRight: 8
-                    // ImgRot180: 3
-                    // Cool. These all tie out with images in Dave Perret article.
-                    imgExifO = jpegInfo.Orientation;
-                    //int imgExifWidth = jpegInfo.Width;
-                    //int imgExifHeight = jpegInfo.Height;
+                        // What each image I set the exif on resulted in:
+                        // (note: what I set should be correct as it displays right in programs that adjust for exif)
+                        // Unchd: 1
+                        // ImgRotLeft: 6
+                        // ImgRotRight: 8
+                        // ImgRot180: 3
+                        // Cool. These all tie out with images in Dave Perret article.
+                        imgExifO = jpegInfo.Orientation;
+                        //int imgExifWidth = jpegInfo.Width;
+                        //int imgExifHeight = jpegInfo.Height;
 
-                    //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
-                    //string res2 = res + "dummy";
-                } catch (Exception e) {
-                    Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
-                    Debug.WriteLine(e.ToString());
+                        //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
+                        //string res2 = res + "dummy";
+                    } catch (Exception e) {
+                        Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
+                        Debug.WriteLine(e.ToString());
+                    }
                 }
-
+                DateTime step2 = DateTime.Now;
                 try {
                     SKBitmap baseBmp = SKBitmapFromBytes(imgBits);
                     //SKBitmap rotatedBmp = null;
@@ -339,19 +353,52 @@ namespace ImageImprov {
                 } catch (Exception e) {
                     string msg = e.ToString();
                 }
+                DateTime step3 = DateTime.Now;
+                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step1:" + (step1 - step0));
+                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step2:" + (step2 - step1));
+                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step3:" + (step3 - step2));
             }
             return rotatedBmp;
         }
 
-        public static Image buildFixedRotationImageFromBytes(byte[] inImg) {
+        public static Image buildFixedRotationImageFromBytes(byte[] inImg, ExifOrientation imgExifO = ExifOrientation.Undefined) {
+            DateTime step0 = DateTime.Now;
             Image result = new Image();
-            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg);
+            DateTime step1 = DateTime.Now;
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg, imgExifO);
+            DateTime step2 = DateTime.Now;
             if (rotatedBmp != null) {
                 result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
             }
+            DateTime step3 = DateTime.Now;
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step1:" + (step1 - step0));
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step2:" + (step2 - step1));
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step3:" + (step3 - step2));
             return result;
         }
 
+        public static IList<Image> buildTwoFixedRotationImageFromBytes(byte[] inImg, ExifOrientation imgExifO = ExifOrientation.Undefined) {
+            IList<Image> res = new List<Image>(2);
+            DateTime step0 = DateTime.Now;
+            //Image result = new Image();
+            res.Add(new Image());
+            res.Add(new Image());
+            DateTime step1 = DateTime.Now;
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg, imgExifO);
+            DateTime step2 = DateTime.Now;
+            if (rotatedBmp != null) {
+                //result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
+                SKImage img = SKImage.FromBitmap((SKBitmap)rotatedBmp);
+                res[0] = SKImageToXamarinImage(img);
+                res[1] = SKImageToXamarinImage(img);
+            }
+            DateTime step3 = DateTime.Now;
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step1:" + (step1 - step0));
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step2:" + (step2 - step1));
+            //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step3:" + (step3 - step2));
+            //return result;
+            return res;
+        }
         /// <summary>
         /// Additionally sets the rotation(orientation) in the candidate object.
         /// </summary>
@@ -359,7 +406,7 @@ namespace ImageImprov {
         /// <returns></returns>
         public static Image buildFixedRotationImage(BallotCandidateJSON candidate) {
             Image result = new Image();
-            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(candidate.imgStr);
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation);
             if (rotatedBmp != null) { 
                 // > means square images are treated as landscape.
                 if (rotatedBmp.Height > rotatedBmp.Width) {

@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.IO;
 
 using Xamarin.Forms;
+using ExifLib;
 
 namespace ImageImprov {
     class LeaderboardPage : ContentView {
@@ -58,11 +59,13 @@ namespace ImageImprov {
 
         //IList<LeaderboardJSON> leaders;
         IDictionary<CategoryJSON, IList<LeaderboardJSON>> listOfLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
+        IDictionary<CategoryJSON, DateTime> leaderboardUpdateTimestamps = new Dictionary<CategoryJSON, DateTime>();
+
         // hmm... need to be careful is we delete from listOfLeaderboards.
         //int activeLeaderboardIndex;
         CategoryJSON activeLeaderboard = null;
         // First button is P, Second button is L
-        Tuple<Button,Button> activeButton = null;
+        Tuple<Button, Button> activeButton = null;
         IDictionary<long, Button> selectLeaderboardDictP = new Dictionary<long, Button>();
         IDictionary<long, Button> selectLeaderboardDictL = new Dictionary<long, Button>();
 
@@ -139,6 +142,7 @@ namespace ImageImprov {
                 // also...
                 //   if leaderboard age > 5 mins reload
                 //   if < 5 mins, play the clavicle game...
+                startTime = DateTime.Now;
                 if (activeButton != null) {
                     activeButton.Item1.BackgroundColor = Color.FromRgb(252, 213, 21);
                     activeButton.Item2.BackgroundColor = Color.FromRgb(252, 213, 21);
@@ -149,12 +153,21 @@ namespace ImageImprov {
                 activeButton = Tuple.Create(selectLeaderboardDictP[newCategory.categoryId], selectLeaderboardDictL[newCategory.categoryId]);
                 activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
                 activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                DateTime preDraw = DateTime.Now;
+                Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to pre image draw:" + (preDraw - startTime));
+                // insufficient: Task(() => { drawLeaderImages(); });
+                //var t = Task.Run(() => { drawLeaderImages(); });
+                //t.Wait();
+                //Task t = new Task(async () => { drawLeaderImages(); });
+                //await Task.WhenAll(t);
                 drawLeaderImages();
+                Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to post image draw:" + (DateTime.Now - preDraw));
                 buildUI();
 
                 // @todo test for reload and clavicle...
                 // if reloading, we'll trigger another drawLeaderImages asynchronously.
                 // as reload will take time, it comes below the buildUI call
+                reloadAnalysis(newCategory);
             };
             container.Children.Add(newButton);
             try {
@@ -165,7 +178,65 @@ namespace ImageImprov {
             return newButton;
         }
 
+        /// <summary>
+        /// Helper for Button.OnClicked that makes the decision whether to request an update from the server
+        /// for this leaderboard.
+        /// If updating, triggers a leaderboardRequest.
+        /// </summary>
+        private void reloadAnalysis(CategoryJSON category) {
+            DateTime timeOfRequest = DateTime.Now;
+            /// should be 
+            if ((timeOfRequest - leaderboardUpdateTimestamps[category])> System.TimeSpan.Parse("300s")) {
+                RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
+                if (RequestLeaderboard != null) {
+                    RequestLeaderboard(this, evtArgs);
+                }
+            } else {
+                activeButton.Item1.Text = category.description + " waiting before reload";
+                activeButton.Item2.Text = category.description + " waiting before reload";
+            }
+        }
+
+        // cant update the ui objects in a separate thread.
         private void drawLeaderImages() {
+            IList<Image> pImgs = new List<Image>();
+            IList<Image> lImgs = new List<Image>();
+            var t = Task.Run(() => { drawLeaderImagesActual(ref pImgs, ref lImgs); });
+            t.Wait();
+
+            if (leaderImgsP == null) {
+                leaderImgsP = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+            } else {
+                leaderImgsP.Clear();
+                // need to clear the stack as well or the image is held onto...
+                leaderStackP.Children.Clear();
+            }
+            if (leaderImgsL == null) {
+                leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+            } else {
+                leaderImgsL.Clear();
+                leaderStackL.Children.Clear();
+            }
+            foreach (Image i in pImgs) {
+                leaderImgsP.Add(i);
+            }
+            foreach (Image j in lImgs) {
+                leaderImgsL.Add(j);
+            }
+        }
+        private void drawLeaderImagesActual(ref IList<Image> pImgs, ref IList<Image> lImgs) {
+            Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
+
+            foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
+                IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromBytes(leader.imgStr, (ExifOrientation)leader.orientation);
+                pImgs.Add(images[0]);
+                lImgs.Add(images[1]);
+            }
+            Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
+        }
+
+        private void drawLeaderImagesOrig() {
+            Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
             if (leaderImgsP == null) {
                 leaderImgsP = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
             } else {
@@ -181,13 +252,19 @@ namespace ImageImprov {
             }
 
             foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
-                Image image = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr);
+                /*
+                Image image = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr, ExifLib.ExifOrientation.TopLeft);
                 // did not implement click recognition on the images.
                 leaderImgsP.Add(image);
 
-                Image imageL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr);
+                Image imageL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr, ExifLib.ExifOrientation.TopLeft);
                 leaderImgsL.Add(imageL);
+                */
+                IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromBytes(leader.imgStr, (ExifOrientation)leader.orientation);
+                leaderImgsP.Add(images[0]);
+                leaderImgsL.Add(images[1]);
             }
+            Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
         }
 
         public void managePersistedLeaderboard() {
@@ -262,56 +339,71 @@ namespace ImageImprov {
             CheckCategoryListLoaded(GlobalStatusSingleton.closedCategories);
         }
 
-        //protected override void OnSizeAllocated(double width, double height) {
-        //protected void OnPageSizeChanged(object sender, EventArgs e) {
+        double widthCheck = 0;
+        double heightCheck = 0;
+
         protected override void OnSizeAllocated(double width, double height) {
             base.OnSizeAllocated(width, height);
-            if ((Width > Height) && (landscapeView != null)) {
-                //GlobalStatusSingleton.inPortraitMode = false;
-                if (backgroundImgL == null) {
-                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)width, (int)height,
-                        GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_PCT);
-                    layoutL = new AbsoluteLayout
-                    {
-                        Children = {
+            if ((widthCheck != width) || (heightCheck != height)) {
+                widthCheck = width;
+                heightCheck = height;
+
+                if ((Width > Height) && (landscapeView != null)) {
+                    //GlobalStatusSingleton.inPortraitMode = false;
+                    if (backgroundImgL == null) {
+                        backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)width, (int)height,
+                            GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_PCT);
+                        layoutL = new AbsoluteLayout
+                        {
+                            Children = {
                                     { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
                                     { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
                                 }
-                    };
-                }
-                if (layoutL != null) {
-                    Content = layoutL;
-                } else if (landscapeView !=null) {
-                    Content = landscapeView;
-                }
-            } else {
-                //GlobalStatusSingleton.inPortraitMode = true;
-                if ((backgroundImgP == null) && (width>0) && (portraitView != null)) {
-                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)width, (int)height);
-                    layoutP = new AbsoluteLayout
-                    {
-                        Children = {
+                        };
+                    }
+                    if (layoutL != null) {
+                        Content = layoutL;
+                    } else if (landscapeView != null) {
+                        Content = landscapeView;
+                    }
+                } else {
+                    //GlobalStatusSingleton.inPortraitMode = true;
+                    if ((backgroundImgP == null) && (width > 0) && (portraitView != null)) {
+                        backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)width, (int)height);
+                        layoutP = new AbsoluteLayout
+                        {
+                            Children = {
                                     { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
                                     { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
                                 }
-                    };
+                        };
+                    }
+                    if (layoutP != null) {
+                        Content = layoutP;
+                    } else if (portraitView != null) {
+                        Content = portraitView;
+                    } // otherwise don't change content.
                 }
-                if (layoutP != null) {
-                    Content = layoutP;
-                } else if (portraitView != null) {
-                    Content = portraitView;
-                } // otherwise don't change content.
             }
         }
 
+        DateTime startTime;
+        DateTime buildUIstartTime;
+
         public int buildUI() {
+            buildUIstartTime = DateTime.Now;
             int res = 0;
             int res2 = 0;
             Device.BeginInvokeOnMainThread(() => {
+                DateTime timeForThread = DateTime.Now;
                 res = buildPortraitView();
+                Debug.WriteLine("DHB:LeaderboardPage:buildUI portrait time:" + (DateTime.Now - buildUIstartTime));
                 res2 = buildLandscapeView();
-                OnSizeAllocated(Width, Height);
+                // why OnSizeAllocated?
+                //OnSizeAllocated(Width, Height);
+                Debug.WriteLine("DHB:LeaderboardPage:buildUI thread catch time:" + (timeForThread - buildUIstartTime));
             });
+            Debug.WriteLine("DHB:LeaderboardPage:buildUI total elapsedTime:" + (DateTime.Now - buildUIstartTime));
             return ((res < res2) ? res : res2);
         }
 
@@ -337,7 +429,8 @@ namespace ImageImprov {
                 if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
                     int j = 0;
                     foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
-                        leaderStackP.Children.Add(leaderImgsP[j]);
+                        // may need to put a lock here. as leaderImgsP can change in an external thread.
+                        if (j < leaderImgsP.Count) { leaderStackP.Children.Add(leaderImgsP[j]); }
                         j++;
                     }
                 }
@@ -384,27 +477,19 @@ namespace ImageImprov {
                 if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
                     IList<LeaderboardJSON> activeBoard = listOfLeaderboards[activeLeaderboard];
 
+                    // may need to put a lock here. as leaderImgsP can change in an external thread.
                     for (int j = 0; j < activeBoard.Count; j = j + 2) {
-                        StackLayout leaderRow;
+                        StackLayout leaderRow = new StackLayout {
+                            Orientation = StackOrientation.Horizontal,
+                            VerticalOptions = LayoutOptions.Center,
+                            HorizontalOptions = LayoutOptions.CenterAndExpand,
+                        };
                         if (j + 1 < leaderImgsL.Count) {
-                            leaderRow = new StackLayout
-                            {
-                                Orientation = StackOrientation.Horizontal,
-                                VerticalOptions = LayoutOptions.Center,
-                                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                                Children = {
-                                    leaderImgsL[j], leaderImgsL[j+1],
-                                }
-                            };
-                        } else {
-                            leaderRow = new StackLayout
-                            {
-                                Orientation = StackOrientation.Horizontal,
-                                VerticalOptions = LayoutOptions.Center,
-                                Children = {
-                                    leaderImgsL[j], // just add 1 img. odd number in leaderboard.
-                                }
-                            };
+                            leaderRow.Children.Add(leaderImgsL[j]);
+                            leaderRow.Children.Add(leaderImgsL[j + 1]);
+                        } else if (j < leaderImgsL.Count) {
+                            leaderRow.Children.Add(leaderImgsL[j]);
+                            // just add 1 img. odd number in leaderboard.
                         }
                         leaderStackL.Children.Add(leaderRow);
                     }
@@ -601,7 +686,12 @@ namespace ImageImprov {
 
             // process successful leaderboard result string
             IList<LeaderboardJSON> newLeaderBoard = JsonHelper.DeserializeToList<LeaderboardJSON>(result);
-            listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
+
+            // may have been added already. this approach throws an exception if key exists
+            //listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
+            // this one resets the value:
+            listOfLeaderboards[((RequestLeaderboardEventArgs)e).Category] = newLeaderBoard;
+
             // no need to add a button here.  That is created in the request to load the leaderboard.
             // I do, however, need to update the button to remove the loading message.
             selectLeaderboardDictP[loadCategory].Text = categoryName;

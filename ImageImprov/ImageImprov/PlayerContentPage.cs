@@ -218,26 +218,32 @@ namespace ImageImprov
             }
         }
 
+        double widthCheck = 0;
+        double heightCheck = 0;
+
         protected override void OnSizeAllocated(double width, double height) {
             // need to have portrait mode local rather than global or i can't
             // tell if I've updated for this page yet or not.
             base.OnSizeAllocated(width, height);
-            if (backgroundImg == null) {
-                if (activeLayout == LAYOUT_PRE_CONNECT_AUTO_LOGIN) {
-                    Content = createPreConnectAutoLoginLayout();
-                } else if (activeLayout == LAYOUT_CONNECTED_AUTO) {
-                    Content = createAutoLoginLayout();
-                } else if (activeLayout == LAYOUT_CONNECTED_ANON) {
-                    Content = createAnonLoggedInLayout();
-                } else if (activeLayout == LAYOUT_PRE_CONNECT_FORCE_LOGIN) {
-                    Content = createForceLoginLayout();
-                } else if (activeLayout == LAYOUT_REGISTRATION) {
-                    Content = createRegistrationLayout();
-                } else if (activeLayout == LAYOUT_NEW_DEVICE) {
-                    Content = createNewDeviceLayout();
+            if ((widthCheck != width) || (heightCheck != height)) {
+                widthCheck = width;
+                heightCheck = height;
+                if (backgroundImg == null) {
+                    if (activeLayout == LAYOUT_PRE_CONNECT_AUTO_LOGIN) {
+                        Content = createPreConnectAutoLoginLayout();
+                    } else if (activeLayout == LAYOUT_CONNECTED_AUTO) {
+                        Content = createAutoLoginLayout();
+                    } else if (activeLayout == LAYOUT_CONNECTED_ANON) {
+                        Content = createAnonLoggedInLayout();
+                    } else if (activeLayout == LAYOUT_PRE_CONNECT_FORCE_LOGIN) {
+                        Content = createForceLoginLayout();
+                    } else if (activeLayout == LAYOUT_REGISTRATION) {
+                        Content = createRegistrationLayout();
+                    } else if (activeLayout == LAYOUT_NEW_DEVICE) {
+                        Content = createNewDeviceLayout();
+                    }
                 }
             }
-
         }
 
         protected void buildBackground(double verticalExtent = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) {
@@ -444,7 +450,7 @@ namespace ImageImprov
             }
 
             alreadyAMemberLabel.Text = "Enter password to play";
-            loggedInLabel.Text = "";
+            //loggedInLabel.Text = "";
             forceLoginLayout = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Center,
@@ -514,7 +520,7 @@ namespace ImageImprov
             if (backgroundImg != null) {
                 fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
-            fullLayout.Children.Add(newDeviceLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            fullLayout.Children.Add(anonLoggedInLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             //return anonLoggedInLayout;
             return fullLayout;
@@ -560,7 +566,7 @@ namespace ImageImprov
             if (backgroundImg != null) {
                 fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
-            fullLayout.Children.Add(newDeviceLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            fullLayout.Children.Add(registrationLayout, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             //return registrationLayout;
             return fullLayout;
@@ -583,6 +589,7 @@ namespace ImageImprov
 
         protected async virtual void OnMyLogin(object sender, EventArgs e) {
             //string loginResult = await requestLoginAsync();
+            loggedInLabel.Text = " Connecting... ";
             loginAttemptCounter++;
             string loginResult = await requestTokenAsync();
             if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {

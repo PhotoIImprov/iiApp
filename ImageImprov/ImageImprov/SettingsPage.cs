@@ -52,6 +52,9 @@ namespace ImageImprov {
         void OnCheckBoxTapped(object sender, EventArgs args) {
             if (sender == maintainLoginCheckbox) {
                 GlobalStatusSingleton.maintainLogin = ((CheckBox)sender).IsChecked;
+                App myApp = ((App)Application.Current);
+                myApp.Properties["maintainLogin"] = GlobalStatusSingleton.maintainLogin.ToString();
+                myApp.SavePropertiesAsync();
             } else if (sender == aspectOrFillCheckbox) {
                 GlobalStatusSingleton.aspectOrFillImgs = GlobalSingletonHelpers.BoolToAspectSetting(((CheckBox)sender).IsChecked);
             }

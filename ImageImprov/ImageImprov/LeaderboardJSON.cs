@@ -27,6 +27,11 @@ namespace ImageImprov {
         [JsonProperty("you")]
         public string isYou { get; set; }
 
+        // this is exif orientation, not portrait/landscape
+        [JsonProperty("orientation")]
+        public int orientation { get; set; }
+
+        // unlike ballot, I don't need portrait vs landscape orientation info as it doesn't impact layout
         // @todo add thumbnail here.
     }
 }

@@ -249,8 +249,10 @@ namespace ImageImprov {
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 10);
 
             if (latestTakenPath.Equals("")) {
-                int w = (Width > -1) ? (int)Width : 720;
-                int h = ((Height > -1) ? (int)Height : 1280);
+                //int w = (Width > -1) ? (int)Width : 720;
+                //int h = ((Height > -1) ? (int)Height : 1280);
+                int w = (int)Width;
+                int h = (int)Height;
                 // we maybe in landscape mode. switch w and h if we are.
                 if (w > h) {
                     int tmp = w;
@@ -263,7 +265,9 @@ namespace ImageImprov {
                     GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             }
             layoutP.Children.Clear();
-            layoutP.Children.Add(latestTakenImgP, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            if (latestTakenImgP != null) {
+                layoutP.Children.Add(latestTakenImgP, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
             layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             return 1;
@@ -323,8 +327,11 @@ namespace ImageImprov {
             //Grid.SetColumnSpan(defaultNavigationButtonsL, 1);
 
             if (latestTakenPath.Equals("")) {
-                int w = (Width > -1) ? (int)Width : 2560;
-                int h = ((Height > -1) ? (int)Height : 1440);
+                // unfortunately, this just results in a missized bitmap.
+                //int w = (Width > -1) ? (int)Width : 1280;
+                //int h = ((Height > -1) ? (int)Height : 720);
+                int w = (int)Width;
+                int h = (int)Height;
                 // we maybe in portrait mode. switch w and h if we are.
                 if (h>w) {
                     int tmp = w;
@@ -337,7 +344,9 @@ namespace ImageImprov {
                     GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             }
             layoutL.Children.Clear();
-            layoutL.Children.Add(latestTakenImgL, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            if (latestTakenImgL != null) {
+                layoutL.Children.Add(latestTakenImgL, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            }
             layoutL.Children.Add(landscapeView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             return 1;
         }

@@ -166,55 +166,62 @@ namespace ImageImprov {
             }
         }
 
-        
+        double widthCheck = 0;
+        double heightCheck = 0;
+
         protected override void OnSizeAllocated(double width, double height) {
-            try {
-                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
-                // content null on first pass.  Do double de-locking.
-                lock (uiLock) {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
-                    base.OnSizeAllocated(width, height);
-                    if ((width > height) && (height>0) && (landscapeView != null)) {
-                        GlobalStatusSingleton.inPortraitMode = false;
-                        if (backgroundImgL == null) {
-                            backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                            layoutL = new AbsoluteLayout
-                            {
-                                Children = {
-                                    { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                                    { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                                }
-                            };
+            base.OnSizeAllocated(width, height);
+            // ensure we have a change before doing anything...
+            if ((widthCheck != width) || (heightCheck != height)) {
+                widthCheck = width;
+                heightCheck = height;
+                try {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
+                        if ((width > height) && (height > 0) && (landscapeView != null)) {
+                            GlobalStatusSingleton.inPortraitMode = false;
+                            if (backgroundImgL == null) {
+                                backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                                layoutL = new AbsoluteLayout
+                                {
+                                    Children = {
+                                        { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                        { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                    }
+                                };
+                            }
+                            if (layoutL != null) {
+                                Content = layoutL;
+                            } else if (landscapeView != null) {
+                                Content = landscapeView;
+                            }
+                        } else {
+                            GlobalStatusSingleton.inPortraitMode = true;
+                            if ((backgroundImgP == null) && (width > 0) && (portraitView != null)) {
+                                backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                                layoutP = new AbsoluteLayout
+                                {
+                                    Children = {
+                                        { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
+                                        { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
+                                    }
+                                };
+                            }
+                            if (layoutP != null) {
+                                Content = layoutP;
+                            } else if (portraitView != null) {
+                                Content = portraitView;
+                            }
                         }
-                        if (layoutL != null) {
-                            Content = layoutL;
-                        } else if (landscapeView != null) {
-                            Content = landscapeView;
-                        }
-                    } else {
-                        GlobalStatusSingleton.inPortraitMode = true;
-                        if ((backgroundImgP == null) && (width>0) && (portraitView!=null)) {
-                            backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                            layoutP = new AbsoluteLayout
-                            {
-                                Children = {
-                                    { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                                    { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                                }
-                            };
-                        }
-                        if (layoutP != null) {
-                            Content = layoutP;
-                        } else if (portraitView != null) {
-                            Content = portraitView;
-                        }
-                    }
-                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated lock released");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated lock released");
+                    });
+                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated end");
+                } catch (Exception e) {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated:Exception");
+                    Debug.WriteLine(e.ToString());
                 }
-                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated end");
-            } catch (Exception e) {
-                Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated:Exception");
-                Debug.WriteLine(e.ToString());
             }
         }
 
@@ -343,12 +350,12 @@ namespace ImageImprov {
         public int buildUI() {
             int res = 0;
             int res2 = 0;
-            Device.BeginInvokeOnMainThread(() =>
-            {
+            //Device.BeginInvokeOnMainThread(() =>
+            //{
                 res = buildPortraitView();
                 res2 = buildLandscapeView();
                 //OnSizeAllocated(Width, Height);
-            });
+            //});
             return ((res<res2)?res:res2);
         }
 
@@ -740,7 +747,7 @@ namespace ImageImprov {
             landscapeView.RowDefinitions.Clear();
             landscapeView.ColumnDefinitions.Clear();
 
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 10; i++) {
                 landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             // 4 columns, 25% each
@@ -751,33 +758,33 @@ namespace ImageImprov {
             if (ballot.ballots[0].isPortrait == BallotCandidateJSON.PORTRAIT) {
                 // 2 portraits, then 2 landscape
                 landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-                Grid.SetRowSpan(ballotImgsL[0], 18);
+                Grid.SetRowSpan(ballotImgsL[0], 8);
 
                 landscapeView.Children.Add(ballotImgsL[1], 1, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[1], 18);
+                Grid.SetRowSpan(ballotImgsL[1], 8);
 
                 landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[2], 9);
+                Grid.SetRowSpan(ballotImgsL[2], 4);
                 Grid.SetColumnSpan(ballotImgsL[2], 2);
 
-                landscapeView.Children.Add(ballotImgsL[3], 2, 10);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[3], 9);
+                landscapeView.Children.Add(ballotImgsL[3], 2, 5);  // col, row format
+                Grid.SetRowSpan(ballotImgsL[3], 4);
                 Grid.SetColumnSpan(ballotImgsL[3], 2);
             } else {
                 // 2 landscape, then 2 portrait
                 landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-                Grid.SetRowSpan(ballotImgsL[0], 9);
+                Grid.SetRowSpan(ballotImgsL[0], 4);
                 Grid.SetColumnSpan(ballotImgsL[0], 2);
 
-                landscapeView.Children.Add(ballotImgsL[1], 0, 10);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[1], 9);
+                landscapeView.Children.Add(ballotImgsL[1], 0, 5);  // col, row format
+                Grid.SetRowSpan(ballotImgsL[1], 4);
                 Grid.SetColumnSpan(ballotImgsL[1], 2);
 
                 landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[2], 18);
+                Grid.SetRowSpan(ballotImgsL[2], 8);
 
                 landscapeView.Children.Add(ballotImgsL[3], 3, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[3], 18);
+                Grid.SetRowSpan(ballotImgsL[3], 8);
             }
 
 #if DEBUG
@@ -787,7 +794,7 @@ namespace ImageImprov {
             landscapeView.Children.Add(challengeLabelL, 0, 0);
             Grid.SetColumnSpan(challengeLabelL, 4);
 
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 19);  // going to wrong position for some reason...
+            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
             Grid.SetColumnSpan(defaultNavigationButtonsL, 4);
 
             return 1;
@@ -1345,27 +1352,39 @@ namespace ImageImprov {
             // not sure how I do indexing...
             //ClearContent(firstSelectedIndex);
             //Device.BeginInvokeOnMainThread(() => {
-                SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[penultimateSelectedIndex].imgStr);
-                SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
-                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
-                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
+            SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
+                    ballot.ballots[penultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[penultimateSelectedIndex].orientation);
+            SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
+            // see if a new object eliminates flicker.
+            // also needs a buildUI at the end to update the layout objects with the new info...
+            //ballotImgsP[penultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+            //ballotImgsL[penultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
 
-                baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[ultimateSelectedIndex].imgStr);
-                mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
-                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
-                GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
+            baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
+                ballot.ballots[ultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[ultimateSelectedIndex].orientation);
+            mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
 
-                foreach (Image img in ballotImgsP) {
+            //ballotImgsP[ultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+            //ballotImgsL[ultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+
+            foreach (Image img in ballotImgsP) {
                     img.IsEnabled = false;
                 // clearing these prevents ui from updating for some reason.
                 // so instead, I catch a tap and ignore it.
                     //img.GestureRecognizers.Clear();
-                }
-                foreach (Image img in ballotImgsL) {
-                    img.IsEnabled = false;
-                    //img.GestureRecognizers.Clear();
-                }
-                AdjustContentToRotation();
+            }
+            foreach (Image img in ballotImgsL) {
+                img.IsEnabled = false;
+                //img.GestureRecognizers.Clear();
+            }
+                // this is very expensive and may be cause of flicker...
+                // what happens if i don't call this?
+                // much faster, and images are updating (this is updating the images via the updatexamarinfromskimage function case)
+                //AdjustContentToRotation();
             //});
             Debug.WriteLine("DHB:JudgingContentPage:UpdateUIForFinalVote done");
         }
@@ -1587,7 +1606,21 @@ namespace ImageImprov {
                     string origText = challengeLabelP.Text;
                     challengeLabelP.Text = "Vote submitted, loading new ballot";
                     challengeLabelL.Text = "Vote submitted, loading new ballot";
+
                     UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
+                    /* the result of this is there is no ui update. that's because need to update what the ui elements point to
+                     * EVEN when I put the key code inside a Device.InvokeMainThread block.
+                    new Task(() =>
+                    {
+                        UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
+                    });
+                    */
+                    /* still flickers. not confident I'm avoiding race conditions either...
+                    var t = Task.Run(() => { UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid)); });
+                    t.Wait();
+                    buildUI();
+                    */
+
                     await Task.Delay(500);
 
                     // Ok. I want to be running the request right now!
@@ -1637,10 +1670,24 @@ namespace ImageImprov {
                     // bleh. do I have the imgStr still? Yes, it lives in Ballot.
                     // hmm... 
                     // vote.vote is indexed from 1. rankimages from 0.
+                    //SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
+                        //ballot.ballots[selectionId].imgStr, (ExifOrientation)ballot.ballots[selectionId].orientation);
                     SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[selectionId].imgStr);
+
                     SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
+
+                    // this method triggers the UI change.
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[selectionId], mergedImage);
+
+                    // this, on it's own, does not...
+                    //ballotImgsP[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+                    //ballotImgsL[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+                    // writing it in the UI thread does not solve the problem... need to tell content there's a change.
+                    //Device.BeginInvokeOnMainThread(() => {
+                    //    ballotImgsP[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+                    //    ballotImgsL[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
+                    //});
 
                 }
             }
