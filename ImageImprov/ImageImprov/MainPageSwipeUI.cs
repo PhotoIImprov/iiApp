@@ -95,5 +95,8 @@ namespace ImageImprov
         public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
             return playerPage.GetLeaderboardList();
         }
+        public IDictionary<CategoryJSON, DateTime> GetLeaderboardTimestamps() {
+            return playerPage.GetLeaderboardTimestamps();
+        }
     }
 }

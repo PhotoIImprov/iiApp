@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 using Android.App;
 using Android.Content;
@@ -57,6 +58,9 @@ namespace ImageImprov.Droid {
             }
             catch (Exception e)
             {
+                var t = Task.Run(async () => { await GlobalSingletonHelpers.SendLogData("User:" + GlobalStatusSingleton.username + " crash:" + e.ToString()); });
+                t.Wait();
+
                 System.Console.WriteLine("{0} Exception caught.", e);
             }
 

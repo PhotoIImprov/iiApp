@@ -18,6 +18,7 @@ namespace ImageImprov {
         public readonly static string LOAD_FAILURE = "No open voting category currently available.";
         readonly static string LEADERBOARD = "leaderboard";
         readonly static string CATEGORY = "?category_id=";
+        readonly static TimeSpan MIN_TIME_BETWEEN_RELOADS = new TimeSpan(0,0,180);
 
         static object uiLock = new object();
 
@@ -143,31 +144,36 @@ namespace ImageImprov {
                 //   if leaderboard age > 5 mins reload
                 //   if < 5 mins, play the clavicle game...
                 startTime = DateTime.Now;
-                if (activeButton != null) {
-                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 213, 21);
-                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 213, 21);
+                // Leaderboard loading is REALLY expensive.  Only do it if it's changed!
+                if (activeLeaderboard == newCategory) {
+                    // no load case!
+                } else {
+                    if (activeButton != null) {
+                        activeButton.Item1.BackgroundColor = Color.FromRgb(252, 213, 21);
+                        activeButton.Item2.BackgroundColor = Color.FromRgb(252, 213, 21);
+                    }
+                    //activeButton = newButton;
+                    //currentButton.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    activeLeaderboard = newCategory; // I'll believe this line when I see it! Wow, it works.
+                    activeButton = Tuple.Create(selectLeaderboardDictP[newCategory.categoryId], selectLeaderboardDictL[newCategory.categoryId]);
+                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    DateTime preDraw = DateTime.Now;
+                    Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to pre image draw:" + (preDraw - startTime));
+                    // insufficient: Task(() => { drawLeaderImages(); });
+                    //var t = Task.Run(() => { drawLeaderImages(); });
+                    //t.Wait();
+                    //Task t = new Task(async () => { drawLeaderImages(); });
+                    //await Task.WhenAll(t);
+                    drawLeaderImages();
+                    Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to post image draw:" + (DateTime.Now - preDraw));
+                    buildUI();
                 }
-                //activeButton = newButton;
-                //currentButton.BackgroundColor = Color.FromRgb(252, 21, 21);
-                activeLeaderboard = newCategory; // I'll believe this line when I see it! Wow, it works.
-                activeButton = Tuple.Create(selectLeaderboardDictP[newCategory.categoryId], selectLeaderboardDictL[newCategory.categoryId]);
-                activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
-                activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
-                DateTime preDraw = DateTime.Now;
-                Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to pre image draw:" + (preDraw - startTime));
-                // insufficient: Task(() => { drawLeaderImages(); });
-                //var t = Task.Run(() => { drawLeaderImages(); });
-                //t.Wait();
-                //Task t = new Task(async () => { drawLeaderImages(); });
-                //await Task.WhenAll(t);
-                drawLeaderImages();
-                Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to post image draw:" + (DateTime.Now - preDraw));
-                buildUI();
-
-                // @todo test for reload and clavicle...
                 // if reloading, we'll trigger another drawLeaderImages asynchronously.
                 // as reload will take time, it comes below the buildUI call
+                // even if this is the currently showing category, we still want it to test for the reload...
                 reloadAnalysis(newCategory);
+
             };
             container.Children.Add(newButton);
             try {
@@ -181,19 +187,37 @@ namespace ImageImprov {
         /// <summary>
         /// Helper for Button.OnClicked that makes the decision whether to request an update from the server
         /// for this leaderboard.
+        /// Also a Helper for managePersisedLeaderboard to determine on startup if updates are needed...
         /// If updating, triggers a leaderboardRequest.
         /// </summary>
         private void reloadAnalysis(CategoryJSON category) {
             DateTime timeOfRequest = DateTime.Now;
-            /// should be 
-            if ((timeOfRequest - leaderboardUpdateTimestamps[category])> System.TimeSpan.Parse("300s")) {
+
+            if (leaderboardUpdateTimestamps.ContainsKey(category)) {
+                if ((timeOfRequest - leaderboardUpdateTimestamps[category]) > MIN_TIME_BETWEEN_RELOADS) {
+                    // before firing request, check that this leaderboard is not already in the closed state.
+                    if (category.end > timeOfRequest) {
+                        // ending is still in the future.
+                        RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
+                        if (RequestLeaderboard != null) {
+                            RequestLeaderboard(this, evtArgs);
+                        }
+                    }
+#if DEBUG
+                    else {
+                        Debug.WriteLine("DHB:LeaderboardPage:reloadAnalysis Hit the closed category no reload case");
+                    }
+#endif
+                } else {
+                    activeButton.Item1.Text = category.description + " to soon to reload";
+                    activeButton.Item2.Text = category.description + " to soon to reload";
+                }
+            } else {
+                // no timestamp info. fire a load.  Request takes care of setting the timestamp.
                 RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
                 if (RequestLeaderboard != null) {
                     RequestLeaderboard(this, evtArgs);
                 }
-            } else {
-                activeButton.Item1.Text = category.description + " waiting before reload";
-                activeButton.Item2.Text = category.description + " waiting before reload";
             }
         }
 
@@ -204,25 +228,28 @@ namespace ImageImprov {
             var t = Task.Run(() => { drawLeaderImagesActual(ref pImgs, ref lImgs); });
             t.Wait();
 
-            if (leaderImgsP == null) {
-                leaderImgsP = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
-            } else {
-                leaderImgsP.Clear();
-                // need to clear the stack as well or the image is held onto...
-                leaderStackP.Children.Clear();
-            }
-            if (leaderImgsL == null) {
-                leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
-            } else {
-                leaderImgsL.Clear();
-                leaderStackL.Children.Clear();
-            }
-            foreach (Image i in pImgs) {
-                leaderImgsP.Add(i);
-            }
-            foreach (Image j in lImgs) {
-                leaderImgsL.Add(j);
-            }
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                if (leaderImgsP == null) {
+                    leaderImgsP = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+                } else {
+                    leaderImgsP.Clear();
+                    // need to clear the stack as well or the image is held onto...
+                    leaderStackP.Children.Clear();
+                }
+                if (leaderImgsL == null) {
+                    leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+                } else {
+                    leaderImgsL.Clear();
+                    leaderStackL.Children.Clear();
+                }
+                foreach (Image i in pImgs) {
+                    leaderImgsP.Add(i);
+                }
+                foreach (Image j in lImgs) {
+                    leaderImgsL.Add(j);
+                }
+            });
         }
         private void drawLeaderImagesActual(ref IList<Image> pImgs, ref IList<Image> lImgs) {
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
@@ -268,6 +295,13 @@ namespace ImageImprov {
         }
 
         public void managePersistedLeaderboard() {
+            // timestamps and leaderboards are separated in the data.
+            // load timestamps first as it has no draw function to suck down time...
+            if (GlobalStatusSingleton.persistedLeaderboardTimestamps.Count>0) {
+                foreach (KeyValuePair<CategoryJSON,DateTime> stamp in GlobalStatusSingleton.persistedLeaderboardTimestamps) {
+                    leaderboardUpdateTimestamps[stamp.Key] = stamp.Value;
+                }
+            }
             // move every leaderboard into listOfLeaderboards
             // create selection buttons for every leaderboard
             // create images for the element at dict[0]
@@ -290,6 +324,9 @@ namespace ImageImprov {
                     activeButton = Tuple.Create(selectLeaderboardDictP[catId], selectLeaderboardDictL[catId]);
                     activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
                     activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                }
+                foreach(KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> board in listOfLeaderboards) {
+                    reloadAnalysis(board.Key);
                 }
                 drawLeaderImages();
             }
@@ -482,7 +519,8 @@ namespace ImageImprov {
                         StackLayout leaderRow = new StackLayout {
                             Orientation = StackOrientation.Horizontal,
                             VerticalOptions = LayoutOptions.Center,
-                            HorizontalOptions = LayoutOptions.CenterAndExpand,
+                            //HorizontalOptions = LayoutOptions.CenterAndExpand,
+                            HorizontalOptions = LayoutOptions.Center,
                         };
                         if (j + 1 < leaderImgsL.Count) {
                             leaderRow.Children.Add(leaderImgsL[j]);
@@ -682,7 +720,10 @@ namespace ImageImprov {
                     Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard sending re-request.");
                     result = await requestLeaderboardAsync(loadCategory);
                 }
-            } 
+            }
+            // fix labels, connection is back...
+            leaderboardLabelL.Text = "BEST OF: ";
+            leaderboardLabelP.Text = "BEST OF: ";
 
             // process successful leaderboard result string
             IList<LeaderboardJSON> newLeaderBoard = JsonHelper.DeserializeToList<LeaderboardJSON>(result);
@@ -691,6 +732,8 @@ namespace ImageImprov {
             //listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
             // this one resets the value:
             listOfLeaderboards[((RequestLeaderboardEventArgs)e).Category] = newLeaderBoard;
+
+            leaderboardUpdateTimestamps[((RequestLeaderboardEventArgs)e).Category] = DateTime.Now;
 
             // no need to add a button here.  That is created in the request to load the leaderboard.
             // I do, however, need to update the button to remove the loading message.
@@ -770,6 +813,9 @@ namespace ImageImprov {
 
         public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
             return listOfLeaderboards;
+        }
+        public IDictionary<CategoryJSON, DateTime> GetLeaderboardTimestamps() {
+            return leaderboardUpdateTimestamps;
         }
     }
 }

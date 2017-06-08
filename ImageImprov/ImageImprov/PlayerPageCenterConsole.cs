@@ -56,6 +56,9 @@ namespace ImageImprov {
             gotoPurchasesButton.GestureRecognizers.Add(tapGesture);
             gotoSettingsButton.GestureRecognizers.Add(tapGesture);
 
+            // @todo implement purchases.
+            gotoPurchasesButton.IsVisible = false;
+
             // ColumnSpacing = 1; RowSpacing = 1;
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());

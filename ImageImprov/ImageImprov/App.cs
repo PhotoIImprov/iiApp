@@ -24,6 +24,7 @@ namespace ImageImprov
         public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE = "leaderboardCategoryListSize";
         public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY = "leaderboardCategoryListKey";
         public const string PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE = "leaderboardCategoryListValue";
+        public const string PROPERTY_LEADERBOARD_TIMESTAMP = "leaderboardCategoryLastLoadTimestamp";
         //public const string PROPERTY_REGISTERED = "registered";
 
         public App()
@@ -63,7 +64,7 @@ namespace ImageImprov
             Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
 
             storeBallot();
-            storeCategories();
+            storeLeaderboards();
         }
 
         private void storeBallot() {
@@ -85,15 +86,19 @@ namespace ImageImprov
         /// <summary>
         /// Helper for OnSleep for category specific saving.
         /// </summary>
-        private void storeCategories() {
+        private void storeLeaderboards() {
             // pull from leaderboard.  Alternative is to put leaderboard into GlobalSingleton... which I don't like since not a shared asset.
             IDictionary<CategoryJSON, IList<LeaderboardJSON>> ldrBoard = (((MainPageSwipeUI)this.MainPage).GetLeaderboardList());
+            IDictionary<CategoryJSON, DateTime> ldrTimestamps = (((MainPageSwipeUI)this.MainPage).GetLeaderboardTimestamps());
             if (ldrBoard != null) {
                 Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] = ldrBoard.Count;
                 int i = 0;
                 foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> board in ldrBoard) {
                     Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i] = JsonConvert.SerializeObject(board.Key);
                     Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] = JsonConvert.SerializeObject(board.Value);
+                    if (ldrTimestamps.ContainsKey(board.Key)) {
+                        Properties[PROPERTY_LEADERBOARD_TIMESTAMP + "_" + i] = ldrTimestamps[board.Key].ToString();
+                    }
                     i++;
                 }
             }
@@ -152,10 +157,10 @@ namespace ImageImprov
                 //((MainPageSwipeUI)this.MainPage).SetBallotQueue(loadedQueue);
                 GlobalStatusSingleton.persistedPreloadedBallots = loadedQueue;
             }
-            loadCategories();
+            loadLeaderboards();
         }
 
-        private void loadCategories() {
+        private void loadLeaderboards() {
             IDictionary<string, object> properties = Application.Current.Properties;
             // this gets called before the leaderboard page is instantiated. so we set it in GlobalStatusSingleton for later retrieval.
             if (Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE)) {
@@ -167,6 +172,7 @@ namespace ImageImprov
                 // most of the above failed. The reason is I wasn't converting the property to a string. this works though, so I'm not seeing a need to convert.
                 int listSize = (int)Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE];  
                 IDictionary<CategoryJSON, IList<LeaderboardJSON>> boards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>(listSize);
+                IDictionary<CategoryJSON, DateTime> timeStamps = new Dictionary<CategoryJSON, DateTime>(listSize);
                 for (int i = 0; i < listSize; i++) {
                     //if (Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST+"_"+i)) {
                     //boards.Add(JsonHelper.DeserializeToList<LeaderboardJSON>(
@@ -176,8 +182,17 @@ namespace ImageImprov
                     IList<LeaderboardJSON> value =
                         JsonHelper.DeserializeToList<LeaderboardJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] as string);
                     boards.Add(key, value);
+
+                    if (Properties.ContainsKey(PROPERTY_LEADERBOARD_TIMESTAMP+"_"+i)) {
+                        DateTime stamp;
+                        bool readSuccess = DateTime.TryParse(Properties[PROPERTY_LEADERBOARD_TIMESTAMP + "_" + i] as string, out stamp);
+                        if (readSuccess) {
+                            timeStamps[key] = stamp;
+                        }
+                    }
                 }
                 GlobalStatusSingleton.persistedLeaderboards = boards;
+                GlobalStatusSingleton.persistedLeaderboardTimestamps = timeStamps;
             }
         }
     }

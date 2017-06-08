@@ -39,6 +39,7 @@ namespace ImageImprov {
             Text = "Loading...",
             HorizontalOptions = LayoutOptions.FillAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
+            HorizontalTextAlignment = TextAlignment.Center,
             TextColor = Color.Black,
             BackgroundColor = Color.FromRgb(252, 213, 21),
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
@@ -48,6 +49,7 @@ namespace ImageImprov {
             Text = "Loading...",
             HorizontalOptions = LayoutOptions.FillAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
+            HorizontalTextAlignment = TextAlignment.Center,
             TextColor = Color.Black,
             BackgroundColor = Color.FromRgb(252, 213, 21),
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
@@ -406,22 +408,22 @@ namespace ImageImprov {
                     loadInstructions();
                     if (ballotImgsP.Count > 0) {
                         portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                        Grid.SetRowSpan(ballotImgsP[0], 6);
+                        Grid.SetRowSpan(ballotImgsP[0], 4);
                     }
 
                     if (ballotImgsP.Count > 1) {
-                        portraitView.Children.Add(ballotImgsP[1], 0, 6);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[1], 6);
+                        portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[1], 4);
                     }
 
                     if (ballotImgsP.Count > 2) {
-                        portraitView.Children.Add(ballotImgsP[2], 0, 13);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[2], 6);
+                        portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[2], 4);
                     }
 
                     if (ballotImgsP.Count > 3) {
-                        portraitView.Children.Add(ballotImgsP[3], 0, 19);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[3], 6);
+                        portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[3], 4);
                     }
                     
 #if DEBUG
@@ -430,6 +432,7 @@ namespace ImageImprov {
 
                     portraitView.Children.Add(challengeLabelP, 0, 8);
                     Grid.SetColumnSpan(challengeLabelP, 1);
+                    Grid.SetRowSpan(challengeLabelP, 2);
                     portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
                     Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
                     Grid.SetRowSpan(defaultNavigationButtonsP, 2);
@@ -854,7 +857,16 @@ namespace ImageImprov {
             {
                 lock (ballot) {
                     ClearContent();
-                    processBallotString(preloadedBallots.Dequeue());
+                    try {
+                        processBallotString(preloadedBallots.Dequeue());
+                    } catch (Exception ex) {
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine(ex.ToString());
+                    }
                 }
             });
             // should be ok at this point. however, sometimes an invalid status gets saved.
@@ -1106,50 +1118,40 @@ namespace ImageImprov {
         /// </summary>
         protected void checkImgOrderAndReorderAsNeeded() {
             // assume I am only called if orientation count == 2.
-            // assume: img lookup against the ballot is by object, not index
             // assume ballot count == 4
 
-            /*
-            if (ballotImgsP.Count != 4) { return; }
-            if (ballotImgsP[0].Width > ballotImgsP[0].Height) {
-                // first img is landscape
-                if (ballotImgsP[1].Width > ballotImgsP[1].Height) {
-                    return;
-                } else {
-                    if (ballotImgsP[2].Width > ballotImgsP[2].Height) {
-                        Image tmp = ballotImgsP[2];
-                        ballotImgsP.RemoveAt(2);
-                        ballotImgsP.Insert(1, tmp);
-                    } else {
-                        // fourth image must be the fourth landscape
-                        Image tmp = ballotImgsP[3];
-                        ballotImgsP.RemoveAt(3);
-                        ballotImgsP.Insert(1, tmp);
-                    }
-                }
+            // 3 Cases: 
+            // Case 1: [0].isPortrait == [1].isPortrait -> already in correct order. do nothing.
+            // Case 2: ([0].isPortrait != [1].isPortrait) && ([1] == [2]) 
+            // Case 3: ([0].isPortrait == [3].isPortrait)
+            // -> find the match. then swap.
+            int swap = 0;
+            if (ballot.ballots[0].isPortrait == ballot.ballots[1].isPortrait) {
+                return;
+            } else if (ballot.ballots[0].isPortrait == ballot.ballots[2].isPortrait) {
+                swap = 2;
             } else {
-                // first img in portrait
-                if (ballotImgsP[1].Width < ballotImgsP[1].Height) {
-                    return;
-                } else {
-                    if (ballotImgsP[2].Width < ballotImgsP[2].Height) {
-                        Image tmp = ballotImgsP[2];
-                        ballotImgsP.RemoveAt(2);
-                        ballotImgsP.Insert(1, tmp);
-                    } else {
-                        // fourth image must be the fourth landscape
-                        Image tmp = ballotImgsP[3];
-                        ballotImgsP.RemoveAt(3);
-                        ballotImgsP.Insert(1, tmp);
-                    }
-                }
+                swap = 3;
             }
-            */
+            if (swap>0) {
+                BallotCandidateJSON moving = ballot.ballots[swap];
+                ballot.ballots.RemoveAt(swap);
+                ballot.ballots.Insert(1, moving);
+                Image lImg = ballotImgsL[swap];
+                ballotImgsL.RemoveAt(swap);
+                ballotImgsL.Insert(1, lImg);
+                Image pImg = ballotImgsP[swap];
+                ballotImgsP.RemoveAt(swap);
+                ballotImgsP.Insert(1, pImg);
+            }
+
+
         }
 
         /// <summary>
         /// Currently, this also manages orientation Count.
         /// This is what is called during the initial image setup.
+        /// DEPREACTED.  Use setupImgsFromBallotCandidate.
         /// </summary>
         /// <param name="candidate"></param>
         /// <returns></returns>
@@ -1185,6 +1187,37 @@ namespace ImageImprov {
             return image;
         }
 
+        protected IList<Image> setupImgsFromBallotCandidate(BallotCandidateJSON candidate) {
+            // TEST
+            // TEST
+            // TEST
+            // Do this so I can confirm bad bids for harry
+            //SKBitmap testBitmap = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
+            // TEST
+            // TEST
+            // TEST
+
+            //Image image = new Image();
+            //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
+            IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromCandidate(candidate);
+            images[0].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
+            images[1].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
+
+            // This works. looks like a long press will be a pain in the ass.
+            TapGestureRecognizer tapGesture = new TapGestureRecognizer();
+            if (tapGesture == null) {
+                tapGesture = new TapGestureRecognizer();
+            }
+            tapGesture.Tapped += OnClicked;  
+            images[0].GestureRecognizers.Add(tapGesture);
+            images[1].GestureRecognizers.Add(tapGesture);
+
+            // orientation info is based on the relative w/h of the image.
+            // square images are all considered "landscape"
+            //candidate.orientation = isPortraitOrientation(candidate.imgStr);
+            orientationCount += candidate.isPortrait;
+            return images;
+        }
         protected Image setupImgFromStream(MemoryStream imgStream) {
             Image image = new Image();
             //
@@ -1249,13 +1282,25 @@ namespace ImageImprov {
                 // now handle ballot
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
+                    /*
+                    // this method does a double load. loading is one of the slowest things, so change.
+                    // also double counted orientation!
                     Image imgP = setupImgFromBallotCandidate(candidate);
                     ballotImgsP.Add(imgP);
 
                     Image imgL = setupImgFromBallotCandidate(candidate);
                     ballotImgsL.Add(imgL);
+                    */
+                    IList<Image> img = setupImgsFromBallotCandidate(candidate);
+                    ballotImgsP.Add(img[0]);
+                    ballotImgsL.Add(img[1]);
                 }
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " +orientationCount);
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
                 if (orientationCount == 2) {
                     checkImgOrderAndReorderAsNeeded();
                 }
@@ -1504,13 +1549,13 @@ namespace ImageImprov {
                 int voteNum = -1;
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
                     if (votedOn(candidate.bidId, ref voteNum)) {
-                        SKBitmap baseImg = GlobalSingletonHelpers.SKBitmapFromBytes(candidate.imgStr);
+                        SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation);
                         // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
                         SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
                     } else {
-                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.SKBitmapFromBytes(candidate.imgStr));
+                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation));
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
                     }

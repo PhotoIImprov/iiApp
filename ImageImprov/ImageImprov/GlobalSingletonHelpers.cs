@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;  // for debug assertions.
 using System.Threading;
@@ -10,6 +11,7 @@ using SkiaSharp;
 using System.IO;
 using System.Reflection;
 using ExifLib;
+using System.Net.Http;
 
 namespace ImageImprov {
     // a collection of static helper functions that are used throughout the app.
@@ -62,6 +64,32 @@ namespace ImageImprov {
             return (checkedStatus ? Aspect.AspectFit : Aspect.Fill);
         }
 
+        public static async Task<bool> SendLogData(string logInfo) {
+            Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync start");
+            string result = "fail";
+            
+            try {
+                HttpClient client = new HttpClient();
+
+                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "log");
+                // build vote!
+                request.Content = new StringContent(logInfo, Encoding.UTF8, "application/json");
+                request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+
+                HttpResponseMessage sendResult = await client.SendAsync(request);
+                if (sendResult.StatusCode == System.Net.HttpStatusCode.OK) {
+                    // do I need these?
+                    result = await sendResult.Content.ReadAsStringAsync();
+                }
+            } catch (Exception e) {
+                // we're doing nothing in the fail case.
+                Debug.WriteLine(e.ToString());
+            }
+            return true;
+        }
         //
         //
         //   BEGIN IMAGE PROCESSING HELPERS
@@ -70,11 +98,11 @@ namespace ImageImprov {
         //
         //
 
-        /// <summary>
-        /// Convenience method for converting a given SKImage to a Xamarin Image UI Component.
-        /// </summary>
-        /// <param name="inImg">A valid SKImage</param>
-        /// <returns>A Xamarin.Forms.Image object based on the passed in SKImage</returns>
+                /// <summary>
+                /// Convenience method for converting a given SKImage to a Xamarin Image UI Component.
+                /// </summary>
+                /// <param name="inImg">A valid SKImage</param>
+                /// <returns>A Xamarin.Forms.Image object based on the passed in SKImage</returns>
         public static Image SKImageToXamarinImage(SKImage inImg) {
             // yes, there should be a way to do this without the multiple back and forth to bytes.
             // no, it's not worth my time to try and figure it out.
@@ -399,6 +427,35 @@ namespace ImageImprov {
             //return result;
             return res;
         }
+
+        /// <summary>
+        /// Additionally sets the rotation(orientation) in the candidate object.
+        /// </summary>
+        /// <param name="candidate"></param>
+        /// <returns></returns>
+        public static IList<Image> buildTwoFixedRotationImageFromCandidate(BallotCandidateJSON candidate) {
+            IList<Image> res = new List<Image>(2);
+            res.Add(new Image());
+            res.Add(new Image());
+            SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation);
+            if (rotatedBmp != null) {
+                //result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
+                SKImage img = SKImage.FromBitmap((SKBitmap)rotatedBmp);
+                res[0] = SKImageToXamarinImage(img);
+                res[1] = SKImageToXamarinImage(img);
+            }
+            if (rotatedBmp != null) {
+                // > means square images are treated as landscape.
+                if (rotatedBmp.Height > rotatedBmp.Width) {
+                    candidate.isPortrait = BallotCandidateJSON.PORTRAIT;
+                } else {
+                    candidate.isPortrait = BallotCandidateJSON.LANDSCAPE;
+                }
+            }
+            return res;
+        }
+
+
         /// <summary>
         /// Additionally sets the rotation(orientation) in the candidate object.
         /// </summary>
@@ -418,6 +475,7 @@ namespace ImageImprov {
             }
             return result;
         }
+
         //
         //
         //   END IMAGE PROCESSING HELPERS

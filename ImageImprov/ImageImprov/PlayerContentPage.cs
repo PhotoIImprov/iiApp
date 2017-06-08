@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Diagnostics;  // for debug assertions.
@@ -39,6 +40,7 @@ namespace ImageImprov
         const int LAYOUT_NEW_DEVICE = 6;
         int activeLayout = LAYOUT_NOT_SET;
 
+        const double BACKGROUND_VERTICAL_EXTENT = 0.8;
 
         public static string REGISTRATION_FAILURE = "Registration failure";
         public static string BAD_PASSWORD_LOGIN_FAILURE = "Sorry, invalid username/password";
@@ -196,10 +198,11 @@ namespace ImageImprov
             // Object creation portion done...   Determine what ui to fire up! :)
 
             if (GlobalStatusSingleton.maintainLogin) {
-                if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
-                    Content = createAnonLoggedInLayout();
-                } else { 
+                if (isEmailAddress(GlobalStatusSingleton.username)) {
                     Content = createPreConnectAutoLoginLayout();
+                } else {
+                    // anonymous user
+                    Content = createAnonLoggedInLayout();
                 }
                 // fire a loginRequestEvent.
                 if (MyLogin != null) {
@@ -208,12 +211,13 @@ namespace ImageImprov
             } else {
                 // this is either the do not maintain login path, or the new user path.
                 // neither of these paths fires a login event in the constructor.
-                if ((GlobalStatusSingleton.username == null) || (GlobalStatusSingleton.username.Equals(""))) {
-                    // new user/device path.
-                    Content = createNewDeviceLayout();
-                } else {
+
+                if (isEmailAddress(GlobalStatusSingleton.username)) {
                     // force relogin path.
                     Content = createForceLoginLayout();
+                } else {
+                    // new user/device path.
+                    Content = createNewDeviceLayout();
                 }
             }
         }
@@ -225,6 +229,7 @@ namespace ImageImprov
             // need to have portrait mode local rather than global or i can't
             // tell if I've updated for this page yet or not.
             base.OnSizeAllocated(width, height);
+            
             if ((widthCheck != width) || (heightCheck != height)) {
                 widthCheck = width;
                 heightCheck = height;
@@ -360,7 +365,7 @@ namespace ImageImprov
             // always assume background is for one of the others... so rebuild.
             // none of them are reachable if I get here unless I logout, where I handle this again.
             backgroundImg = null;
-            buildBackground(.7);
+            buildBackground(BACKGROUND_VERTICAL_EXTENT);
             ((AbsoluteLayout)autoLoginLayout).Children.Clear();
             if (backgroundImg != null) {
                 ((AbsoluteLayout)autoLoginLayout).Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
@@ -479,6 +484,8 @@ namespace ImageImprov
         }
 
         protected Layout<View> createAnonLoggedInLayout() {
+            loggedInLabel.Text = "logged in anonymously";
+
             activeLayout = LAYOUT_CONNECTED_ANON;
             gotoRegistrationButton = new Button {
                 Text = "Register me now!",
@@ -496,14 +503,15 @@ namespace ImageImprov
                 Children =
                 {
                     loggedInLabel,
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = " ", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Register for these benefits: ", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play from any device", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Play with friends", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Secure your account", TextColor = Color.Black, },
-                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "  Enable password recovery", TextColor = Color.Black, },
+                    versionLabel,
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting           ", TextColor = Color.Black, BackgroundColor=Color.White, },
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos    ", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Start, Text = "Register for these benefits: ", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Start, Text = "  Play from any device       ", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Start, Text = "  Play with friends          ", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Start, Text = "  Secure your account        ", TextColor = Color.Black, BackgroundColor=Color.White,},
+                    new Label { HorizontalTextAlignment = TextAlignment.Start, Text = "  Enable password recovery   ", TextColor = Color.Black, BackgroundColor=Color.White,},
                     gotoRegistrationButton,
                 }
             };
@@ -511,11 +519,15 @@ namespace ImageImprov
                 createDefaultNavigationButtons();
             }
             anonLoggedInLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(16, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             anonLoggedInLayout.Children.Add(upperPortionOfGrid, 0, 0);
-            anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
+            anonLoggedInLayout.Children.Add(CenterConsole, 0, 1);  // object, col, row
+            anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 2);  // object, col, row
 
+            backgroundImg = null;
+            buildBackground(BACKGROUND_VERTICAL_EXTENT);
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
                 fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
@@ -560,7 +572,8 @@ namespace ImageImprov
             };
             usernameEntry.Text = "";
 
-            buildBackground(.9);
+            backgroundImg = null; // generally coming from a page with < full extent.
+            buildBackground();
 
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
@@ -579,11 +592,19 @@ namespace ImageImprov
                 Debug.WriteLine("DHB:PlayerContentPage:goHome fyi - not logged in");
             }
 
+            /*
             if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
                 // anonymous user
                 Content = createAnonLoggedInLayout();
             } else {
                 Content = createAutoLoginLayout();
+            }
+            */
+            if (isEmailAddress(GlobalStatusSingleton.username)) {
+                Content = createAutoLoginLayout();
+            } else {
+                // anonymous user
+                Content = createAnonLoggedInLayout();
             }
         }
 
@@ -600,11 +621,19 @@ namespace ImageImprov
                 if (TokenReceived != null) {
                     TokenReceived(this, eDummy);
                 }
+                /* unreliable as uuid can change if there are save issues or an uninstall.
                 if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
                     // anonymous user
                     Content = createAnonLoggedInLayout();
                 } else {
                     Content = createAutoLoginLayout();
+                }
+                */
+                if (isEmailAddress(GlobalStatusSingleton.username)) {
+                    Content = createAutoLoginLayout();
+                } else {
+                    // anonymous user
+                    Content = createAnonLoggedInLayout();
                 }
                 loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
 
@@ -734,20 +763,24 @@ namespace ImageImprov
 
 
         protected async virtual void OnRegisterNow(object sender, EventArgs e) {
-            string registrationResult = await requestRegistrationAsync();
-            if (registrationResult.Equals(REGISTRATION_FAILURE)) {
-                blankRowLabel.Text = registrationResult;
-            } else {
-                // registration success. Send a login request message.
-                if (MyLogin != null) {
-                    MyLogin(this, eDummy);
-                }
+            if (isEmailAddress(GlobalStatusSingleton.username) || (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID))) {
+                string registrationResult = await requestRegistrationAsync();
+                if (registrationResult.Equals(REGISTRATION_FAILURE)) {
+                    blankRowLabel.Text = registrationResult;
+                } else {
+                    // registration success. Send a login request message.
+                    if (MyLogin != null) {
+                        MyLogin(this, eDummy);
+                    }
 
-                Content = createAutoLoginLayout();
-                loggedInLabel.Text = "Registration success! logging in...";
-                if (RegisterSuccess != null) {
-                    RegisterSuccess(this, eDummy);
+                    Content = createAutoLoginLayout();
+                    loggedInLabel.Text = "Registration success! logging in...";
+                    if (RegisterSuccess != null) {
+                        RegisterSuccess(this, eDummy);
+                    }
                 }
+            } else {
+                loggedInLabel.Text = "Please register with a valid email address";
             }
         }
 
@@ -868,7 +901,9 @@ namespace ImageImprov
         /// <returns>True for an email address, false otherwise</returns>
         private static bool isEmailAddress(string testAddress) {
             // try with a test against this regex: ^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$
-            return true;
+            string pattern = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
+            Match m = Regex.Match(testAddress, pattern, RegexOptions.IgnoreCase);
+            return m.Success;
         }
 
         /* lives and works in teh KeyPageNavigator
@@ -885,7 +920,8 @@ namespace ImageImprov
 
         protected virtual void OnLogoutClicked(object sender, EventArgs e) {
             // Anonymous users can't logout...
-            if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
+            //if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
+            if (!isEmailAddress(GlobalStatusSingleton.username)) {
                 // can't logout in this scenario...
                 loggedInLabel.Text = "Sorry, Anonymous users can't log out.";
             } else {
@@ -901,6 +937,9 @@ namespace ImageImprov
 
         public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
             return CenterConsole.LeaderboardPage.GetLeaderboardList();
+        }
+        public IDictionary<CategoryJSON, DateTime> GetLeaderboardTimestamps() {
+            return CenterConsole.LeaderboardPage.GetLeaderboardTimestamps();
         }
 
     }  // class

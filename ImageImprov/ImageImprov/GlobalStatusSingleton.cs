@@ -92,6 +92,7 @@ namespace ImageImprov
 
         // Key is CategoryJson, value is the associated leaderboard.
         public static IDictionary<CategoryJSON, IList<LeaderboardJSON>> persistedLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
+        public static IDictionary<CategoryJSON, DateTime> persistedLeaderboardTimestamps = new Dictionary<CategoryJSON, DateTime>();
 
         public static AuthenticationToken authToken;
 
