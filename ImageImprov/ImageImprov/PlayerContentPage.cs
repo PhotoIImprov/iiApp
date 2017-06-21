@@ -202,7 +202,11 @@ namespace ImageImprov
                     Content = createPreConnectAutoLoginLayout();
                 } else {
                     // anonymous user
-                    Content = createAnonLoggedInLayout();
+
+                    // No. Not logged in at this point!
+                    //Content = createAnonLoggedInLayout();
+                    // don't think I should differ here!
+                    Content = createPreConnectAutoLoginLayout();
                 }
                 // fire a loginRequestEvent.
                 if (MyLogin != null) {
@@ -233,6 +237,14 @@ namespace ImageImprov
             if ((widthCheck != width) || (heightCheck != height)) {
                 widthCheck = width;
                 heightCheck = height;
+                // force a rebuild. 
+                // cant just set backgroundImg to null as it is part of the layout OnSizeAllocated is iterating over
+                // and we'll throw a InvalidOperationException
+
+                // ok. this fubars, but is also what currently allows proper background. 
+                // want to push to app store, so leaving in the state that doesn't crash, but has improper background
+                //backgroundImg = null;
+                // hmm... i can just remove the if null constraint... -apparently, not kosher either...
                 if (backgroundImg == null) {
                     if (activeLayout == LAYOUT_PRE_CONNECT_AUTO_LOGIN) {
                         Content = createPreConnectAutoLoginLayout();
@@ -255,11 +267,7 @@ namespace ImageImprov
             if (backgroundImg == null) {
                 int w = (int)Width;
                 int h = (int)Height;
-                if (w > h) {
-                    int tmp = w;
-                    w = h;
-                    h = w;
-                }
+                // don't switch w or h here.  we are building the correct image for the current w,h setting.
                 backgroundImg = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, this.GetType().GetTypeInfo().Assembly, w, h, verticalExtent);
             }
         }
@@ -305,8 +313,8 @@ namespace ImageImprov
             controls.Children.Add(upperPortionOfGrid, 0, 0);
             //autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
 
-            buildBackground();
             preConnectAutoLoginLayout.Children.Clear();
+            buildBackground();
             if (backgroundImg != null) {
                 preConnectAutoLoginLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
@@ -362,11 +370,12 @@ namespace ImageImprov
             controls.Children.Add(CenterConsole, 0, 8);
             controls.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 
+            ((AbsoluteLayout)autoLoginLayout).Children.Clear();
             // always assume background is for one of the others... so rebuild.
             // none of them are reachable if I get here unless I logout, where I handle this again.
+            // clear backgroundImg AFTER layout, so layout doesnot have an invalid state.
             backgroundImg = null;
             buildBackground(BACKGROUND_VERTICAL_EXTENT);
-            ((AbsoluteLayout)autoLoginLayout).Children.Clear();
             if (backgroundImg != null) {
                 ((AbsoluteLayout)autoLoginLayout).Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
@@ -526,9 +535,9 @@ namespace ImageImprov
             anonLoggedInLayout.Children.Add(CenterConsole, 0, 1);  // object, col, row
             anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 2);  // object, col, row
 
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
             backgroundImg = null;
             buildBackground(BACKGROUND_VERTICAL_EXTENT);
-            AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
                 fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
@@ -572,10 +581,9 @@ namespace ImageImprov
             };
             usernameEntry.Text = "";
 
+            AbsoluteLayout fullLayout = new AbsoluteLayout();
             backgroundImg = null; // generally coming from a page with < full extent.
             buildBackground();
-
-            AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
                 fullLayout.Children.Add(backgroundImg, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
@@ -608,6 +616,27 @@ namespace ImageImprov
             }
         }
 
+        private void LoginSuccess() {
+            if (TokenReceived != null) {
+                TokenReceived(this, eDummy);
+            }
+            /* unreliable as uuid can change if there are save issues or an uninstall.
+            if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
+                // anonymous user
+                Content = createAnonLoggedInLayout();
+            } else {
+                Content = createAutoLoginLayout();
+            }
+            */
+            if (isEmailAddress(GlobalStatusSingleton.username)) {
+                Content = createAutoLoginLayout();
+            } else {
+                // anonymous user
+                Content = createAnonLoggedInLayout();
+            }
+            loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
+        }
+
         protected async virtual void OnMyLogin(object sender, EventArgs e) {
             //string loginResult = await requestLoginAsync();
             loggedInLabel.Text = " Connecting... ";
@@ -616,26 +645,24 @@ namespace ImageImprov
             if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
                 loggedInLabel.Text = loginResult +"("+loginAttemptCounter+")";
                 // if I was in autologin and failed (may have happened from a pwd theft, or because of a db wipe in testing), need to reset ui.
-                Content = createForceLoginLayout();
-            } else {
-                if (TokenReceived != null) {
-                    TokenReceived(this, eDummy);
-                }
-                /* unreliable as uuid can change if there are save issues or an uninstall.
-                if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
-                    // anonymous user
-                    Content = createAnonLoggedInLayout();
-                } else {
-                    Content = createAutoLoginLayout();
-                }
-                */
                 if (isEmailAddress(GlobalStatusSingleton.username)) {
-                    Content = createAutoLoginLayout();
+                    Content = createForceLoginLayout();
                 } else {
-                    // anonymous user
-                    Content = createAnonLoggedInLayout();
+                    // I'm in the anon case. Therefore, I only autologin.
+                    // therefore, I need to repeat until success...
+                    bool nologin = true;
+                    while (nologin) {
+                        loginResult = await requestTokenAsync();
+                        if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
+                            loggedInLabel.Text = loginResult + "(" + loginAttemptCounter + ")";
+                        } else {
+                            nologin = false;
+                        }
+                    }
+                    LoginSuccess();
                 }
-                loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
+            } else {
+                LoginSuccess();
 
             }
         }
@@ -900,10 +927,13 @@ namespace ImageImprov
         /// <param name="testAddress">The string to test against</param>
         /// <returns>True for an email address, false otherwise</returns>
         private static bool isEmailAddress(string testAddress) {
+            /*
             // try with a test against this regex: ^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$
             string pattern = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
             Match m = Regex.Match(testAddress, pattern, RegexOptions.IgnoreCase);
             return m.Success;
+            */
+            return GlobalSingletonHelpers.isEmailAddress(testAddress);
         }
 
         /* lives and works in teh KeyPageNavigator

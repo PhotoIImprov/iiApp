@@ -198,9 +198,13 @@ namespace ImageImprov {
                     // before firing request, check that this leaderboard is not already in the closed state.
                     if (category.end > timeOfRequest) {
                         // ending is still in the future.
-                        RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
-                        if (RequestLeaderboard != null) {
-                            RequestLeaderboard(this, evtArgs);
+                        // hmm. if I"m called by managePersistedLeaderboard, this can occur before I have an authToken...
+                        // so... check for auth token. if I don't have one, the OnCategoryLoad process catches calls here.
+                        if (GlobalStatusSingleton.authToken != null) {
+                            RequestLeaderboardEventArgs evtArgs = new RequestLeaderboardEventArgs { Category = category, };
+                            if (RequestLeaderboard != null) {
+                                RequestLeaderboard(this, evtArgs);
+                            }
                         }
                     }
 #if DEBUG
@@ -364,7 +368,8 @@ namespace ImageImprov {
                         RequestLeaderboard(this, evtArgs);
                     }
                 } else {
-                    // @todo check to see if I should reload this category anyway.
+                    // check to see if I should reload this category anyway.
+                    reloadAnalysis(category);
                 }
             }
         }

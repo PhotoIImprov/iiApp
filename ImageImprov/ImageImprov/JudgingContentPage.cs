@@ -833,7 +833,10 @@ namespace ImageImprov {
             // can't lock in an async fcn.
             // can't update challengeLabel text here as it generates a ui race condition.
             // This puts rubbish up anyway.  erase.
-            string ignorableResult = await requestChallengeNameAsync();
+            string ignorableResult = LOAD_FAILURE;
+            while (ignorableResult.Equals(LOAD_FAILURE)) {
+                ignorableResult = await requestChallengeNameAsync();
+            }
             //challengeLabelP.Text = await requestChallengeNameAsync();
             //challengeLabelL.Text = challengeLabelP.Text;
             if (CategoryLoadSuccess != null) {
@@ -925,6 +928,7 @@ namespace ImageImprov {
                             //GlobalStatusSingleton.votingCategoryId = cat.categoryId;
                             //GlobalStatusSingleton.votingCategoryDescription = cat.description;
                             GlobalStatusSingleton.votingCategories.Add(cat);
+                            // Need more than just this. This relies on there being an open voting category.
                             result = cat.description;
                         } else if (cat.state.Equals(CategoryJSON.UPLOAD)) {
                             //GlobalStatusSingleton.uploadingCategoryId = cat.categoryId;
@@ -935,6 +939,10 @@ namespace ImageImprov {
                             //GlobalStatusSingleton.mostRecentClosedCategoryDescription = cat.description;
                             GlobalStatusSingleton.closedCategories.Add(cat);
                         }
+                    }
+                    // If below is true, we are in a no voting category open condition...
+                    if (result.Equals(LOAD_FAILURE)) {
+                        result = "No open voting categories";
                     }
                 } else {
                     // no ok back from the server! gahh.

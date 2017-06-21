@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.imageimprov" android:versionCode="1" android:versionName="0.1.0.0">
 	<uses-sdk android:minSdkVersion="15" />
-	<application android:label="ImageImprov.Droid" >
+  <!-- package android:name="com.imageimprov" / -->
+  <!-- application android:label="Image Improv" android:icon="@drawable/ii_mainLogo" -->
+  <application android:label="Image Improv">
     <!-- getting a null pointer error around the action bar.  does this make it go away?? -->
     <!-- NOPE. not how to turn action bar off. style name="ActionBarPopupThemeOverlay" parent="Theme.AppCompat.Light.NoActionBar">
       <item name="windowActionBar">false</item>
@@ -9,4 +11,6 @@
   </application>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.CAMERA" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

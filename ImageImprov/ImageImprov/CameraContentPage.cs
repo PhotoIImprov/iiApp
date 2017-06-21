@@ -40,7 +40,7 @@ namespace ImageImprov {
         // bound to data in GlobalStatusSingleton
         // @todo bind to dat in globalstatussingleton
 
-            // Leverage the buttons to do this...
+        // Leverage the buttons to do this...
         //public Label categoryLabelP;
         //public Label categoryLabelL;
 
@@ -48,8 +48,11 @@ namespace ImageImprov {
         //Label lastActionResultLabelP;
         //Label lastActionResultLabelL;
 
+        // this may be better as a dictionary...
+        IList<CategoryJSON> loadedCategories = new List<CategoryJSON>();
         IList<Button> takePictureP = new List<Button>();
         IList<Button> takePictureL = new List<Button>();
+
         // @todo enable pictures from the camera roll
         //Button selectPictureFromCameraRoll;
         Button submitCurrentPictureP;
@@ -193,7 +196,13 @@ namespace ImageImprov {
                 GlobalStatusSingleton.inPortraitMode = false;
                 //buildLandscapeView();
                 //Content = landscapeView;
-
+                if (latestTakenImgL == null) {
+                    // build default background
+                    latestTakenImgL = GlobalSingletonHelpers.buildBackground(
+                        backgroundPatternFilename, assembly, (int)width, (int)height);
+                    // unfortunately - this means I have to trigger a layout rebuild.
+                    buildLandscapeView();
+                }
                 if (layoutL != null) {
                     Content = layoutL;
                 } else if (landscapeView != null) {
@@ -205,6 +214,11 @@ namespace ImageImprov {
                 GlobalStatusSingleton.inPortraitMode = true;
                 //buildPortraitView();
                 //Content = portraitView;
+                if (latestTakenImgP == null) {
+                    latestTakenImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
+                    // unfortunately - this means I have to trigger a layout rebuild.
+                    buildPortraitView();
+                }
                 if (layoutP != null) {
                     Content = layoutP;
                 } else if (portraitView != null) {
@@ -248,7 +262,10 @@ namespace ImageImprov {
             //portraitView.Children.Add(lastActionResultLabelP, 0, 9);
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 10);
 
-            if (latestTakenPath.Equals("")) {
+            /* w,h are not consistent when rotated ie h=616 portrait, but w=640 landscape
+             * so build default background in OnSizeAllocated, and image based background here.
+            //if (latestTakenPath.Equals("")) {
+            if (latestTakenImgP == null) { 
                 //int w = (Width > -1) ? (int)Width : 720;
                 //int h = ((Height > -1) ? (int)Height : 1280);
                 int w = (int)Width;
@@ -261,6 +278,8 @@ namespace ImageImprov {
                 }
                 latestTakenImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, w, h);
             } else {
+                */
+            if (!latestTakenPath.Equals("")) { 
                 latestTakenImgP = GlobalSingletonHelpers.buildBackgroundFromBytes(latestTakenImgBytes, assembly, (int)Width, (int)Height, 
                     GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             }
@@ -326,20 +345,29 @@ namespace ImageImprov {
             landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);
             //Grid.SetColumnSpan(defaultNavigationButtonsL, 1);
 
-            if (latestTakenPath.Equals("")) {
+            /* Moved to OnSizeAllocated to handle the disparate w,h amounts by rotation.
+            //if (latestTakenPath.Equals("")) {
+            if (latestTakenImgL == null) { 
                 // unfortunately, this just results in a missized bitmap.
                 //int w = (Width > -1) ? (int)Width : 1280;
                 //int h = ((Height > -1) ? (int)Height : 720);
                 int w = (int)Width;
                 int h = (int)Height;
                 // we maybe in portrait mode. switch w and h if we are.
-                if (h>w) {
-                    int tmp = w;
-                    w = h;
-                    h = tmp;
+                // actually w and h aren't the w->h->w is not true. (ie the pixel ranges change with rotation).
+                // this is why background works when I set it in OnSizeAllocated, but not here!
+                if (h > w) {
+                    //int tmp = w;
+                    //w = h;
+                    //h = tmp;
+                    // skip!
+                } else {
+                    latestTakenImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, w, h, GlobalStatusSingleton.PATTERN_PCT, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
                 }
-                latestTakenImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, w, h, GlobalStatusSingleton.PATTERN_PCT, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             } else {
+                */
+            if (!latestTakenPath.Equals("")) { 
+                // user has taken a photo, so rebuild the background with it.
                 latestTakenImgL = GlobalSingletonHelpers.buildBackgroundFromBytes(latestTakenImgBytes, assembly, (int)Width, (int)Height,
                     GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             }
@@ -378,27 +406,38 @@ namespace ImageImprov {
             if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
                 //categoryLabelP.Text = "Today's category: " + GlobalStatusSingleton.uploadingCategories[0].description;
                 //categoryLabelL.Text = "Today's category: " + GlobalStatusSingleton.uploadingCategories[0].description;
+                if ((takePictureL.Count >0) && (loadedCategories.Count == 0)) {
+                    // clear out the no contests button
+                    takePictureP.Clear();
+                    takePictureL.Clear();
+                }
                 foreach (CategoryJSON category in GlobalStatusSingleton.uploadingCategories) {
-                    Button pButton = new Button {
-                        Text = " " + category.description + " - Take Picture Now! ",
-                        HorizontalOptions = LayoutOptions.CenterAndExpand,
-                        VerticalOptions = LayoutOptions.FillAndExpand,
-                        TextColor = Color.Black,
-                        BackgroundColor = Color.FromRgb(252, 213, 21),
-                        FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-                        Command = new Command(o => ShouldTakePicture()),
-                    };
-                    takePictureP.Add(pButton);
-                    Button lButton = new Button {
-                        Text = " " + category.description + " - Take Picture Now! ",
-                        HorizontalOptions = LayoutOptions.CenterAndExpand,
-                        VerticalOptions = LayoutOptions.FillAndExpand,
-                        TextColor = Color.Black,
-                        BackgroundColor = Color.FromRgb(252, 213, 21),
-                        FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-                        Command = new Command(o => ShouldTakePicture()),
-                    };
-                    takePictureL.Add(lButton);
+                    // make sure we aren't doubling up...
+                    if (!loadedCategories.Contains(category)) {
+                        Button pButton = new Button
+                        {
+                            Text = " " + category.description + " - Take Picture Now! ",
+                            HorizontalOptions = LayoutOptions.CenterAndExpand,
+                            VerticalOptions = LayoutOptions.FillAndExpand,
+                            TextColor = Color.Black,
+                            BackgroundColor = Color.FromRgb(252, 213, 21),
+                            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+                            Command = new Command(o => ShouldTakePicture()),
+                        };
+                        takePictureP.Add(pButton);
+                        Button lButton = new Button
+                        {
+                            Text = " " + category.description + " - Take Picture Now! ",
+                            HorizontalOptions = LayoutOptions.CenterAndExpand,
+                            VerticalOptions = LayoutOptions.FillAndExpand,
+                            TextColor = Color.Black,
+                            BackgroundColor = Color.FromRgb(252, 213, 21),
+                            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+                            Command = new Command(o => ShouldTakePicture()),
+                        };
+                        takePictureL.Add(lButton);
+                        loadedCategories.Add(category);
+                    }
                 }
             } else {
                 //categoryLabelP.Text = "No open contest";
@@ -424,6 +463,7 @@ namespace ImageImprov {
                     IsEnabled = false,
                 };
                 takePictureL.Add(lButton);
+                // loadedCategories stays empty, and we use the difference to know to clear this out.
             }
             buildUI();
         }

@@ -22,12 +22,13 @@ namespace ImageImprov {
         }
 
         protected void buildUI() {
-            maintainLoginCheckbox = new CheckBox { Text = "Stay logged in on restart", IsChecked = GlobalStatusSingleton.maintainLogin, };
-            maintainLoginCheckbox.CheckChanged += (sender, args) =>
-            {
-                OnCheckBoxTapped(sender, new EventArgs());
-            };
-            
+            if (GlobalSingletonHelpers.isEmailAddress(GlobalStatusSingleton.username)) {
+                maintainLoginCheckbox = new CheckBox { Text = "Stay logged in on restart", IsChecked = GlobalStatusSingleton.maintainLogin, };
+                maintainLoginCheckbox.CheckChanged += (sender, args) =>
+                {
+                    OnCheckBoxTapped(sender, new EventArgs());
+                };
+            }
             aspectOrFillCheckbox = new CheckBox {
                 Text = "Constrain img to original aspect ratio",
                 IsChecked = GlobalSingletonHelpers.AspectSettingToBool(GlobalStatusSingleton.aspectOrFillImgs),
@@ -43,7 +44,9 @@ namespace ImageImprov {
             for (int i = 0; i < 10; i++) {
                 settingsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
-            settingsGrid.Children.Add(maintainLoginCheckbox, 0, 4);
+            if (maintainLoginCheckbox != null) {
+                settingsGrid.Children.Add(maintainLoginCheckbox, 0, 4);
+            }
             settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
             settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 

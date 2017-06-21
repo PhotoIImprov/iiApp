@@ -2,16 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="1.0" package="ImageImprov.Droid">
   <!--suppress UsesMinSdkAttributes-->
   <uses-sdk android:minSdkVersion="15" />
+  <!-- application android:label="Image Improv" android:icon="@drawable/ii_mainLogo" -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.CAMERA" />
-  <application android:label="ImageImprov.Droid" android:name="android.app.Application" android:allowBackup="true" android:icon="@drawable/icon" android:debuggable="true">
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <application android:label="Image Improv" android:name="android.app.Application" android:allowBackup="true" android:icon="@drawable/icon" android:debuggable="true">
     <!-- getting a null pointer error around the action bar.  does this make it go away?? -->
     <!-- NOPE. not how to turn action bar off. style name="ActionBarPopupThemeOverlay" parent="Theme.AppCompat.Light.NoActionBar">
       <item name="windowActionBar">false</item>
     </style -->
-    <activity android:configChanges="orientation|screenSize" android:icon="@drawable/icon" android:label="ImageImprov" android:name="md55e160bfb44375ae0ec1cf841d5f9d9d8.MainActivity">
+    <activity android:configChanges="orientation|screenSize" android:icon="@drawable/icon" android:label="ImageImprov" android:screenOrientation="fullSensor" android:name="md55e160bfb44375ae0ec1cf841d5f9d9d8.MainActivity" />
+    <activity android:noHistory="true" android:theme="@style/MyTheme.Splash" android:name="md55e160bfb44375ae0ec1cf841d5f9d9d8.SplashActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

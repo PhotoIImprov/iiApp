@@ -12,6 +12,7 @@ using System.IO;
 using System.Reflection;
 using ExifLib;
 using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace ImageImprov {
     // a collection of static helper functions that are used throughout the app.
@@ -44,6 +45,13 @@ namespace ImageImprov {
             return result;
         }
 
+        public static bool isEmailAddress(string testAddress) {
+            // try with a test against this regex: ^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$
+            string pattern = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
+            Match m = Regex.Match(testAddress, pattern, RegexOptions.IgnoreCase);
+            return m.Success;
+        }
+
         /// <summary>
         /// Given an input Aspect converts to a bool with
         /// Aspect.AspectFit == true, Aspect.Fill == false and Aspect.AspectFill == false.
@@ -69,20 +77,25 @@ namespace ImageImprov {
             string result = "fail";
             
             try {
-                HttpClient client = new HttpClient();
+                // only send log data if we are authenticated.
+                if (GlobalStatusSingleton.authToken != null) {
+                    HttpClient client = new HttpClient();
 
-                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                    client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "log");
-                // build vote!
-                request.Content = new StringContent(logInfo, Encoding.UTF8, "application/json");
-                request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "log");
+                    LoggingJSON log = new LoggingJSON();
+                    log.msg = logInfo;
+                    string jsonQuery = JsonConvert.SerializeObject(log);
+                    request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                    request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
 
-                HttpResponseMessage sendResult = await client.SendAsync(request);
-                if (sendResult.StatusCode == System.Net.HttpStatusCode.OK) {
-                    // do I need these?
-                    result = await sendResult.Content.ReadAsStringAsync();
+                    HttpResponseMessage sendResult = await client.SendAsync(request);
+                    if (sendResult.StatusCode == System.Net.HttpStatusCode.OK) {
+                        // do I need these?
+                        result = await sendResult.Content.ReadAsStringAsync();
+                    }
                 }
             } catch (Exception e) {
                 // we're doing nothing in the fail case.

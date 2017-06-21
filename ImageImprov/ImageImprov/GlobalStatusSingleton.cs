@@ -66,6 +66,9 @@ namespace ImageImprov
         /// Tracks how many images taken on this device for image improv so we don't overwrite previous images.
         /// </summary>
         public static int imgsTakenTracker = 0;
+
+        public static Color backgroundColor = Color.FromRgb(0, 0, 0);
+
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
         /// END PREFERENCES SECTION
