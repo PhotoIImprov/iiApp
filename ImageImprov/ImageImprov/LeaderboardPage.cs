@@ -59,12 +59,17 @@ namespace ImageImprov {
         //long activeCategory;
 
         //IList<LeaderboardJSON> leaders;
+        // originally categoryJSON, but this means there's no match in ContainsKey when checking dicts.
         IDictionary<CategoryJSON, IList<LeaderboardJSON>> listOfLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
         IDictionary<CategoryJSON, DateTime> leaderboardUpdateTimestamps = new Dictionary<CategoryJSON, DateTime>();
 
         // hmm... need to be careful is we delete from listOfLeaderboards.
         //int activeLeaderboardIndex;
+
+        // activeLeaderboard MUST be the categoryJSON, or we have issues!
         CategoryJSON activeLeaderboard = null;
+        //string activeLeaderboard;
+
         // First button is P, Second button is L
         Tuple<Button, Button> activeButton = null;
         IDictionary<long, Button> selectLeaderboardDictP = new Dictionary<long, Button>();
@@ -103,7 +108,7 @@ namespace ImageImprov {
             // This class is hooked up to JudgingContentPage to tell me when the categories for leaderboards are available.
             // That happens in MainPageSwipeUI.
             leaderImgsP = new List<Image>();
-            leaderImgsL = new List<Image>();
+            //leaderImgsL = new List<Image>();
 
             // and to listen for leaderboard requests; done as event so easy to process async.
             this.RequestLeaderboard += new EventHandler(OnRequestLeaderboard);
@@ -145,7 +150,7 @@ namespace ImageImprov {
                 //   if < 5 mins, play the clavicle game...
                 startTime = DateTime.Now;
                 // Leaderboard loading is REALLY expensive.  Only do it if it's changed!
-                if (activeLeaderboard == newCategory) {
+                if (activeLeaderboard.Equals(newCategory.description)) {
                     // no load case!
                 } else {
                     if (activeButton != null) {
@@ -192,7 +197,7 @@ namespace ImageImprov {
         /// </summary>
         private void reloadAnalysis(CategoryJSON category) {
             DateTime timeOfRequest = DateTime.Now;
-
+            
             if (leaderboardUpdateTimestamps.ContainsKey(category)) {
                 if ((timeOfRequest - leaderboardUpdateTimestamps[category]) > MIN_TIME_BETWEEN_RELOADS) {
                     // before firing request, check that this leaderboard is not already in the closed state.
@@ -228,8 +233,11 @@ namespace ImageImprov {
         // cant update the ui objects in a separate thread.
         private void drawLeaderImages() {
             IList<Image> pImgs = new List<Image>();
-            IList<Image> lImgs = new List<Image>();
-            var t = Task.Run(() => { drawLeaderImagesActual(ref pImgs, ref lImgs); });
+            //IList<Image> lImgs = new List<Image>();
+            var t = Task.Run(() => {
+                //drawLeaderImagesActual(ref pImgs, ref lImgs);
+                drawLeaderImagesActual(ref pImgs);
+            });
             t.Wait();
 
             Device.BeginInvokeOnMainThread(() =>
@@ -241,27 +249,35 @@ namespace ImageImprov {
                     // need to clear the stack as well or the image is held onto...
                     leaderStackP.Children.Clear();
                 }
+                /*
                 if (leaderImgsL == null) {
                     leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
                 } else {
                     leaderImgsL.Clear();
                     leaderStackL.Children.Clear();
                 }
+                */
                 foreach (Image i in pImgs) {
                     leaderImgsP.Add(i);
                 }
+                /*
                 foreach (Image j in lImgs) {
                     leaderImgsL.Add(j);
                 }
+                */
             });
         }
-        private void drawLeaderImagesActual(ref IList<Image> pImgs, ref IList<Image> lImgs) {
+
+        //private void drawLeaderImagesActual(ref IList<Image> pImgs, ref IList<Image> lImgs) {
+        private void drawLeaderImagesActual(ref IList<Image> pImgs) {
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
 
-            foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
-                IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromBytes(leader.imgStr, (ExifOrientation)leader.orientation);
-                pImgs.Add(images[0]);
-                lImgs.Add(images[1]);
+            if ((listOfLeaderboards != null) && (listOfLeaderboards.Count > 0) && listOfLeaderboards.ContainsKey(activeLeaderboard)) {
+                foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
+                    IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromBytes(leader.imgStr, (ExifOrientation)leader.orientation);
+                    pImgs.Add(images[0]);
+                    //lImgs.Add(images[1]);
+                }
             }
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
         }
@@ -275,13 +291,14 @@ namespace ImageImprov {
                 // need to clear the stack as well or the image is held onto...
                 leaderStackP.Children.Clear();
             }
+            /*
             if (leaderImgsL == null) {
-                leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard].Count);
+                leaderImgsL = new List<Image>(listOfLeaderboards[activeLeaderboard.description].Count);
             } else {
                 leaderImgsL.Clear();
                 leaderStackL.Children.Clear();
             }
-
+            */
             foreach (LeaderboardJSON leader in listOfLeaderboards[activeLeaderboard]) {
                 /*
                 Image image = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(leader.imgStr, ExifLib.ExifOrientation.TopLeft);
@@ -293,7 +310,7 @@ namespace ImageImprov {
                 */
                 IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromBytes(leader.imgStr, (ExifOrientation)leader.orientation);
                 leaderImgsP.Add(images[0]);
-                leaderImgsL.Add(images[1]);
+                //leaderImgsL.Add(images[1]);
             }
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
         }
@@ -384,6 +401,7 @@ namespace ImageImprov {
         double widthCheck = 0;
         double heightCheck = 0;
 
+        /*
         protected override void OnSizeAllocated(double width, double height) {
             base.OnSizeAllocated(width, height);
             if ((widthCheck != width) || (heightCheck != height)) {
@@ -428,11 +446,13 @@ namespace ImageImprov {
                 }
             }
         }
+        */
 
         DateTime startTime;
         DateTime buildUIstartTime;
 
         public int buildUI() {
+            /*
             buildUIstartTime = DateTime.Now;
             int res = 0;
             int res2 = 0;
@@ -447,6 +467,16 @@ namespace ImageImprov {
             });
             Debug.WriteLine("DHB:LeaderboardPage:buildUI total elapsedTime:" + (DateTime.Now - buildUIstartTime));
             return ((res < res2) ? res : res2);
+            */
+            int res = 0;
+            Device.BeginInvokeOnMainThread(() => {
+                DateTime timeForThread = DateTime.Now;
+                res = buildPortraitView();
+                if (res == 1) {
+                    Content = portraitView;
+                }
+            });
+            return res;
         }
 
         public int buildPortraitView() {
@@ -736,7 +766,7 @@ namespace ImageImprov {
             // may have been added already. this approach throws an exception if key exists
             //listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
             // this one resets the value:
-            listOfLeaderboards[((RequestLeaderboardEventArgs)e).Category] = newLeaderBoard;
+            listOfLeaderboards[(((RequestLeaderboardEventArgs)e).Category)] = newLeaderBoard;
 
             leaderboardUpdateTimestamps[((RequestLeaderboardEventArgs)e).Category] = DateTime.Now;
 
@@ -746,7 +776,7 @@ namespace ImageImprov {
             selectLeaderboardDictL[loadCategory].Text = categoryName;
 
             // I do need to update the ui if this is the active leaderboard.
-            if (activeLeaderboard == ((RequestLeaderboardEventArgs)e).Category) {
+            if (activeLeaderboard.Equals( ((RequestLeaderboardEventArgs)e).Category)  ) {
                 drawLeaderImages();
                 if (activeButton == null) {
                     activeButton = new Tuple<Button, Button>(selectLeaderboardDictP[activeLeaderboard.categoryId], selectLeaderboardDictL[activeLeaderboard.categoryId]);

@@ -48,6 +48,7 @@ namespace ImageImprov {
         //Label lastActionResultLabelP;
         //Label lastActionResultLabelL;
 
+        ScrollView contestStackP = new ScrollView();
         // this may be better as a dictionary...
         IList<CategoryJSON> loadedCategories = new List<CategoryJSON>();
         IList<Button> takePictureP = new List<Button>();
@@ -187,6 +188,7 @@ namespace ImageImprov {
             //setView();
         }
 
+        /*
         protected override void OnSizeAllocated(double width, double height) {
             // need to have portrait mode local rather than global or i can't
             // tell if I've updated for this page yet or not.
@@ -226,8 +228,10 @@ namespace ImageImprov {
                 } // otherwise don't change content.
             }
         }
+        */
 
         protected int buildUI() {
+            /*
             int res = 0;
             int res2 = 0;
             Device.BeginInvokeOnMainThread(() =>
@@ -236,12 +240,23 @@ namespace ImageImprov {
                 res2 = buildLandscapeView();
             });
             return ((res < res2) ? res : res2);
+            */
+            int res = 0;
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                res = buildPortraitView();
+                if (res == 1) {
+                    //Content = layoutP;
+                    Content = portraitView;
+                }
+            });
+            return res;
         }
 
         protected int buildPortraitView() {
             if (portraitView == null) {
-                portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-                for (int i = 0; i < 11; i++) {
+                portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor=GlobalStatusSingleton.backgroundColor };
+                for (int i = 0; i < 20; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -255,12 +270,18 @@ namespace ImageImprov {
             foreach (Button b in takePictureP) {
                 buttonStack.Children.Add(b);
             }
-            portraitView.Children.Add(buttonStack, 0, 1);
-            //portraitView.Children.Add(latestTakenImgP, 0, 2);
-            //Grid.SetRowSpan(latestTakenImgP, 6);
-            portraitView.Children.Add(submitCurrentPictureP, 0, 8);
+            contestStackP.Content = buttonStack;
+            portraitView.Children.Add(contestStackP, 0, 0);
+            Grid.SetRowSpan(contestStackP, 4);
+            if (latestTakenImgP != null) {
+                portraitView.Children.Add(latestTakenImgP, 0, 4);
+                Grid.SetRowSpan(latestTakenImgP, 12);
+            }
+            portraitView.Children.Add(submitCurrentPictureP, 0, 16);
+            Grid.SetRowSpan(submitCurrentPictureP, 2);
             //portraitView.Children.Add(lastActionResultLabelP, 0, 9);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 10);
+            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
+            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
 
             /* w,h are not consistent when rotated ie h=616 portrait, but w=640 landscape
              * so build default background in OnSizeAllocated, and image based background here.
@@ -279,15 +300,20 @@ namespace ImageImprov {
                 latestTakenImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, w, h);
             } else {
                 */
-            if (!latestTakenPath.Equals("")) { 
+
+            /* img no longer the full background.
+            if (!latestTakenPath.Equals("")) {
+                // we are now only in portrait mode, making this an uncomplicated calculation:
+                double heightPct = Width / Height;
                 latestTakenImgP = GlobalSingletonHelpers.buildBackgroundFromBytes(latestTakenImgBytes, assembly, (int)Width, (int)Height, 
-                    GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
+                    heightPct, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
             }
             layoutP.Children.Clear();
             if (latestTakenImgP != null) {
                 layoutP.Children.Add(latestTakenImgP, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             }
             layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            */
 
             return 1;
         }
@@ -476,6 +502,7 @@ namespace ImageImprov {
 
         // click handler for SubmitCurrentPicture.
         protected async virtual void OnSubmitCurrentPicture(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture start");
             // check that button is enabled... xamarin has weak-fu here.
             if (((Button)sender).IsEnabled==false) { return; }
 
@@ -484,29 +511,42 @@ namespace ImageImprov {
             submitCurrentPictureL.IsEnabled = false;
             //lastActionResultLabelP.Text = "Uploading image to server...";
             //lastActionResultLabelL.Text = "Uploading image to server(may take a while)...";
-            submitCurrentPictureP.Text = "Uploading image to server...";
-            submitCurrentPictureL.Text = "Uploading image to server(may take a while)...";
+            //submitCurrentPictureP.Text = "Uploading image to server...";
+            submitCurrentPictureP.Text = "Submitting!";
+            //submitCurrentPictureL.Text = "Uploading image to server(may take a while)...";
 
+            Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture pre async call");
             string result = await sendSubmitAsync(latestTakenImgBytes);
-            PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
-            if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
-                // success. update the UI
-                //currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
-                //currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
-                //currentSubmissionImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
-                //currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
-                //lastActionResultLabelP.Text = "Congratulations, you're in!";
-                //lastActionResultLabelL.Text = "Congratulations, you're in!";
-                submitCurrentPictureP.Text = "Congratulations, you're in!";
-                submitCurrentPictureL.Text = "Congratulations, you're in!";
+            Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post async call");
+            try {
+                PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
+                Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post json deserialize");
+                if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
+                    // success. update the UI
+                    //currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                    //currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
+                    //currentSubmissionImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
+                    //currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
+                    //lastActionResultLabelP.Text = "Congratulations, you're in!";
+                    //lastActionResultLabelL.Text = "Congratulations, you're in!";
+                    submitCurrentPictureP.Text = "Congratulations, you're in!";
+                    submitCurrentPictureL.Text = "Congratulations, you're in!";
 
-                // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
-                // also update when image is taken when fixing this.
-                //buildPortraitView();
-                //buildLandscapeView();
+                    // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
+                    // also update when image is taken when fixing this.
+                    //buildPortraitView();
+                    //buildLandscapeView();
+                    buildUI();
+                    //setView();
+                    Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture end");
+                }
+            } catch (Exception err) {
+                Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture invalid response json: "+result);
+                Debug.WriteLine(err.ToString());
+                submitCurrentPictureP.Text = "Submit failed - try again";
+                submitCurrentPictureL.Text = "Submit failed";
+                submitCurrentPictureP.IsEnabled = true;
                 buildUI();
-                //setView();
-
             }
 
             // only enable on picture taking.
@@ -524,6 +564,7 @@ namespace ImageImprov {
         /// <param name="imgBytes">bytes of the image we are sending.</param>
         /// <returns>The JSON success string on success, an err msg on failure. </returns>
         protected static async Task<string> sendSubmitAsync(byte[] imgBytes) {
+            Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync start");
             //string result = "fail";
             PhotoSubmitResponseJSON resJson = new PhotoSubmitResponseJSON();
             resJson.message = "fail";
@@ -535,36 +576,53 @@ namespace ImageImprov {
                 submission.extension = "JPEG";
                 Debug.Assert(GlobalStatusSingleton.uploadingCategories.Count > 0, "DHB:ASSERT!:CameraContentPage:sendSubmitAsync Invalid uploading categories!");
                 submission.categoryId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync catid: " + GlobalStatusSingleton.uploadingCategories[0].categoryId.ToString());
                 //submission.userId = GlobalStatusSingleton.loginCredentials.userId;
-
-                HttpClient client = new HttpClient();
-                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                // moved this up in case serialization was causing the client to be disposed prematurely...
+                string jsonQuery = JsonConvert.SerializeObject(submission);
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync query serialized");
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync query[0,99]: "+jsonQuery.Substring(0,100));
 
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, PHOTO);
                 //request.Headers.Add("Authorization", "JWT " + GlobalStatusSingleton.authToken.accessToken);
                 request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
 
-                string jsonQuery = JsonConvert.SerializeObject(submission);
                 request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync request obj built");
                 // string test = request.ToString();
 
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync pre send");
                 HttpResponseMessage submitResult = await client.SendAsync(request);
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync post send");
                 if (submitResult.StatusCode == System.Net.HttpStatusCode.Created) {
                     // tada
+                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync ok return");
                     result = await submitResult.Content.ReadAsStringAsync();
+                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync result read in");
+                } else {
+                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync send statusCode="+submitResult.StatusCode.ToString());
+                    result = "unknown failure";
                 }
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
                 Debug.WriteLine(err.ToString());
+                Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync webexception");
                 result = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
                 Debug.WriteLine(err.ToString());
                 // do something!!
                 result = "login failure";
+            } catch (Exception err) {
+                Debug.WriteLine(err.ToString());
+                // do something!!
+                result = "unknown failure";
             }
-            
+            Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync end");
             return result;
         }
 
@@ -578,19 +636,21 @@ namespace ImageImprov {
         public void ShowImage(string filepath, byte[] imgBytes)
         {
             submitCurrentPictureP.IsVisible = true;
-            submitCurrentPictureL.IsVisible = true;
+            //submitCurrentPictureL.IsVisible = true;
             latestTakenPath = filepath;
             //latestTakenImgP.Source = ImageSource.FromFile(filepath);
             //latestTakenImgL.Source = ImageSource.FromFile(filepath);
-            latestTakenImgBytes = imgBytes;
 
-            // shifted these two lines to buildUI.
-            //latestTakenImgP = GlobalSingletonHelpers.buildFixedRotationImageFromStr(imgBytes);
-            //latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(imgBytes);
+            // This works... but is not neccessarily a square image.
+            //latestTakenImgBytes = imgBytes;
+            latestTakenImgBytes = GlobalSingletonHelpers.SquareImage(imgBytes);
+
+            latestTakenImgP = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(latestTakenImgBytes);
+            //latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(imgBytes);
             submitCurrentPictureP.Text = "Submit picture";
             submitCurrentPictureP.IsEnabled = true;
-            submitCurrentPictureL.Text = "Submit picture";
-            submitCurrentPictureL.IsEnabled = true;
+            //submitCurrentPictureL.Text = "Submit picture";
+            //submitCurrentPictureL.IsEnabled = true;
 
             buildUI();
             //setView();

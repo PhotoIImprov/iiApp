@@ -195,6 +195,7 @@ namespace ImageImprov
                 }
             };
 
+            createRegisterButton();
             // Object creation portion done...   Determine what ui to fire up! :)
 
             if (GlobalStatusSingleton.maintainLogin) {
@@ -226,6 +227,7 @@ namespace ImageImprov
             }
         }
 
+        /*
         double widthCheck = 0;
         double heightCheck = 0;
 
@@ -262,6 +264,7 @@ namespace ImageImprov
                 }
             }
         }
+        */
 
         protected void buildBackground(double verticalExtent = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) {
             if (backgroundImg == null) {
@@ -278,6 +281,9 @@ namespace ImageImprov
             string version = this.GetType().GetTypeInfo().Assembly.FullName;
             string[] splitString = version.Split(',');
             versionLabel.Text = splitString[1];
+#if DEBUG
+            versionLabel.Text = "Debug " + versionLabel.Text;
+#endif
         }
 
         protected Layout<View> createPreConnectAutoLoginLayout() {
@@ -312,7 +318,9 @@ namespace ImageImprov
             controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             controls.Children.Add(upperPortionOfGrid, 0, 0);
             //autoLoginLayout.Children.Add(defaultNavigationButtons, 0, 1);  // object, col, row
-
+            controls.BackgroundColor = GlobalStatusSingleton.backgroundColor;
+            return controls;
+            /*
             preConnectAutoLoginLayout.Children.Clear();
             buildBackground();
             if (backgroundImg != null) {
@@ -321,6 +329,7 @@ namespace ImageImprov
             preConnectAutoLoginLayout.Children.Add(controls, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             return preConnectAutoLoginLayout;
+            */
         }
 
 
@@ -367,9 +376,13 @@ namespace ImageImprov
             controls.Children.Add(logoutButton, 0, 1);
             controls.Children.Add(loggedInLabel, 0, 2);
             controls.Children.Add(versionLabel, 0, 3);
-            controls.Children.Add(CenterConsole, 0, 8);
+            controls.Children.Add(CenterConsole, 0, 7);
+            Grid.SetRowSpan(CenterConsole, 2);
             controls.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 
+            controls.BackgroundColor = GlobalStatusSingleton.backgroundColor;
+            return controls;
+            /*
             ((AbsoluteLayout)autoLoginLayout).Children.Clear();
             // always assume background is for one of the others... so rebuild.
             // none of them are reachable if I get here unless I logout, where I handle this again.
@@ -382,6 +395,8 @@ namespace ImageImprov
             ((AbsoluteLayout)autoLoginLayout).Children.Add(controls, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
 
             return autoLoginLayout;
+            */
+
         }
 
         protected StackLayout usernameRow() {
@@ -391,7 +406,8 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Username", TextColor = Color.Black, BackgroundColor=Color.White, },
+                    //new Label { Text = "Username", TextColor = Color.Black, BackgroundColor=Color.White, },
+                    new Label { Text = "Email", TextColor = Color.Black, BackgroundColor=Color.White, },
                     usernameEntry,
                 }
             };
@@ -435,6 +451,7 @@ namespace ImageImprov
             activeLayout = LAYOUT_NEW_DEVICE;
             newDeviceLayout = new StackLayout
             {
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
@@ -444,8 +461,12 @@ namespace ImageImprov
                     connectButton,
                     blankRowLabel,
                     anonymousPlayButton,
+                    blankRowLabel,
+                    registerButton,
                 }
             };
+            return newDeviceLayout;
+            /*
             buildBackground();
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
@@ -455,6 +476,7 @@ namespace ImageImprov
 
             //return newDeviceLayout;
             return fullLayout;
+            */
         }
 
         protected Layout<View> createForceLoginLayout() {
@@ -467,6 +489,7 @@ namespace ImageImprov
             //loggedInLabel.Text = "";
             forceLoginLayout = new StackLayout
             {
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
@@ -481,6 +504,8 @@ namespace ImageImprov
                     registerButton,
                 }
             };
+            return forceLoginLayout;
+            /*
             buildBackground();
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             if (backgroundImg != null) {
@@ -490,6 +515,7 @@ namespace ImageImprov
 
             //return forceLoginLayout;
             return fullLayout;
+            */
         }
 
         protected Layout<View> createAnonLoggedInLayout() {
@@ -528,13 +554,15 @@ namespace ImageImprov
                 createDefaultNavigationButtons();
             }
             anonLoggedInLayout = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(16, GridUnitType.Star) });
-            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(14, GridUnitType.Star) });
+            anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(4, GridUnitType.Star) });
             anonLoggedInLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             anonLoggedInLayout.Children.Add(upperPortionOfGrid, 0, 0);
             anonLoggedInLayout.Children.Add(CenterConsole, 0, 1);  // object, col, row
             anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 2);  // object, col, row
-
+            anonLoggedInLayout.BackgroundColor = GlobalStatusSingleton.backgroundColor;
+            return anonLoggedInLayout;
+            /*
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             backgroundImg = null;
             buildBackground(BACKGROUND_VERTICAL_EXTENT);
@@ -545,7 +573,7 @@ namespace ImageImprov
 
             //return anonLoggedInLayout;
             return fullLayout;
-
+            */
         }
 
         protected Layout<View> createRegistrationLayout() {
@@ -566,6 +594,7 @@ namespace ImageImprov
 
             registrationLayout = new StackLayout
             {
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
@@ -580,7 +609,8 @@ namespace ImageImprov
                 }
             };
             usernameEntry.Text = "";
-
+            return registrationLayout;
+            /*
             AbsoluteLayout fullLayout = new AbsoluteLayout();
             backgroundImg = null; // generally coming from a page with < full extent.
             buildBackground();
@@ -591,6 +621,7 @@ namespace ImageImprov
 
             //return registrationLayout;
             return fullLayout;
+            */
         }
 
         // resets my ui as it may have been changed to a subpage.
@@ -820,6 +851,7 @@ namespace ImageImprov
         // handles the communication with the server to register an account fully.
         // @todo actually implement this function! (this is the anon registration code)
         static async Task<string> requestRegistrationAsync() {
+            Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync start");
             string resultMsg = "Success...";
 
             RegistrationRequestJSON loginInfo = new RegistrationRequestJSON();
@@ -839,6 +871,7 @@ namespace ImageImprov
 
                 HttpResponseMessage result = await client.SendAsync(request);
                 if (result.StatusCode == System.Net.HttpStatusCode.Created) {
+                    Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync success");
                     // @todo on switch to oauth/jwt uncomment the token code (it currently is called after the login).
                     resultMsg = await requestTokenAsync();
                     /* a or b
@@ -851,6 +884,7 @@ namespace ImageImprov
                     */
                 } else {
                     // login creds are no good.
+                    Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync failure! statuscode: " + result.StatusCode.ToString());
                     resultMsg = REGISTRATION_FAILURE;
                 }
                 ////////// still todo above here..........
@@ -864,6 +898,7 @@ namespace ImageImprov
                 Debug.WriteLine(err.ToString());
                 resultMsg = REGISTRATION_FAILURE;
             }
+            Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync done");
             return resultMsg;
         }
 

@@ -28,9 +28,7 @@ namespace ImageImprov {
         static readonly object uiLock = new object();
 
         Grid portraitView = null;
-        Grid landscapeView = null;
         KeyPageNavigator defaultNavigationButtonsP;
-        KeyPageNavigator defaultNavigationButtonsL;
 
         // Yesterday's challenge 
         //< challengeLabel
@@ -41,19 +39,11 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Center,
             TextColor = Color.Black,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            LineBreakMode=LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
-        Label challengeLabelL = new Label
-        {
-            Text = "Loading...",
-            HorizontalOptions = LayoutOptions.FillAndExpand,
-            VerticalOptions = LayoutOptions.FillAndExpand,
-            HorizontalTextAlignment = TextAlignment.Center,
-            TextColor = Color.Black,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
-            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-        };
+        
         //> challengeLabel
         // This is the request to load.
         public event LoadChallengeNameEventHandler LoadChallengeName;
@@ -72,7 +62,6 @@ namespace ImageImprov {
         // @todo imgs currently only respond to taps.  Would like to be able to longtap a fast vote.
         // Need to instances to accomodate the way GridLayout handles spans.
         IList<Image> ballotImgsP = null;
-        IList<Image> ballotImgsL = null;
 
         /// <summary>
         /// ballot, ballotImgsP, and ballotImgsL hold the active Ballot.
@@ -112,11 +101,9 @@ namespace ImageImprov {
         //   BEGIN Variables related/needed for images to place image rankings and backgrounds on screen.
         //
         AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
-        AbsoluteLayout layoutL;  // this lets us place a background image on the screen.
         List<SKBitmap> rankImages = new List<SKBitmap>();
         Assembly assembly = null;
         Image backgroundImgP = null;
-        Image backgroundImgL = null;
         string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
                 "ImageImprov.IconImages.third.png", "ImageImprov.IconImages.fourth.png"};
         string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
@@ -131,7 +118,6 @@ namespace ImageImprov {
             preloadedBallots = new Queue<string>();
 
             ballotImgsP = new List<Image>();
-            ballotImgsL = new List<Image>();
             //buildPortraitView();
             //buildLandscapeView();
 
@@ -143,6 +129,9 @@ namespace ImageImprov {
 
             // and to listen for vote sends; done as event so easy to process async.
             this.Vote += new EventHandler(OnVote);
+
+            // This gets called too often to be of value (impacts performance dramatically)
+            //challengeLabelP.PropertyChanged += OnPortraitViewSizeChanged;
 
             eDummy = new EventArgs();
 
@@ -168,109 +157,13 @@ namespace ImageImprov {
             }
         }
 
-        double widthCheck = 0;
-        double heightCheck = 0;
-
-        protected override void OnSizeAllocated(double width, double height) {
-            base.OnSizeAllocated(width, height);
-            // ensure we have a change before doing anything...
-            if ((widthCheck != width) || (heightCheck != height)) {
-                widthCheck = width;
-                heightCheck = height;
-                try {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
-                    Device.BeginInvokeOnMainThread(() =>
-                    {
-                        Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated inside lock");
-                        if ((width > height) && (height > 0) && (landscapeView != null)) {
-                            GlobalStatusSingleton.inPortraitMode = false;
-                            if (backgroundImgL == null) {
-                                backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                                layoutL = new AbsoluteLayout
-                                {
-                                    Children = {
-                                        { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                                        { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                                    }
-                                };
-                            }
-                            if (layoutL != null) {
-                                Content = layoutL;
-                            } else if (landscapeView != null) {
-                                Content = landscapeView;
-                            }
-                        } else {
-                            GlobalStatusSingleton.inPortraitMode = true;
-                            if ((backgroundImgP == null) && (width > 0) && (portraitView != null)) {
-                                backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                                layoutP = new AbsoluteLayout
-                                {
-                                    Children = {
-                                        { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                                        { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                                    }
-                                };
-                            }
-                            if (layoutP != null) {
-                                Content = layoutP;
-                            } else if (portraitView != null) {
-                                Content = portraitView;
-                            }
-                        }
-                        Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated lock released");
-                    });
-                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated end");
-                } catch (Exception e) {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated:Exception");
-                    Debug.WriteLine(e.ToString());
-                }
-            }
+        void OnPortraitViewSizeChanged(Object sender, EventArgs args) {
+            View view = (View)sender;
+            if ((view.Width <=0)||(view.Height<=0)) { return; }
+            // This assumes label can be whole width.
+            
+            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, view.Width, view.Height/10.0);
         }
-
-        /*
-        protected override void OnSizeAllocated(double width, double height) {
-            Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated start");
-            base.OnSizeAllocated(width, height);
-            if (width > height) {
-                GlobalStatusSingleton.inPortraitMode = false;
-                Content = landscapeView;
-            } else {
-                GlobalStatusSingleton.inPortraitMode = true;
-                Content = portraitView;
-            }
-            Debug.WriteLine("DHB:JudgingContentPage:OnSizeAllocated complete");
-        }
-        */
-
-        /* I have better luck with onsizeallocated.
-        void OnPageSizeChanged(Object sender, EventArgs args) {
-            if ((backgroundImgP == null) && (Width>0.0) && (Height>0.0)) {
-                if (Height > Width) {
-                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Height, (int)Width);
-                } else {
-                    backgroundImgP = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Height, (int)Width);
-                    backgroundImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, (int)Width, (int)Height);
-                }
-                layoutP = new AbsoluteLayout
-                {
-                    Children = {
-                        { backgroundImgP, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                        { portraitView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                    }
-                };
-                layoutL = new AbsoluteLayout
-                {
-                    Children = {
-                        { backgroundImgL, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All },
-                        { landscapeView, new Rectangle(0,0,1,1), AbsoluteLayoutFlags.All }
-                    }
-                };
-                //Content = layout;
-                OnSizeAllocated(Width, Height);
-            }
-        }
-        */
 
         /// <summary>
         /// This is called whenever my underlying data for my layout has changed (e.g. for a vote)
@@ -304,7 +197,6 @@ namespace ImageImprov {
                 ballot.Clear();
             }
             ballotImgsP.Clear();  // does Content update? No
-            ballotImgsL.Clear();  // does Content update? No
             if (unvotedImgs != null) {
                 unvotedImgs.Clear();
             }
@@ -342,23 +234,20 @@ namespace ImageImprov {
         /// <param name="index"></param>
         private void ClearContent(int index) {
             portraitView.IsEnabled = false;
-            landscapeView.IsEnabled = false;
             ballot.Clear();
 
             highlightCorrectImg(ballotImgsP, index);
-            highlightCorrectImg(ballotImgsL, index);
         }
 
         public int buildUI() {
             int res = 0;
-            int res2 = 0;
-            //Device.BeginInvokeOnMainThread(() =>
-            //{
+            Device.BeginInvokeOnMainThread(() => {
                 res = buildPortraitView();
-                res2 = buildLandscapeView();
-                //OnSizeAllocated(Width, Height);
-            //});
-            return ((res<res2)?res:res2);
+                if (res==1) {
+                    Content = portraitView;
+                }
+            });
+            return res;
         }
 
         /// <summary>
@@ -376,7 +265,8 @@ namespace ImageImprov {
             try {
                 // all my elements are already members...
                 if (portraitView == null) {
-                    portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = Color.Transparent };
+                    portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                    portraitView.SizeChanged += OnPortraitViewSizeChanged;
                 } else {
                     // flush the old children.
                     portraitView.Children.Clear();
@@ -388,6 +278,9 @@ namespace ImageImprov {
 
                 // ok. Everything has been initialized. So now I just need to decide where to put it.
                 if (ballotImgsP.Count > 0) {
+                    // new design is just 4 squares and that's the only orientation
+                    result = buildFourPortraitImgPortraitView();
+                    /*
                     if (orientationCount < 2) {
                         result = buildFourLandscapeImgPortraitView();
                     } else if (orientationCount > 2) {
@@ -395,9 +288,10 @@ namespace ImageImprov {
                     } else {
                         result = buildTwoXTwoImgPortraitView();
                     }
+                    */
                 } else {
                     // Note: This is reached on ctor call, so don't put an assert here.
-                    result = -1;
+                    //result = -1;  This is a valid exit case.  Result should be 1!
                     portraitView.RowDefinitions.Clear();
                     portraitView.ColumnDefinitions.Clear();
                     for (int i = 0; i < 20; i++) {
@@ -426,9 +320,9 @@ namespace ImageImprov {
                         Grid.SetRowSpan(ballotImgsP[3], 4);
                     }
                     
-#if DEBUG
-                    challengeLabelP.Text += " no image case";
-#endif
+//#if DEBUG
+//                    challengeLabelP.Text += " no image case";
+//#endif
 
                     portraitView.Children.Add(challengeLabelP, 0, 8);
                     Grid.SetColumnSpan(challengeLabelP, 1);
@@ -438,6 +332,7 @@ namespace ImageImprov {
                     Grid.SetRowSpan(defaultNavigationButtonsP, 2);
                 }
             } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView exception");
                 Debug.WriteLine(e.ToString());
                 result = -1;
             }
@@ -461,23 +356,28 @@ namespace ImageImprov {
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             portraitView.Children.Add(ballotImgsP[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsP[0], 8);
+            Grid.SetRowSpan(ballotImgsP[0], 6);
 
             portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[1], 8);
+            Grid.SetRowSpan(ballotImgsP[1], 6);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[2], 8);
+            portraitView.Children.Add(ballotImgsP[2], 0, 6);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[2], 6);
 
-            portraitView.Children.Add(ballotImgsP[3], 1, 10);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[3], 8);
+            portraitView.Children.Add(ballotImgsP[3], 1, 6);  // col, row format
+            Grid.SetRowSpan(ballotImgsP[3], 6);
 
-#if DEBUG
-            challengeLabelP.Text += " 4P_P case";
-#endif
-
-            portraitView.Children.Add(challengeLabelP, 0, 8);
+//#if DEBUG
+            //challengeLabelP.Text += " 4P_P case";
+            //@todo Periodically check to see if my xamarin forums query solved this.
+            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
+            // Calling this here is calling from an invalid height state that seems to fubar everything...
+            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+//#endif
+            portraitView.Children.Add(challengeLabelP, 0, 13);
             Grid.SetColumnSpan(challengeLabelP, 2);
+            Grid.SetRowSpan(challengeLabelP, 2);
+
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
             Grid.SetRowSpan(defaultNavigationButtonsP, 2);
@@ -575,6 +475,7 @@ namespace ImageImprov {
             }
 #if DEBUG
             challengeLabelP.Text += " 2x2P case";
+            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
 #endif
 
             portraitView.Children.Add(challengeLabelP, 0, 8);
@@ -587,221 +488,7 @@ namespace ImageImprov {
             return 1;
         }
 
-        public int buildLandscapeView() {
-            Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView begin");
-            int result = 1;
-            try {
-                // the current implemented case is orientationCount == 0. (displays as a 2x2)
-                // There are two other options... 
-                //    orientationCount == 2 - displays as 2xstack or stackx2 per first img orientation
-                //    orientationCount == 4 - display as a 4x1 horizontally aligned portraits.
-                if (defaultNavigationButtonsL == null) {
-                    defaultNavigationButtonsL = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
-                }
 
-                // all my elements are already members...
-                if (landscapeView == null) {
-                    landscapeView = new Grid { ColumnSpacing = 0, RowSpacing = 0, BackgroundColor = Color.Transparent, };
-                } else {
-                    // flush the old children.
-                    landscapeView.Children.Clear();
-                    landscapeView.IsEnabled = true;
-                }
-                // should I be flushing the children each time???
-                if (ballotImgsL.Count > 0) {
-                    if (orientationCount < 2) {
-                        // landscape
-                        result = buildFourLandscapeImgLandscapeView();
-                    } else if (orientationCount > 2) {
-                        // portrait
-                        result = buildFourPortraitImgLandscapeView();
-                    } else {
-                        result = buildTwoXTwoImgLandscapeView();
-                    }
-                } else {
-                    // Note: This is reached on ctor call, so don't put an assert here.
-                    result = -1;
-                    landscapeView.RowDefinitions.Clear();
-                    landscapeView.ColumnDefinitions.Clear();
-                    for (int i = 0; i < 10; i++) {
-                        landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                    }
-                    for (int i = 0; i < 2; i++) {
-                        landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                    }
-                    /*
-                    if (ballotImgsL.Count > 0) {
-                        landscapeView.Children.Add(ballotImgsL[0], 0, 0);
-                        Grid.SetRowSpan(ballotImgsL[0], 12);
-                    }
-
-                    if (ballotImgsL.Count > 1) {
-                        landscapeView.Children.Add(ballotImgsL[1], 1, 0);  // col, row format
-                        Grid.SetRowSpan(ballotImgsL[1], 12);
-                    }
-                    if (ballotImgsL.Count > 2) {
-                        landscapeView.Children.Add(ballotImgsL[2], 0, 14);  // col, row format
-                        Grid.SetRowSpan(ballotImgsL[2], 12);
-                    }
-                    if (ballotImgsL.Count > 3) {
-                        landscapeView.Children.Add(ballotImgsL[3], 1, 14);  // col, row format
-                        Grid.SetRowSpan(ballotImgsL[3], 12);
-                    }
-                    */
-#if DEBUG
-                    challengeLabelL.Text += " no image L case";
-#endif
-
-                    landscapeView.Children.Add(challengeLabelL, 0, 0);
-                    Grid.SetColumnSpan(challengeLabelL, 2);
-
-                    landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
-                    Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
-
-                }
-            } catch (Exception e) {
-                Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView:Exception");
-                Debug.WriteLine(e.ToString());
-            }
-            Debug.WriteLine("DHB:JudgingContentPage:buildLandscapeView end");
-            return result;
-        }
-
-        public int buildFourPortraitImgLandscapeView() {
-            landscapeView.RowDefinitions.Clear();
-            landscapeView.ColumnDefinitions.Clear();
-
-            for (int i = 0; i < 10; i++) {
-                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            }
-            // 4 columns, 25% each
-            for (int i = 0; i < 4; i++) {
-                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            }
-
-            landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-            Grid.SetRowSpan(ballotImgsL[0], 8);
-
-            landscapeView.Children.Add(ballotImgsL[1], 1, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[1], 8);
-
-            landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[2], 8);
-
-            landscapeView.Children.Add(ballotImgsL[3], 3, 1);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[3], 8);
-
-#if DEBUG
-            challengeLabelL.Text += " 4P L Case";
-#endif
-
-            landscapeView.Children.Add(challengeLabelL, 0, 0);
-            Grid.SetColumnSpan(challengeLabelL, 4);
-
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
-            Grid.SetColumnSpan(defaultNavigationButtonsL, 4);
-
-            return 1;
-        }
-        public int buildFourLandscapeImgLandscapeView() {
-            landscapeView.RowDefinitions.Clear();
-            landscapeView.ColumnDefinitions.Clear();
-            // topleft img1 48%H 50%w; topright img2 48%H 50%W
-            // middle challenge label 4%H 100% W
-            // bot left img3 48%H 50%W; bot right img4 48%H 50%W
-            // 25 rows of 4% each.
-            // No, go with an extra row so the full text shows.  Went to 28 rows for nav buttons.
-            for (int i = 0; i < 10; i++) {
-                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            }
-            // 2 columns, 50% each
-            landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            // I can add none, but if i add one, then i just have 1. So here's 2. :)
-            landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            landscapeView.Children.Add(ballotImgsL[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsL[0], 4);
-
-            landscapeView.Children.Add(ballotImgsL[1], 1, 0);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[1], 4);
-
-            landscapeView.Children.Add(ballotImgsL[2], 0, 5);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[2], 4);
-
-            landscapeView.Children.Add(ballotImgsL[3], 1, 5);  // col, row format
-            Grid.SetRowSpan(ballotImgsL[3], 4);
-
-#if DEBUG
-            challengeLabelL.Text += " 4L L case";
-#endif
-
-            landscapeView.Children.Add(challengeLabelL, 0, 4);
-            Grid.SetColumnSpan(challengeLabelL, 2);
-            //Grid.SetRowSpan(challengeLabel, 2);
-
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
-            Grid.SetColumnSpan(defaultNavigationButtonsL, 2);
-            //Grid.SetRowSpan(defaultNavigationButtons, 2); no, this generates a nightmare
-
-            return 1;
-        }
-
-        public int buildTwoXTwoImgLandscapeView() {
-            landscapeView.RowDefinitions.Clear();
-            landscapeView.ColumnDefinitions.Clear();
-
-            for (int i = 0; i < 10; i++) {
-                landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            }
-            // 4 columns, 25% each
-            for (int i = 0; i < 4; i++) {
-                landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            }
-
-            if (ballot.ballots[0].isPortrait == BallotCandidateJSON.PORTRAIT) {
-                // 2 portraits, then 2 landscape
-                landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-                Grid.SetRowSpan(ballotImgsL[0], 8);
-
-                landscapeView.Children.Add(ballotImgsL[1], 1, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[1], 8);
-
-                landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[2], 4);
-                Grid.SetColumnSpan(ballotImgsL[2], 2);
-
-                landscapeView.Children.Add(ballotImgsL[3], 2, 5);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[3], 4);
-                Grid.SetColumnSpan(ballotImgsL[3], 2);
-            } else {
-                // 2 landscape, then 2 portrait
-                landscapeView.Children.Add(ballotImgsL[0], 0, 1);
-                Grid.SetRowSpan(ballotImgsL[0], 4);
-                Grid.SetColumnSpan(ballotImgsL[0], 2);
-
-                landscapeView.Children.Add(ballotImgsL[1], 0, 5);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[1], 4);
-                Grid.SetColumnSpan(ballotImgsL[1], 2);
-
-                landscapeView.Children.Add(ballotImgsL[2], 2, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[2], 8);
-
-                landscapeView.Children.Add(ballotImgsL[3], 3, 1);  // col, row format
-                Grid.SetRowSpan(ballotImgsL[3], 8);
-            }
-
-#if DEBUG
-            challengeLabelL.Text += " 2x2 L case";
-#endif
-
-            landscapeView.Children.Add(challengeLabelL, 0, 0);
-            Grid.SetColumnSpan(challengeLabelL, 4);
-
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);  // going to wrong position for some reason...
-            Grid.SetColumnSpan(defaultNavigationButtonsL, 4);
-
-            return 1;
-        }
 
         // image clicks
         // @todo adjust so that voting occurs on a long click
@@ -814,7 +501,12 @@ namespace ImageImprov {
             }
         }
 
-
+        public void OnDoubleClick(object sender, EventArgs e) {
+            // want to switch to a UI where just the sending image is present.
+            // with a like button
+            //    a flag button
+            //    an entry for custom tags
+        }
         /////
         /////
         ///// BEGIN Loading section
@@ -1043,7 +735,9 @@ namespace ImageImprov {
         protected virtual void loadInstructions() {
             ballot.ballots = new List<BallotCandidateJSON>();
             challengeLabelP.Text = "Instructions";
-            challengeLabelL.Text = "Instructions";
+            if (portraitView != null) {
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height / 10.0);
+            }
             // now handle ballot
             Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
             for (int i=1;i<5; i++) { 
@@ -1051,12 +745,6 @@ namespace ImageImprov {
                     Source = ImageSource.FromResource("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png"),
                 };
                 ballotImgsP.Add(imgP);
-
-                Image imgL = new Image
-                {
-                    Source = ImageSource.FromResource("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png"),
-                };
-                ballotImgsL.Add(imgL);
             }
 
         }
@@ -1145,9 +833,6 @@ namespace ImageImprov {
                 BallotCandidateJSON moving = ballot.ballots[swap];
                 ballot.ballots.RemoveAt(swap);
                 ballot.ballots.Insert(1, moving);
-                Image lImg = ballotImgsL[swap];
-                ballotImgsL.RemoveAt(swap);
-                ballotImgsL.Insert(1, lImg);
                 Image pImg = ballotImgsP[swap];
                 ballotImgsP.RemoveAt(swap);
                 ballotImgsP.Insert(1, pImg);
@@ -1187,6 +872,11 @@ namespace ImageImprov {
             }
             tapGesture.Tapped += OnClicked;
             image.GestureRecognizers.Add(tapGesture);
+
+            TapGestureRecognizer doubleTap = new TapGestureRecognizer();
+            doubleTap.NumberOfTapsRequired = 2;
+            doubleTap.Tapped += OnDoubleClick;
+            image.GestureRecognizers.Add(doubleTap);
 
             // orientation info is based on the relative w/h of the image.
             // square images are all considered "landscape"
@@ -1285,8 +975,9 @@ namespace ImageImprov {
                 ballot = JsonConvert.DeserializeObject<BallotJSON>(result);
                 unvotedImgs = new List<BallotCandidateJSON>(ballot.ballots);
                 // handle category first.
-                challengeLabelP.Text = "Current category: " + ballot.category.description;
-                challengeLabelL.Text = "Current category: " + ballot.category.description;
+                //challengeLabelP.Text = "Category: " + ballot.category.description;
+                challengeLabelP.Text = ballot.category.description;
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                 // now handle ballot
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
@@ -1299,9 +990,10 @@ namespace ImageImprov {
                     Image imgL = setupImgFromBallotCandidate(candidate);
                     ballotImgsL.Add(imgL);
                     */
+                    // @todo rebuild setupImgFromBallotCandidate so we dont do double the work
                     IList<Image> img = setupImgsFromBallotCandidate(candidate);
                     ballotImgsP.Add(img[0]);
-                    ballotImgsL.Add(img[1]);
+                    //ballotImgsL.Add(img[1]);
                 }
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " +orientationCount);
@@ -1409,7 +1101,6 @@ namespace ImageImprov {
                     ballot.ballots[penultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[penultimateSelectedIndex].orientation);
             SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[penultimateSelectedIndex], mergedImage);
             // see if a new object eliminates flicker.
             // also needs a buildUI at the end to update the layout objects with the new info...
             //ballotImgsP[penultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
@@ -1419,7 +1110,6 @@ namespace ImageImprov {
                 ballot.ballots[ultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[ultimateSelectedIndex].orientation);
             mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
             GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
-            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ultimateSelectedIndex], mergedImage);
 
             //ballotImgsP[ultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
             //ballotImgsL[ultimateSelectedIndex] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
@@ -1429,10 +1119,6 @@ namespace ImageImprov {
                 // clearing these prevents ui from updating for some reason.
                 // so instead, I catch a tap and ignore it.
                     //img.GestureRecognizers.Clear();
-            }
-            foreach (Image img in ballotImgsL) {
-                img.IsEnabled = false;
-                //img.GestureRecognizers.Clear();
             }
                 // this is very expensive and may be cause of flicker...
                 // what happens if i don't call this?
@@ -1459,10 +1145,7 @@ namespace ImageImprov {
             long bid = -1;
             // ballotImgsP and L have same meta info, so only need this once.
             // but I do need to search the correct one to id the sender.
-            var searchImgs = ballotImgsL;
-            if (GlobalStatusSingleton.inPortraitMode == true) {
-                searchImgs = ballotImgsP;
-            }
+            var searchImgs = ballotImgsP;
             foreach (Image img in searchImgs) {
                 if (img == sender) {
                     found = true;
@@ -1486,20 +1169,20 @@ namespace ImageImprov {
             string jsonQuery = JsonConvert.SerializeObject(votes);
             string origText = challengeLabelP.Text;
             challengeLabelP.Text = "Vote submitted, loading new ballot";
-            challengeLabelL.Text = "Vote submitted, loading new ballot";
+            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
             ClearContent(selectionId);
             string result = await requestVoteAsync(jsonQuery);
             if (result.Equals("fail")) {
                 // @todo This fail case is untested code. Does the UI come back?
                 challengeLabelP.Text = "Connection failed. Please revote";
-                challengeLabelL.Text = "Connection failed. Please revote";
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                 AdjustContentToRotation();
                 //} else ("no ballot created") { 
             } else {
                 // only clear on success
                 ClearContent();
                 challengeLabelP.Text = origText;
-                challengeLabelL.Text = origText;
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                 processBallotString(result);
             }
         }
@@ -1516,10 +1199,7 @@ namespace ImageImprov {
             int index = 0;
             // ballotImgsP and L have same meta info, so only need this once.
             // but I do need to search the correct one to id the sender.
-            var searchImgs = ballotImgsL;
-            if (GlobalStatusSingleton.inPortraitMode == true) {
-                searchImgs = ballotImgsP;
-            }
+            var searchImgs = ballotImgsP;
             foreach (Image img in searchImgs) {
                 if (img == sender) {
                     found = true;
@@ -1561,11 +1241,9 @@ namespace ImageImprov {
                         // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
                         SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
-                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], mergedImage);
                     } else {
                         SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation));
                         GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
-                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[ballotIndex], img);
                     }
                     ballotIndex++;
                 }
@@ -1658,7 +1336,7 @@ namespace ImageImprov {
                     string jsonQuery = JsonConvert.SerializeObject(votes);
                     string origText = challengeLabelP.Text;
                     challengeLabelP.Text = "Vote submitted, loading new ballot";
-                    challengeLabelL.Text = "Vote submitted, loading new ballot";
+                    GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
 
                     UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
                     /* the result of this is there is no ui update. that's because need to update what the ui elements point to
@@ -1698,7 +1376,7 @@ namespace ImageImprov {
                             // @todo This fail case is untested code. Does the UI come back?
                             if (preloadedBallots.Count == 0) {
                                 challengeLabelP.Text = "No connection. Awaiting connection for more ballots.";
-                                challengeLabelL.Text = "No connection. Awaiting connection for more ballots.";
+                                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                                 AdjustContentToRotation();
                             }
                         } else {
@@ -1731,7 +1409,6 @@ namespace ImageImprov {
 
                     // this method triggers the UI change.
                     GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsL[selectionId], mergedImage);
 
                     // this, on it's own, does not...
                     //ballotImgsP[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
@@ -1773,6 +1450,9 @@ namespace ImageImprov {
                     result = await voteResult.Content.ReadAsStringAsync();
                     Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync vote result recvd");
                 }
+                voteResult.Dispose();
+                request.Dispose();
+                client.Dispose();
             } catch (System.Net.WebException err) {
                 //result = "exception";
                 // web failure. keep the msg as a simple fail for correct onVote processing

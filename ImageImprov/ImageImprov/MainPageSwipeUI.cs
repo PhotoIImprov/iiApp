@@ -19,7 +19,7 @@ namespace ImageImprov
 
         public MainPageSwipeUI()
         {
-            BackgroundColor = Color.White;
+            BackgroundColor = GlobalStatusSingleton.backgroundColor;
 
             //var padding = new Thickness(0, Device.OnPlatform(40, 40, 0), 0, 0);
             playerPage = new PlayerContentPage();  // player page must be built before judging page sets up listeners.

@@ -21,6 +21,9 @@ namespace ImageImprov {
         //Grid defaultNavigationButtons;
 
         public KeyPageNavigator(bool horizontalOrientation=true) {
+            BackgroundColor = GlobalStatusSingleton.backgroundColor;
+            Padding = 10;
+
             gotoVotingImgButton = new Image {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png")
             };

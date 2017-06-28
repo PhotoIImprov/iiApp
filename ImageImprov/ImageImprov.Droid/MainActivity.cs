@@ -16,12 +16,12 @@ using System.Diagnostics;
 
 namespace ImageImprov.Droid {
     [Activity(Label = "ImageImprov", 
-        Icon = "@drawable/icon", 
+        Icon = "@drawable/icon",
         //Theme = "@style/MainTheme", 
         //Theme = "@android:Theme.Holo.Light.NoActionBar",
         //MainLauncher = true, // removed to enable splash screen...
-        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
-        ScreenOrientation = ScreenOrientation.FullSensor)]
+        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,  
+        ScreenOrientation = ScreenOrientation.Portrait)]
     public class MainActivity : FormsApplicationActivity
     {
         //< file
@@ -52,12 +52,9 @@ namespace ImageImprov.Droid {
                 GlobalStatusSingleton.hasCamera = false;
             }
 
-            try
-            {
+            try {
                 LoadApplication(new App());
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 var t = Task.Run(async () => { await GlobalSingletonHelpers.SendLogData("User:" + GlobalStatusSingleton.username + " crash:" + e.ToString()); });
                 t.Wait();
 

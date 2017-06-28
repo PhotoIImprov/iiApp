@@ -5,6 +5,7 @@ using System.Text;
 
 using Android.App;
 using Android.Content;
+using Android.Content.PM;  // needed for Config and ScreenOrientation
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -13,8 +14,11 @@ using Android.Support.V7.App;
 using Android.Util;
 using System.Threading.Tasks;
 
+
 namespace ImageImprov.Droid {
-    [Activity(Theme = "@style/MyTheme.Splash", MainLauncher = true, NoHistory = true)]
+    [Activity(Theme = "@style/MyTheme.Splash", MainLauncher = true, NoHistory = true,
+        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
+        ScreenOrientation = ScreenOrientation.Portrait)]
     public class SplashActivity : AppCompatActivity {
         static readonly string TAG = "X:" + typeof(SplashActivity).Name;
 

@@ -16,6 +16,7 @@ namespace ImageImprov {
         Image gotoLeaderboardButton;
         Image gotoPurchasesButton;
         Image gotoSettingsButton;
+        Image gotoHelpButton;
 
         PlayerContentPage parent;
 
@@ -26,16 +27,30 @@ namespace ImageImprov {
         }
         //PurchasesPage purchasesPage;
         
-        SettingsPage settingsPage;
+        // late build this so we get the correct username information.
+        SettingsPage settingsPage = null;
         public SettingsPage SettingsPage {
-            get { return settingsPage; }
+            get {
+                if (settingsPage == null) {
+                    settingsPage = new SettingsPage();
+                }
+                return settingsPage;
+            }
+        }
+
+        InstructionsPage instructionsPage;
+        public InstructionsPage InstructionsPage {
+            get { return instructionsPage;  }
         }
 
         public PlayerPageCenterConsole(PlayerContentPage parent) {
+            Padding = 10;
+
             this.parent = parent;
             leaderboardPage = new LeaderboardPage();
             // purchasesPage = new PurchasesPage();
-            settingsPage = new SettingsPage();
+            //settingsPage = new SettingsPage(); // be careful. Settings is null, but being built late so we have correct user info.
+            instructionsPage = new InstructionsPage();
 
             gotoLeaderboardButton= new Image
             {
@@ -49,12 +64,17 @@ namespace ImageImprov {
             {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png")
             };
+            gotoHelpButton = new Image
+            {
+                Source = ImageSource.FromResource("ImageImprov.IconImages.Help.png")
+            };
 
             tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += OnClicked;
             gotoLeaderboardButton.GestureRecognizers.Add(tapGesture);
             gotoPurchasesButton.GestureRecognizers.Add(tapGesture);
             gotoSettingsButton.GestureRecognizers.Add(tapGesture);
+            gotoHelpButton.GestureRecognizers.Add(tapGesture);
 
             // @todo implement purchases.
             gotoPurchasesButton.IsVisible = false;
@@ -63,9 +83,12 @@ namespace ImageImprov {
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
-            Children.Add(gotoLeaderboardButton, 0, 0);  // col, row
-            Children.Add(gotoPurchasesButton, 1, 0);
-            Children.Add(gotoSettingsButton, 2, 0);
+            RowDefinitions.Add(new RowDefinition());
+            RowDefinitions.Add(new RowDefinition());
+            Children.Add(gotoLeaderboardButton, 0, 1);  // col, row
+            Children.Add(gotoPurchasesButton, 1, 1);
+            Children.Add(gotoSettingsButton, 2, 1);
+            Children.Add(gotoHelpButton, 2, 0);
         }
 
         public void OnClicked(object sender, EventArgs e) {
@@ -75,7 +98,12 @@ namespace ImageImprov {
             } else if (sender == gotoPurchasesButton) {
                 //parent.Content = purchasesPage;
             } else if (sender == gotoSettingsButton) {
-               parent.Content = settingsPage;
+                if (settingsPage == null) {
+                    settingsPage = new SettingsPage();
+                }
+                parent.Content = settingsPage;
+            } else if (sender == gotoHelpButton) {
+                parent.Content = instructionsPage;
             }
         }
  

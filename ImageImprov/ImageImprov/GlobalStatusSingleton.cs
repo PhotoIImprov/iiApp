@@ -67,7 +67,7 @@ namespace ImageImprov
         /// </summary>
         public static int imgsTakenTracker = 0;
 
-        public static Color backgroundColor = Color.FromRgb(0, 0, 0);
+        public static Color backgroundColor = Color.FromRgb(242, 242, 242);
 
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
@@ -117,6 +117,15 @@ namespace ImageImprov
         // Pct of screen covered by pattern. (remainder reserved for ui stuff)
         public const double PATTERN_PCT = 0.9;
         public const double PATTERN_FULL_COVERAGE = 1.0;
+
+        /// <summary>
+        /// Default minimum font size when dynamically scaling the font.
+        /// </summary>
+        public const int MIN_FONT_SIZE = 10;
+        /// <summary>
+        /// Default maximum font size when dynamically scaling the font.
+        /// </summary>
+        public const int MAX_FONT_SIZE = 100;
 
         // will be set to false by android or iOS if the device has no camera.
         // need to check this in cameraContentPage still. (is that created before or after ios/android contexts?)

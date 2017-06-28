@@ -36,5 +36,36 @@ namespace ImageImprov
         // Current valid states are uploading, voting, closed
         [JsonProperty("state")]
         public string state { get; set; }
+
+        public override bool Equals(System.Object obj) {
+            if (obj==null) { return false; }
+            CategoryJSON y = obj as CategoryJSON;
+            if ((System.Object)y == null) {
+                // failed to cast as a CategoryJSON. --> Not equal!
+                return false;
+            }
+            // description is a string, and therefore could be null!!
+            if ((description==null) || (y.description==null)) {
+                return ((description == null) && (y.description == null));
+            }
+            return description.Equals(y.description);
+        }
+
+        public bool Equals(CategoryJSON y) {
+            if ((object)y == null) { return false; }
+            // description is a string, and therefore could be null!!
+            // Note: Will return true if description null in both instances.
+            if ((description == null) || (y.description == null)) {
+                return ((description == null) && (y.description == null));
+            }
+            return description.Equals(y);
+        }
+        public override int GetHashCode() {
+            int res = 0;
+            if (description != null) {
+                res = description.GetHashCode();
+            }
+            return res;
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace ImageImprov {
                 return memStream.ToArray();
             }
             */
-                
+
         }
 
         public static string getAuthToken() {
@@ -48,7 +48,7 @@ namespace ImageImprov {
         public static bool isEmailAddress(string testAddress) {
             // try with a test against this regex: ^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$
             string pattern = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
-            Match m = Regex.Match(testAddress, pattern, RegexOptions.IgnoreCase);
+            Match m = Regex.Match(testAddress.Trim(), pattern, RegexOptions.IgnoreCase);
             return m.Success;
         }
 
@@ -62,7 +62,7 @@ namespace ImageImprov {
         public static bool AspectSettingToBool(Aspect inAspect) {
             return ((inAspect == Aspect.AspectFit) ? true : false);
         }
-        
+
         /// <summary>
         /// Reverse look up of the AspectSettingToBool conversion.
         /// </summary>
@@ -75,7 +75,7 @@ namespace ImageImprov {
         public static async Task<bool> SendLogData(string logInfo) {
             Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync start");
             string result = "fail";
-            
+
             try {
                 // only send log data if we are authenticated.
                 if (GlobalStatusSingleton.authToken != null) {
@@ -111,11 +111,11 @@ namespace ImageImprov {
         //
         //
 
-                /// <summary>
-                /// Convenience method for converting a given SKImage to a Xamarin Image UI Component.
-                /// </summary>
-                /// <param name="inImg">A valid SKImage</param>
-                /// <returns>A Xamarin.Forms.Image object based on the passed in SKImage</returns>
+        /// <summary>
+        /// Convenience method for converting a given SKImage to a Xamarin Image UI Component.
+        /// </summary>
+        /// <param name="inImg">A valid SKImage</param>
+        /// <returns>A Xamarin.Forms.Image object based on the passed in SKImage</returns>
         public static Image SKImageToXamarinImage(SKImage inImg) {
             // yes, there should be a way to do this without the multiple back and forth to bytes.
             // no, it's not worth my time to try and figure it out.
@@ -172,7 +172,7 @@ namespace ImageImprov {
                     using (var tempSurface = SKSurface.Create(new SKImageInfo((int)Width, (int)Height))) {
                         var canvas = tempSurface.Canvas;
                         canvas.Clear(SKColors.White);
-                        
+
                         SKBitmap bottomEdge = new SKBitmap();
                         SKBitmap rightEdge = new SKBitmap();
                         SKBitmap corner = new SKBitmap();
@@ -219,24 +219,26 @@ namespace ImageImprov {
             return result;
         }
 
-        public static Image buildBackgroundFromBytes(byte[] patternSource, Assembly assembly, int Width, int Height, 
-            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) 
-        {
+        public static Image buildBackgroundFromBytes(byte[] patternSource, Assembly assembly, int Width, int Height,
+            double bottomAdjustment = GlobalStatusSingleton.PATTERN_PCT, double sideAdjustment = GlobalStatusSingleton.PATTERN_FULL_COVERAGE) {
             Image result = null;
             if ((Width == -1) || (Height == -1)) {
+                return result;
+            }
+            if (patternSource == null) {
                 return result;
             }
 
             SKBitmap bitmap = new SKBitmap(new SKImageInfo(Width, Height));
             var bitmapFullSize = buildFixedRotationSKBitmapFromBytes(patternSource);
-            if ((bitmapFullSize.Width>Width) || (bitmapFullSize.Height>Height)) {
+            if ((bitmapFullSize.Width > Width) || (bitmapFullSize.Height > Height)) {
                 // passed in image is larger than the screen.  shrink to fit.
                 bitmapFullSize.Resize(bitmap, SKBitmapResizeMethod.Box);
             } else {
                 bitmap = bitmapFullSize;
             }
-            int tilesWide = (int)((Width*sideAdjustment) / bitmap.Width);
-            int tilesHigh = (int)((Height* bottomAdjustment) / bitmap.Height);
+            int tilesWide = (int)((Width * sideAdjustment) / bitmap.Width);
+            int tilesHigh = (int)((Height * bottomAdjustment) / bitmap.Height);
             try {
                 using (var tempSurface = SKSurface.Create(new SKImageInfo((int)Width, (int)Height))) {
                     var canvas = tempSurface.Canvas;
@@ -245,8 +247,8 @@ namespace ImageImprov {
                     SKBitmap bottomEdge = new SKBitmap();
                     SKBitmap rightEdge = new SKBitmap();
                     SKBitmap corner = new SKBitmap();
-                    int excessH = (int)(Height*bottomAdjustment) - (tilesHigh * bitmap.Height);
-                    int excessW = (int)(Width*sideAdjustment) - (tilesWide * bitmap.Width);
+                    int excessH = (int)(Height * bottomAdjustment) - (tilesHigh * bitmap.Height);
+                    int excessW = (int)(Width * sideAdjustment) - (tilesWide * bitmap.Width);
                     if (excessH > 0) {
                         bitmap.ExtractSubset(bottomEdge, new SKRectI(0, 0, bitmap.Width, excessH));
                     }
@@ -309,6 +311,11 @@ namespace ImageImprov {
             return finalImage;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="imgBits">These are not actually the raw bits, but a jpeg encoded set of bits.</param>
+        /// <returns></returns>
         public static SKBitmap SKBitmapFromBytes(byte[] imgBits) {
             SKBitmap bitmap = null;
             MemoryStream mems = new MemoryStream(imgBits);
@@ -326,78 +333,80 @@ namespace ImageImprov {
 
         public static SKBitmap buildFixedRotationSKBitmapFromBytes(byte[] imgBits, ExifOrientation imgExifO = ExifOrientation.Undefined) {
             SKBitmap rotatedBmp = null;
-            DateTime step0 = DateTime.Now;
-            using (var resource = new MemoryStream(imgBits)) {
-                //using (var stream = new SKManagedStream(resource)) {
-                //using (var stream = new MemoryStream((resource)) {
-                DateTime step1 = DateTime.Now;
-                if (imgExifO == ExifOrientation.Undefined) {
-                    imgExifO = ExifLib.ExifOrientation.TopLeft;
+            if (imgBits != null) {
+                DateTime step0 = DateTime.Now;
+                using (var resource = new MemoryStream(imgBits)) {
+                    //using (var stream = new SKManagedStream(resource)) {
+                    //using (var stream = new MemoryStream((resource)) {
+                    DateTime step1 = DateTime.Now;
+                    if (imgExifO == ExifOrientation.Undefined) {
+                        imgExifO = ExifLib.ExifOrientation.TopLeft;
+                        try {
+                            JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
+                            // What exif lib associates each orientation with num in spec:
+                            // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
+                            // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
+                            // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
+                            // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
+
+                            // What each image I set the exif on resulted in:
+                            // (note: what I set should be correct as it displays right in programs that adjust for exif)
+                            // Unchd: 1
+                            // ImgRotLeft: 6
+                            // ImgRotRight: 8
+                            // ImgRot180: 3
+                            // Cool. These all tie out with images in Dave Perret article.
+                            imgExifO = jpegInfo.Orientation;
+                            //int imgExifWidth = jpegInfo.Width;
+                            //int imgExifHeight = jpegInfo.Height;
+
+                            //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
+                            //string res2 = res + "dummy";
+                        } catch (Exception e) {
+                            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
+                            Debug.WriteLine(e.ToString());
+                        }
+                    }
+                    DateTime step2 = DateTime.Now;
                     try {
-                        JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
-                        // What exif lib associates each orientation with num in spec:
-                        // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
-                        // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
-                        // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
-                        // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
-
-                        // What each image I set the exif on resulted in:
-                        // (note: what I set should be correct as it displays right in programs that adjust for exif)
-                        // Unchd: 1
-                        // ImgRotLeft: 6
-                        // ImgRotRight: 8
-                        // ImgRot180: 3
-                        // Cool. These all tie out with images in Dave Perret article.
-                        imgExifO = jpegInfo.Orientation;
-                        //int imgExifWidth = jpegInfo.Width;
-                        //int imgExifHeight = jpegInfo.Height;
-
-                        //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
-                        //string res2 = res + "dummy";
+                        SKBitmap baseBmp = SKBitmapFromBytes(imgBits);
+                        //SKBitmap rotatedBmp = null;
+                        if (imgExifO == ExifLib.ExifOrientation.TopRight) {
+                            rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                            using (var canvas = new SKCanvas(rotatedBmp)) {
+                                canvas.Translate(rotatedBmp.Width, 0);
+                                canvas.RotateDegrees(90);
+                                canvas.DrawBitmap(baseBmp, 0, 0);
+                            }
+                        } else if (imgExifO == ExifLib.ExifOrientation.BottomLeft) {
+                            rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                            using (var canvas = new SKCanvas(rotatedBmp)) {
+                                // currently upside down. with w, 90.
+                                // failures:   -W, 270    w,-90    -W,90     0,90  0,270
+                                //   h, 270  -> soln is to think about the corner I'm told is important...
+                                //canvas.Translate(-rotatedBmp.Width, 0);
+                                canvas.Translate(0, rotatedBmp.Height);
+                                canvas.RotateDegrees(270);
+                                canvas.DrawBitmap(baseBmp, 0, 0);
+                            }
+                        } else if (imgExifO == ExifLib.ExifOrientation.BottomRight) {
+                            rotatedBmp = new SKBitmap(baseBmp.Width, baseBmp.Height);
+                            using (var canvas = new SKCanvas(rotatedBmp)) {
+                                canvas.Translate(rotatedBmp.Width, rotatedBmp.Height);
+                                canvas.RotateDegrees(180);
+                                canvas.DrawBitmap(baseBmp, 0, 0);
+                            }
+                        } else {
+                            rotatedBmp = baseBmp;
+                        }
                     } catch (Exception e) {
-                        Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
-                        Debug.WriteLine(e.ToString());
+                        string msg = e.ToString();
                     }
+                    DateTime step3 = DateTime.Now;
+                    //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step1:" + (step1 - step0));
+                    //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step2:" + (step2 - step1));
+                    //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step3:" + (step3 - step2));
                 }
-                DateTime step2 = DateTime.Now;
-                try {
-                    SKBitmap baseBmp = SKBitmapFromBytes(imgBits);
-                    //SKBitmap rotatedBmp = null;
-                    if (imgExifO == ExifLib.ExifOrientation.TopRight) {
-                        rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
-                        using (var canvas = new SKCanvas(rotatedBmp)) {
-                            canvas.Translate(rotatedBmp.Width, 0);
-                            canvas.RotateDegrees(90);
-                            canvas.DrawBitmap(baseBmp, 0, 0);
-                        }
-                    } else if (imgExifO == ExifLib.ExifOrientation.BottomLeft) {
-                        rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
-                        using (var canvas = new SKCanvas(rotatedBmp)) {
-                            // currently upside down. with w, 90.
-                            // failures:   -W, 270    w,-90    -W,90     0,90  0,270
-                            //   h, 270  -> soln is to think about the corner I'm told is important...
-                            //canvas.Translate(-rotatedBmp.Width, 0);
-                            canvas.Translate(0, rotatedBmp.Height);
-                            canvas.RotateDegrees(270);
-                            canvas.DrawBitmap(baseBmp, 0, 0);
-                        }
-                    } else if (imgExifO == ExifLib.ExifOrientation.BottomRight) {
-                        rotatedBmp = new SKBitmap(baseBmp.Width, baseBmp.Height);
-                        using (var canvas = new SKCanvas(rotatedBmp)) {
-                            canvas.Translate(rotatedBmp.Width, rotatedBmp.Height);
-                            canvas.RotateDegrees(180);
-                            canvas.DrawBitmap(baseBmp, 0, 0);
-                        }
-                    } else {
-                        rotatedBmp = baseBmp;
-                    }
-                } catch (Exception e) {
-                    string msg = e.ToString();
-                }
-                DateTime step3 = DateTime.Now;
-                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step1:" + (step1 - step0));
-                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step2:" + (step2 - step1));
-                //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes step3:" + (step3 - step2));
             }
             return rotatedBmp;
         }
@@ -477,7 +486,7 @@ namespace ImageImprov {
         public static Image buildFixedRotationImage(BallotCandidateJSON candidate) {
             Image result = new Image();
             SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation);
-            if (rotatedBmp != null) { 
+            if (rotatedBmp != null) {
                 // > means square images are treated as landscape.
                 if (rotatedBmp.Height > rotatedBmp.Width) {
                     candidate.isPortrait = BallotCandidateJSON.PORTRAIT;
@@ -489,6 +498,28 @@ namespace ImageImprov {
             return result;
         }
 
+        public static SKImage CropImage(SKBitmap inImg) {
+            int w = inImg.Width;
+            int h = inImg.Height;
+            int shortestLen = ((w < h) ? w : h);
+            SKImage image = SKImage.FromBitmap(inImg);
+            SKImage subset = image.Subset(SKRectI.Create(0, 0, shortestLen, shortestLen));
+            return subset;
+        }
+
+        public static byte[] SquareImage(byte[] imgBytes) {
+            // my passed in imgBytes are a jpg, not a bmp.
+            //SKBitmap bmp = GlobalSingletonHelpers.SKBitmapFromBytes(imgBytes);
+            SKBitmap bmp = buildFixedRotationSKBitmapFromBytes(imgBytes);
+            SKImage res = CropImage(bmp);
+            return res.Encode(SKEncodedImageFormat.Jpeg, 100).ToArray();
+
+            // testing
+            //byte[] test = res.Encode(SKEncodedImageFormat.Jpeg, 100).ToArray();
+            //SKBitmap res3 = SKBitmapFromBytes(test2);
+            //return test;
+
+        }
         //
         //
         //   END IMAGE PROCESSING HELPERS
@@ -496,5 +527,67 @@ namespace ImageImprov {
         //   END IMAGE PROCESSING HELPERS
         //
         //
+
+        /*
+    public static void fixLabelHeight(Label label, View view, double containerWidth) {
+        // Calculate the height of the rendered text. 
+        FontCalc lowerFontCalc = new FontCalc(label, 10, view.Width);
+        FontCalc upperFontCalc = new FontCalc(label, 100, view.Width);
+        while (upperFontCalc.FontSize - lowerFontCalc.FontSize > 1) {
+            // Get the average font size of the upper and lower bounds. 
+            double fontSize = (lowerFontCalc.FontSize + upperFontCalc.FontSize) / 2;
+            // Check the new text height against the container height. 
+            // @NOTE: And again, I'm cheating on the width used.  This won't work if I have multiple columns!!!!
+            FontCalc newFontCalc = new FontCalc(label, fontSize, view.Width);
+            // @NOTE: This is the worst cheat as it's the one most likely to be changed!
+            if ((newFontCalc.TextHeight > (view.Height)) || (newFontCalc.TextHeight == -1)) {
+                upperFontCalc = newFontCalc;
+            } else {
+                lowerFontCalc = newFontCalc;
+            }
+        }
+        // Set the final font size and the text with the embedded value. 
+        label.FontSize = lowerFontCalc.FontSize;
+        label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
+    }
+    */
+        public static void fixLabelHeight(Label label, double containerWidth, double containerHeight, 
+            int minFontSize = GlobalStatusSingleton.MIN_FONT_SIZE, int maxFontSize=GlobalStatusSingleton.MAX_FONT_SIZE) 
+        {
+            // Calculate the height of the rendered text. 
+            if ((containerWidth <= 0) || (containerHeight<=0)) { return; }
+
+            FontCalc lowerFontCalc = new FontCalc(label, minFontSize, containerWidth);
+            FontCalc upperFontCalc = new FontCalc(label, maxFontSize, containerWidth);
+            while (upperFontCalc.FontSize - lowerFontCalc.FontSize > 1) {
+                // Get the average font size of the upper and lower bounds. 
+                double fontSize = (lowerFontCalc.FontSize + upperFontCalc.FontSize) / 2;
+                // Check the new text height against the container height. 
+                // @NOTE: And again, I'm cheating on the width used.  This won't work if I have multiple columns!!!!
+                FontCalc newFontCalc = new FontCalc(label, fontSize, containerWidth);
+                // @NOTE: This is the worst cheat as it's the one most likely to be changed!
+                if ((newFontCalc.TextHeight > (containerHeight)) || (newFontCalc.TextHeight == -1)) {
+                    upperFontCalc = newFontCalc;
+                } else {
+                    lowerFontCalc = newFontCalc;
+                }
+
+                // Testing....
+                /*
+                if (newFontCalc.TextHeight == -1) {
+                    // wtf. why is this happening?
+                    // this didn't help...
+                    //containerWidth = containerWidth * 2.0;
+                    label.MinimumHeightRequest = 20.0;
+                    FontCalc test = new FontCalc(label, 10.0, containerWidth);
+                    FontCalc test2 = new FontCalc(label, 5.0, containerWidth);
+                    FontCalc test3 = new FontCalc(label, 1.0, containerWidth);
+                }
+                */
+            }
+            // Set the final font size and the text with the embedded value. 
+            label.FontSize = lowerFontCalc.FontSize;
+            label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
+        }
     }
 }

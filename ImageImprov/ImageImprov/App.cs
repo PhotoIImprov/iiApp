@@ -59,6 +59,7 @@ namespace ImageImprov
             Properties[PROPERTY_USERNAME] = GlobalStatusSingleton.username;
             Properties[PROPERTY_PWD] = GlobalStatusSingleton.password;
             Properties[PROPERTY_MAINTAIN_LOGIN] = GlobalStatusSingleton.maintainLogin.ToString();
+            Debug.WriteLine("DHB:App:OnSleep set maintainlogin to " + Properties[PROPERTY_MAINTAIN_LOGIN]);
             Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
             Properties[PROPERTY_MIN_BALLOTS_TO_LOAD] = GlobalStatusSingleton.minBallotsToLoad.ToString();
             Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
@@ -178,12 +179,15 @@ namespace ImageImprov
                     //boards.Add(JsonHelper.DeserializeToList<LeaderboardJSON>(
                     //  Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST + "_" + i] as string));
                     //}
-                    CategoryJSON key = JsonConvert.DeserializeObject<CategoryJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i] as string);
-                    IList<LeaderboardJSON> value =
-                        JsonHelper.DeserializeToList<LeaderboardJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] as string);
-                    boards.Add(key, value);
+                    bool hasLeaderboardKey = Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i);
+                    bool hasLeaderboardValue = Properties.ContainsKey(PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_"+i);
+                    bool hasLeaderboardTimestamp = Properties.ContainsKey(PROPERTY_LEADERBOARD_TIMESTAMP + "_" + i);
+                    if ((hasLeaderboardKey) && (hasLeaderboardValue) && (hasLeaderboardTimestamp)) { 
+                        CategoryJSON key = JsonConvert.DeserializeObject<CategoryJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_KEY + "_" + i] as string);
+                        IList<LeaderboardJSON> value =
+                            JsonHelper.DeserializeToList<LeaderboardJSON>(Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_VALUE + "_" + i] as string);
+                        boards.Add(key, value);
 
-                    if (Properties.ContainsKey(PROPERTY_LEADERBOARD_TIMESTAMP+"_"+i)) {
                         DateTime stamp;
                         bool readSuccess = DateTime.TryParse(Properties[PROPERTY_LEADERBOARD_TIMESTAMP + "_" + i] as string, out stamp);
                         if (readSuccess) {
