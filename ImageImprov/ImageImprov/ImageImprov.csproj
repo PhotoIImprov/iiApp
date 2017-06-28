@@ -34,6 +34,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="AuthenticationToken.cs" />
@@ -42,10 +45,12 @@
     <Compile Include="CameraContentPage.cs" />
     <Compile Include="CategoryJSON.cs" />
     <Compile Include="CheckBox.cs" />
+    <Compile Include="FontCalc.cs" />
     <Compile Include="GlobalSingletonHelpers.cs" />
     <Compile Include="GlobalStatusSingleton.cs" />
     <Compile Include="ICamera.cs" />
     <Compile Include="IExposeCamera.cs" />
+    <Compile Include="InstructionsPage.cs" />
     <Compile Include="IProvideNavigation.cs" />
     <Compile Include="JsonHelper.cs" />
     <Compile Include="JudgingContentPage.cs" />
@@ -142,6 +147,9 @@
     <EmbeddedResource Include="IconImages\Instructions\Instructions_2.png" />
     <EmbeddedResource Include="IconImages\Instructions\Instructions_3.png" />
     <EmbeddedResource Include="IconImages\Instructions\Instructions_4.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IconImages\Help.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="..\..\packages\Xamarin.Forms.2.3.3.180\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+Xamarin.iOS10+xamarinmac20\Xamarin.Forms.targets" Condition="Exists('..\..\packages\Xamarin.Forms.2.3.3.180\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+Xamarin.iOS10+xamarinmac20\Xamarin.Forms.targets')" />
