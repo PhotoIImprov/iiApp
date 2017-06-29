@@ -90,7 +90,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             categoryLabelL = new Label {
@@ -98,7 +98,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             */
@@ -109,7 +109,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             lastActionResultLabelL = new Label {
@@ -117,7 +117,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             */
@@ -127,7 +127,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 21, 21),
+                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 Command = new Command(o => ShouldTakePicture()),
             };
@@ -136,7 +136,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 21, 21),
+                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 Command = new Command(o => ShouldTakePicture()),
             };
@@ -147,7 +147,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 21, 21),
+                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
@@ -156,7 +156,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 21, 21),
+                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
@@ -446,7 +446,7 @@ namespace ImageImprov {
                             HorizontalOptions = LayoutOptions.CenterAndExpand,
                             VerticalOptions = LayoutOptions.FillAndExpand,
                             TextColor = Color.Black,
-                            BackgroundColor = Color.FromRgb(252, 213, 21),
+                            BackgroundColor = GlobalStatusSingleton.ButtonColor,
                             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                             Command = new Command(o => ShouldTakePicture()),
                         };
@@ -457,7 +457,7 @@ namespace ImageImprov {
                             HorizontalOptions = LayoutOptions.CenterAndExpand,
                             VerticalOptions = LayoutOptions.FillAndExpand,
                             TextColor = Color.Black,
-                            BackgroundColor = Color.FromRgb(252, 213, 21),
+                            BackgroundColor = GlobalStatusSingleton.ButtonColor,
                             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                             Command = new Command(o => ShouldTakePicture()),
                         };
@@ -473,7 +473,7 @@ namespace ImageImprov {
                     HorizontalOptions = LayoutOptions.CenterAndExpand,
                     VerticalOptions = LayoutOptions.FillAndExpand,
                     TextColor = Color.Black,
-                    BackgroundColor = Color.FromRgb(252, 21, 21),
+                    BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                     FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                     IsEnabled = false,
                 };
@@ -484,7 +484,7 @@ namespace ImageImprov {
                     HorizontalOptions = LayoutOptions.CenterAndExpand,
                     VerticalOptions = LayoutOptions.FillAndExpand,
                     TextColor = Color.Black,
-                    BackgroundColor = Color.FromRgb(252, 21, 21),
+                    BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
                     FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                     IsEnabled = false,
                 };

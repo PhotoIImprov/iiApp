@@ -52,7 +52,7 @@ namespace ImageImprov
             Text = "Connecting...",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
+            BackgroundColor = GlobalStatusSingleton.ButtonColor,
             TextColor = Color.Black,
         };
         //> loggedInLabel
@@ -60,7 +60,7 @@ namespace ImageImprov
         {
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
+            BackgroundColor = GlobalStatusSingleton.ButtonColor,
             TextColor = Color.Black,
         };
 
@@ -169,7 +169,7 @@ namespace ImageImprov
             {
                 Text = "Connect now",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             connectButton.Clicked += (sender, args) =>
             {
@@ -184,7 +184,7 @@ namespace ImageImprov
             {
                 Text = "Play anonymously now",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             anonymousPlayButton.Clicked += (sender, args) =>
             {
@@ -291,7 +291,7 @@ namespace ImageImprov
             logoutButton = new Button {
                 Text = "Logout",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21), };
+                BackgroundColor = GlobalStatusSingleton.ButtonColor, };
             logoutButton.Clicked += (sender, args) =>
             {
                 if (LogoutClicked != null) {
@@ -338,7 +338,7 @@ namespace ImageImprov
             logoutButton = new Button {
                 Text = "Logout",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             logoutButton.Clicked += (sender, args) => {
                 if (LogoutClicked != null) {
@@ -430,7 +430,7 @@ namespace ImageImprov
             registerButton = new Button {
                 Text = "Register",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             registerButton.Clicked += (sender, args) =>
             {
@@ -525,7 +525,7 @@ namespace ImageImprov
             gotoRegistrationButton = new Button {
                 Text = "Register me now!",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             gotoRegistrationButton.Clicked += (sender, args) =>
             {
@@ -585,7 +585,7 @@ namespace ImageImprov
             cancelRegistrationButton = new Button {
                 Text = "Never mind; I'll register later",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
             };
             cancelRegistrationButton.Clicked += (sender, args) =>
             {

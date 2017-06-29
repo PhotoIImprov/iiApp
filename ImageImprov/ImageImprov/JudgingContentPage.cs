@@ -29,6 +29,7 @@ namespace ImageImprov {
 
         Grid portraitView = null;
         KeyPageNavigator defaultNavigationButtonsP;
+        KeyPageNavigator defaultNavigationButtonsZ;
 
         // Yesterday's challenge 
         //< challengeLabel
@@ -39,7 +40,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Center,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode=LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -110,6 +111,25 @@ namespace ImageImprov {
         //
         //   END Variables related/needed for images to place image rankings and backgrounds on screen.
         // 
+
+        //
+        //   BEGIN Variables related/needed for double clicking an image
+        //
+
+        /// <summary>
+        /// Tracks whether to display a ballot or the meta data for an image.
+        /// </summary>
+        Grid zoomView;
+        Image unlikedImg;
+        Image unflaggedImg;
+        Image likedImg;
+        Image flaggedImg;
+        Button backButton = null;
+        BallotCandidateJSON activeMetaBallot;
+        //
+        //   END Variables related/needed for double clicking an image
+        // 
+
 
         public JudgingContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
@@ -274,6 +294,7 @@ namespace ImageImprov {
                 }
                 if (defaultNavigationButtonsP == null) {
                     defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+                    defaultNavigationButtonsZ = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
                 }
 
                 // ok. Everything has been initialized. So now I just need to decide where to put it.
@@ -337,6 +358,94 @@ namespace ImageImprov {
                 result = -1;
             }
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView end");
+            return result;
+        }
+
+        private void buildMetaButtons() {
+            unlikedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.unliked.png"), IsVisible = true };
+            unflaggedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.unflagged.png"), IsVisible=true };
+            likedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.liked.png"), IsVisible = false };
+            flaggedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.flagged.png"), IsVisible = false };
+
+            TapGestureRecognizer ulTap = new TapGestureRecognizer();
+            ulTap.Tapped += (sender, args) => {
+                activeMetaBallot.isLiked = true;
+                unlikedImg.IsVisible = false;
+                likedImg.IsVisible = true;
+            };
+            unlikedImg.GestureRecognizers.Add(ulTap);
+
+            TapGestureRecognizer lTap = new TapGestureRecognizer();
+            lTap.Tapped += (sender, args) => {
+                activeMetaBallot.isLiked = false;
+                likedImg.IsVisible = false;
+                unlikedImg.IsVisible = true;
+            };
+            likedImg.GestureRecognizers.Add(lTap);
+
+            TapGestureRecognizer ufTap = new TapGestureRecognizer();
+            ufTap.Tapped += (sender, args) => {
+                activeMetaBallot.isFlagged = true;
+                unflaggedImg.IsVisible = false;
+                flaggedImg.IsVisible = true;
+            };
+            unflaggedImg.GestureRecognizers.Add(ufTap);
+
+            TapGestureRecognizer fTap = new TapGestureRecognizer();
+            fTap.Tapped += (sender, args) => {
+                activeMetaBallot.isFlagged = false;
+                flaggedImg.IsVisible = false;
+                unflaggedImg.IsVisible = true;
+            };
+            flaggedImg.GestureRecognizers.Add(fTap);
+
+            backButton = new Button
+            {
+                //Text = buttonText,
+                Text = "Save and return to voting",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                //VerticalOptions = LayoutOptions.FillAndExpand,
+                TextColor = Color.Black,
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+            };
+            backButton.Clicked += (sender, args) => {
+                Content = portraitView;
+            };
+        }
+
+        private int buildZoomView(Image mainImage, BallotCandidateJSON ballot) {
+            int result = 1;
+            if (zoomView == null) {
+                zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                for (int i = 0; i < 20; i++) {
+                    zoomView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+                zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width= new GridLength(1, GridUnitType.Star) });
+                buildMetaButtons();
+            } else {
+                unlikedImg.IsVisible = !ballot.isLiked;
+                likedImg.IsVisible = ballot.isLiked;
+                unflaggedImg.IsVisible = !ballot.isFlagged;
+                flaggedImg.IsVisible = ballot.isFlagged;
+            }
+            activeMetaBallot = ballot;
+
+            zoomView.Children.Clear();
+            zoomView.Children.Add(mainImage,0,1);
+            Grid.SetRowSpan(mainImage, 6);
+            Grid.SetColumnSpan(mainImage, 2);
+            zoomView.Children.Add(unlikedImg,0,8);
+            zoomView.Children.Add(likedImg,0,8);
+            zoomView.Children.Add(unflaggedImg,1,8);
+            zoomView.Children.Add(flaggedImg,1,8);
+            zoomView.Children.Add(backButton,0,11);
+            Grid.SetColumnSpan(backButton, 2);
+            Grid.SetRowSpan(backButton, 2);
+            zoomView.Children.Add(defaultNavigationButtonsZ,0,18);
+            Grid.SetRowSpan(defaultNavigationButtonsZ, 2);
+            Grid.SetColumnSpan(defaultNavigationButtonsZ, 2);
             return result;
         }
 
@@ -506,6 +615,22 @@ namespace ImageImprov {
             // with a like button
             //    a flag button
             //    an entry for custom tags
+            Image taggedImg = sender as Image;
+            if (taggedImg == null) { return; }
+
+            // sadly I can't use taggedImg in zoomView as it causes a crash. 
+            // probably for same reason I had to create two of everything for portrait vs landscape.
+            int selectionId = 0;
+            long bid = -1;
+            BallotCandidateJSON votedOnCandidate = null;
+            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate);
+            if (found) {
+                taggedImg = GlobalSingletonHelpers.buildFixedRotationImage(votedOnCandidate);
+            }
+            buildZoomView(taggedImg, votedOnCandidate);
+            Device.BeginInvokeOnMainThread(() => {
+                Content = zoomView;
+            });
         }
         /////
         /////
@@ -844,7 +969,7 @@ namespace ImageImprov {
         /// <summary>
         /// Currently, this also manages orientation Count.
         /// This is what is called during the initial image setup.
-        /// DEPREACTED.  Use setupImgsFromBallotCandidate.
+        /// Use setupImgsFromBallotCandidate if we switch back to landscape&&portrait..
         /// </summary>
         /// <param name="candidate"></param>
         /// <returns></returns>
@@ -867,9 +992,6 @@ namespace ImageImprov {
 
             // This works. looks like a long press will be a pain in the ass.
             TapGestureRecognizer tapGesture = new TapGestureRecognizer();
-            if (tapGesture == null) {
-                tapGesture = new TapGestureRecognizer();
-            }
             tapGesture.Tapped += OnClicked;
             image.GestureRecognizers.Add(tapGesture);
 
@@ -885,6 +1007,11 @@ namespace ImageImprov {
             return image;
         }
 
+        /// <summary>
+        /// Deprecated. Use setupImgFromBallotCandidate.
+        /// </summary>
+        /// <param name="candidate"></param>
+        /// <returns></returns>
         protected IList<Image> setupImgsFromBallotCandidate(BallotCandidateJSON candidate) {
             // TEST
             // TEST
@@ -895,8 +1022,11 @@ namespace ImageImprov {
             // TEST
             // TEST
 
+            // NOTE SHOULD NOT REACH THE BREAK POINT BELOW!!!
+
             //Image image = new Image();
             //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
+            //IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromCandidate(candidate);
             IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromCandidate(candidate);
             images[0].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
             images[1].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
@@ -909,6 +1039,12 @@ namespace ImageImprov {
             tapGesture.Tapped += OnClicked;  
             images[0].GestureRecognizers.Add(tapGesture);
             images[1].GestureRecognizers.Add(tapGesture);
+
+            TapGestureRecognizer doubleTap = new TapGestureRecognizer();
+            doubleTap.NumberOfTapsRequired = 2;
+            doubleTap.Tapped += OnDoubleClick;
+            images[0].GestureRecognizers.Add(doubleTap);
+            images[1].GestureRecognizers.Add(doubleTap);
 
             // orientation info is based on the relative w/h of the image.
             // square images are all considered "landscape"
@@ -990,9 +1126,9 @@ namespace ImageImprov {
                     Image imgL = setupImgFromBallotCandidate(candidate);
                     ballotImgsL.Add(imgL);
                     */
-                    // @todo rebuild setupImgFromBallotCandidate so we dont do double the work
-                    IList<Image> img = setupImgsFromBallotCandidate(candidate);
-                    ballotImgsP.Add(img[0]);
+                    //IList<Image> img = setupImgsFromBallotCandidate(candidate);
+                    Image img = setupImgFromBallotCandidate(candidate);
+                    ballotImgsP.Add(img);
                     //ballotImgsL.Add(img[1]);
                 }
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
@@ -1163,7 +1299,8 @@ namespace ImageImprov {
             VoteJSON vote = new ImageImprov.VoteJSON();
             vote.bid = bid;
             vote.vote = votes.votes.Count + 1;
-            vote.like = true;
+            vote.like = ballot.ballots[index].isLiked ? "1" : "0";
+            vote.offensive = ballot.ballots[index].isFlagged? "1" : "0";
             votes.votes.Add(vote);
 
             string jsonQuery = JsonConvert.SerializeObject(votes);
@@ -1188,7 +1325,7 @@ namespace ImageImprov {
         }
 
         /// <summary>
-        /// Helper function for MultiVoteGeneratesBallot
+        /// Helper function for MultiVoteGeneratesBallot and OnDoubleClick
         /// Given the tapped image, find the index in the ballot.ballots array of that image and sets it to the selectionId variable.
         /// And grabs the bid at the same time for easy use.
         /// bleh, setting so many things this turned out to be more trouble than worth...
@@ -1314,11 +1451,12 @@ namespace ImageImprov {
                     // first selected save the selectionId;
                     firstSelectedIndex = selectionId;
                 }
-                vote.like = true;
-                votes.votes.Add(vote);
                 if (votedOnCandidate != null) {
                     unvotedImgs.Remove(votedOnCandidate);
+                    vote.like = votedOnCandidate.isLiked?"1":"0";
+                    vote.offensive = votedOnCandidate.isFlagged?"1":"0";
                 }
+                votes.votes.Add(vote);
 
                 // Is this the last img to be voted on (on the ui second to last as fully defined order at that point)
                 // if so, send the votes in.
@@ -1330,7 +1468,8 @@ namespace ImageImprov {
                     // This has to be the only one left.
                     vote.bid = unvotedImgs[0].bidId;
                     vote.vote = votes.votes.Count + 1;
-                    vote.like = true;
+                    vote.like = unvotedImgs[0].isLiked ? "1" : "0";
+                    vote.offensive = unvotedImgs[0].isFlagged?"1":"0";
                     votes.votes.Add(vote);
 
                     string jsonQuery = JsonConvert.SerializeObject(votes);
@@ -1371,6 +1510,7 @@ namespace ImageImprov {
                     // keep refiring until success.
                     string result = "fail";
                     while (result.Equals("fail")) {
+                        Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot: vote json: " + jsonQuery);
                         result = await requestVoteAsync(jsonQuery);
                         if (result.Equals("fail")) {
                             // @todo This fail case is untested code. Does the UI come back?

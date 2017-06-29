@@ -42,7 +42,7 @@ namespace ImageImprov {
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
             TextColor = Color.Black,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
+            BackgroundColor = GlobalStatusSingleton.ButtonColor,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
         Label leaderboardLabelL = new Label
@@ -51,7 +51,7 @@ namespace ImageImprov {
             HorizontalOptions = LayoutOptions.FillAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
             TextColor = Color.Black,
-            BackgroundColor = Color.FromRgb(252, 213, 21),
+            BackgroundColor = GlobalStatusSingleton.ButtonColor,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
 
@@ -137,7 +137,7 @@ namespace ImageImprov {
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.Black,
-                BackgroundColor = Color.FromRgb(252, 213, 21),
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
             };
             newButton.Clicked += (sender, args) => {
@@ -154,15 +154,15 @@ namespace ImageImprov {
                     // no load case!
                 } else {
                     if (activeButton != null) {
-                        activeButton.Item1.BackgroundColor = Color.FromRgb(252, 213, 21);
-                        activeButton.Item2.BackgroundColor = Color.FromRgb(252, 213, 21);
+                        activeButton.Item1.BackgroundColor = GlobalStatusSingleton.ButtonColor;
+                        activeButton.Item2.BackgroundColor = GlobalStatusSingleton.ButtonColor;
                     }
                     //activeButton = newButton;
-                    //currentButton.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    //currentButton.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
                     activeLeaderboard = newCategory; // I'll believe this line when I see it! Wow, it works.
                     activeButton = Tuple.Create(selectLeaderboardDictP[newCategory.categoryId], selectLeaderboardDictL[newCategory.categoryId]);
-                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
-                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    activeButton.Item1.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
+                    activeButton.Item2.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
                     DateTime preDraw = DateTime.Now;
                     Debug.WriteLine("DHB:LeaderboardPage:AnonButtonClicked time to pre image draw:" + (preDraw - startTime));
                     // insufficient: Task(() => { drawLeaderImages(); });
@@ -343,8 +343,8 @@ namespace ImageImprov {
                 if (activeButton == null) {
                     long catId = activeLeaderboard.categoryId;
                     activeButton = Tuple.Create(selectLeaderboardDictP[catId], selectLeaderboardDictL[catId]);
-                    activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
-                    activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                    activeButton.Item1.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
+                    activeButton.Item2.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
                 }
                 foreach(KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> board in listOfLeaderboards) {
                     reloadAnalysis(board.Key);
@@ -781,8 +781,8 @@ namespace ImageImprov {
                 if (activeButton == null) {
                     activeButton = new Tuple<Button, Button>(selectLeaderboardDictP[activeLeaderboard.categoryId], selectLeaderboardDictL[activeLeaderboard.categoryId]);
                 }
-                activeButton.Item1.BackgroundColor = Color.FromRgb(252, 21, 21);
-                activeButton.Item2.BackgroundColor = Color.FromRgb(252, 21, 21);
+                activeButton.Item1.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
+                activeButton.Item2.BackgroundColor = GlobalStatusSingleton.ActiveButtonColor;
                 buildUI();
             }
 #if DEBUG

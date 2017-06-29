@@ -22,6 +22,9 @@ namespace ImageImprov {
         public int vote{ get; set; }
 
         [JsonProperty("like")]
-        public bool like { get; set; }
+        public string like { get; set; }
+
+        [JsonProperty("offensive")]
+        public string offensive { get; set; }
     }
 }

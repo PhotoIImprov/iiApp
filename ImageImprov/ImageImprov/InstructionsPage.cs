@@ -23,7 +23,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode=LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -31,13 +31,13 @@ namespace ImageImprov {
         Label generalVoting = new Label
         {
             Text = " * Tap the images from favorite to least.\n * Tap a second time to undo a selection.\n" +
-                " * Your vote is auto submitted when making your third image selection.\n * Long press to LIKE, flag as offensive, or add a custom tag! ",
+                " * Your vote is auto submitted when making your third image selection.\n * Double tap to LIKE, flag as offensive, or add a custom tag! ",
             HorizontalOptions = LayoutOptions.StartAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
             Margin = 4,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             //FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -49,7 +49,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -61,7 +61,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -72,7 +72,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
@@ -83,7 +83,7 @@ namespace ImageImprov {
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,
             TextColor = Color.Black,
-            //BackgroundColor = Color.FromRgb(252, 213, 21),
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };

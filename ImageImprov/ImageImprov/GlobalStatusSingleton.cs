@@ -68,7 +68,8 @@ namespace ImageImprov
         public static int imgsTakenTracker = 0;
 
         public static Color backgroundColor = Color.FromRgb(242, 242, 242);
-
+        public static Color ButtonColor = Color.FromRgb(252, 213, 21);
+        public static Color ActiveButtonColor = Color.FromRgb(252, 21, 21);
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
         /// END PREFERENCES SECTION

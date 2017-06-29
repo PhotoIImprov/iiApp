@@ -28,6 +28,14 @@ namespace ImageImprov {
 
         public BallotCandidateJSON() {
             this.orientation = ORIENTATION_UNKNOWN;
-        } 
+        }
+
+        /// <summary>
+        /// These are not received from server, but used in the ui to track
+        /// user preferences for this image.
+        /// Stored here, rather than in vote, as vote is a volatile that changes based on user selections.
+        /// </summary>
+        public bool isLiked = false;
+        public bool isFlagged = false;
     }
 }
