@@ -76,6 +76,17 @@ namespace ImageImprov {
 
         public event LoadBallotPicsEventHandler LoadBallotPics;
         public event EventHandler Vote;
+        /// <summary>
+        /// Needed because iOS fires both clicked and double clicked events when a double click occurs.
+        /// </summary>
+        private Image lastClicked = null;
+        /// <summary>
+        /// If the image had been unchecked, nothing doing.
+        /// However, if the image was checked, we need to make sure it is reselected in the correct order.
+        /// Just reselecting could push an image that had in place1 to place 2.
+        /// </summary>
+        private int checkPosition = -1;
+
         EventArgs eDummy = null;
 
         // the http command name to request category information to determine what we can vote on.
@@ -85,9 +96,6 @@ namespace ImageImprov {
         
         // When third is selected, there is enough info to rank all 4 images.
         const int PENULTIMATE_BALLOT_SELECTED = 3;
-
-        // interesting. doing this somehow sets up a double tap (and therefore an error due to data clearing)
-        //TapGestureRecognizer tapGesture;
 
         // tracks the number of pictures in each orientation so we know how to display.
         int orientationCount;
@@ -605,9 +613,28 @@ namespace ImageImprov {
         public void OnClicked(object sender, EventArgs e) {
             // I need to know which image.  
             // From there I vote... (?)
+            Debug.WriteLine("DHB:JudgingContentPage:OnClicked start");
+            // The 2 tap recognizer is first. So clearly it's being ignored.
+            // On first tap - dbl tap doesn't trigger. 2nd tap does.
+            // on second tap - dbl tap triggers, and consumes trigger, so second does not.
+            /*
+            foreach (TapGestureRecognizer g in ((Image)sender).GestureRecognizers) {
+                Debug.WriteLine(g.ToString()+" taps="+g.NumberOfTapsRequired);
+            }
+            */
+            /*
+            if (Content==zoomView) {
+                // I'm on iOS trying to process both the click and double click. No! Click always COMPLETELY processed first.
+                Debug.WriteLine("DHB:JudgingContentPage:OnClicked Content==zoomView");
+                return;
+            }
+            */
+            lastClicked = null;
+            checkPosition = -1;
             if (Vote != null) {
                 Vote(sender, e);
             }
+            Debug.WriteLine("DHB:JudgingContentPage:OnClicked end");
         }
 
         public void OnDoubleClick(object sender, EventArgs e) {
@@ -615,6 +642,7 @@ namespace ImageImprov {
             // with a like button
             //    a flag button
             //    an entry for custom tags
+            Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick start");
             Image taggedImg = sender as Image;
             if (taggedImg == null) { return; }
 
@@ -630,7 +658,49 @@ namespace ImageImprov {
             buildZoomView(taggedImg, votedOnCandidate);
             Device.BeginInvokeOnMainThread(() => {
                 Content = zoomView;
+                Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick Content==zoomView");
             });
+
+            if (Device.OS == TargetPlatform.iOS) {
+                Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick on iOS do single click cleanup");
+                Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick checkposition == " + checkPosition);
+                if (checkPosition>-1) {
+                    // was checked. deal with it.
+                    if (checkPosition == (votes.votes.Count)) {  // no -1 here as the instance has been removed.
+                        // was just on the end. simple fix.
+                        Vote(sender, e);
+                    } else {
+                        // this is the pain in the butt case...
+                        for (int i = checkPosition; i < votes.votes.Count; i++) {
+                            votes.votes[i].vote++;
+                        }
+                        VoteJSON vote = new ImageImprov.VoteJSON();
+                        // This has to be the only one left.
+                        vote.bid = votedOnCandidate.bidId;
+                        vote.vote = checkPosition;
+                        vote.like = votedOnCandidate.isLiked ? "1" : "0";
+                        vote.offensive = votedOnCandidate.isFlagged ? "1" : "0";
+                        votes.votes.Insert(checkPosition, vote);
+                        unvotedImgs.Remove(votedOnCandidate);
+                        // brute force the images and do all four...
+                        rebuildAllImagesWithVotes();
+                    }
+                } else {
+                    // was not checked before. just uncheck.
+                    Vote(sender, e);
+                }
+                // reset at start of process, as there are no process steps that can set these flags.
+                //lastClicked = null;
+                //checkPosition = -1;
+            }
+
+            // event args has nothing I can set.
+            // use a class member to show this has been processed and prevent click processing.
+            // hmm... will this mess up android, who doesn't have this issue?
+            // because how will android undo the mess...
+            // let's try check to see what Content is set to! Nope. click is always processed first.
+            Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick end");
+
         }
         /////
         /////
@@ -990,7 +1060,10 @@ namespace ImageImprov {
             //image.Aspect = Aspect.AspectFit;
             image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
 
+
             // This works. looks like a long press will be a pain in the ass.
+            // bleh. iOS always responds to both the doubleTap and tap. Whereas android only responds to the double tap
+            // order of addition is immaterial. iOS grabs.
             TapGestureRecognizer tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += OnClicked;
             image.GestureRecognizers.Add(tapGesture);
@@ -1401,6 +1474,10 @@ namespace ImageImprov {
             int removePosn = 0;
             bool res = votedOn(bid, ref removePosn);
             if (res) {
+                if (Device.OS == TargetPlatform.iOS) {
+                    checkPosition = removePosn;
+                    Debug.WriteLine("DHB:JudgingContentPage:uncheckCase set checkposition to " + removePosn);
+                }
                 // process the uncheck.
                 //    remove this bid from the votes object.
                 //    add back into the unvoted images list.
@@ -1426,6 +1503,11 @@ namespace ImageImprov {
             if (votes.votes.Count == ballot.ballots.Count) {
                 // everything already voted on. ignore the tap.
                 return;
+            }
+
+            // only needed for iOS.
+            if (Device.OS == TargetPlatform.iOS) {
+                lastClicked = (Image)sender;
             }
 
             // ballots may have been cleared and this can be a dbl tap registration.
@@ -1543,7 +1625,7 @@ namespace ImageImprov {
                     // vote.vote is indexed from 1. rankimages from 0.
                     //SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
                         //ballot.ballots[selectionId].imgStr, (ExifOrientation)ballot.ballots[selectionId].orientation);
-                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[selectionId].imgStr);
+                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[selectionId].imgStr, (ExifLib.ExifOrientation)ballot.ballots[selectionId].orientation);
 
                     SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
 

@@ -70,6 +70,7 @@ namespace ImageImprov
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
             TextColor = Color.Black,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
         };
 
         readonly Label blankRowLabel = new Label
@@ -151,6 +152,8 @@ namespace ImageImprov
         Image backgroundImg = null;
 
         public PlayerContentPage() {
+            BackgroundColor = GlobalStatusSingleton.backgroundColor;
+
             // set myself up to listen for the login events...
             this.MyLogin += new MyLoginEventHandler(OnMyLogin);
             this.AnonPlay += new AnonPlayEventHandler(OnAnonPlay);
@@ -302,9 +305,11 @@ namespace ImageImprov
             StackLayout upperPortionOfGrid = new StackLayout
             {
                 VerticalOptions = LayoutOptions.Center,
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 Children =
                 {
                     loggedInLabel,
+                    versionLabel,
                     //CenterConsole,
                     //new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go left for voting" },
                     //new Label { HorizontalTextAlignment = TextAlignment.Center, Text = "Go right to submit photos" },
@@ -407,7 +412,7 @@ namespace ImageImprov
                 Children =
                 {
                     //new Label { Text = "Username", TextColor = Color.Black, BackgroundColor=Color.White, },
-                    new Label { Text = "Email", TextColor = Color.Black, BackgroundColor=Color.White, },
+                    new Label { Text = "Email", TextColor = Color.Black, BackgroundColor = GlobalStatusSingleton.backgroundColor, },
                     usernameEntry,
                 }
             };
@@ -420,7 +425,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "Password",TextColor = Color.Black, BackgroundColor=Color.White, },
+                    new Label { Text = "Password",TextColor = Color.Black, BackgroundColor = GlobalStatusSingleton.backgroundColor, },
                     passwordEntry,
                 }
             };
@@ -455,6 +460,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
+                    versionLabel,
                     alreadyAMemberLabel,
                     usernameRow(),
                     passwordRow(),
@@ -493,6 +499,7 @@ namespace ImageImprov
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
+                    versionLabel,
                     alreadyAMemberLabel,
                     loggedInLabel,
                     usernameRow(),
@@ -988,7 +995,9 @@ namespace ImageImprov
             //if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
             if (!isEmailAddress(GlobalStatusSingleton.username)) {
                 // can't logout in this scenario...
+                // shit. this can lead to a dead case if there's incorrect account info.
                 loggedInLabel.Text = "Sorry, Anonymous users can't log out.";
+                Debug.WriteLine("DHB:PlayerContentPage:OnLogoutClicked in the anon user use case.");
             } else {
                 // deactivate the carousel. - happens in MainPageUISwipe, who also consumes this event
                 // make sure this is the active page - happens in MainPageUISwipe, who also consumes this event

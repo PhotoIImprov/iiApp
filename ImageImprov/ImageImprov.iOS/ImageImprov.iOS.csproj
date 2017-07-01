@@ -63,8 +63,12 @@
     <WarningLevel>4</WarningLevel>
     <MtouchArch>ARMv7, ARM64</MtouchArch>
     <ConsolePause>false</ConsolePause>
-    <CodesignKey>iPhone Developer</CodesignKey>
+    <CodesignKey>iPhone Distribution: Image Improv, llc (4522BPCCLM)</CodesignKey>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchUseLlvm>true</MtouchUseLlvm>
+    <MtouchLink>Full</MtouchLink>
+    <BuildIpa>true</BuildIpa>
+    <CodesignProvision>5d21b102-d0a5-4a3a-b4a4-a2adf85da107</CodesignProvision>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
     <DebugType>none</DebugType>
@@ -73,11 +77,13 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <MtouchArch>ARMv7, ARM64</MtouchArch>
-    <BuildIpa>True</BuildIpa>
-    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
-    <CodesignKey>iPhone Distribution</CodesignKey>
+    <MtouchArch>ARMv7, ARMv7s, ARM64</MtouchArch>
+    <BuildIpa>true</BuildIpa>
+    <CodesignProvision>5d21b102-d0a5-4a3a-b4a4-a2adf85da107</CodesignProvision>
+    <CodesignKey>iPhone Distribution: Image Improv, llc (4522BPCCLM)</CodesignKey>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchLink>None</MtouchLink>
+    <OptimizePNGs>true</OptimizePNGs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
     <DebugType>none</DebugType>
@@ -95,7 +101,9 @@
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <None Include="app.config" />
-    <None Include="Entitlements.plist" />
+    <None Include="Entitlements.plist">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Info.plist">
       <SubType>Designer</SubType>
     </None>
