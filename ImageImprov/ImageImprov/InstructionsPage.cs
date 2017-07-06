@@ -118,7 +118,7 @@ namespace ImageImprov {
             }
 
             if (defaultNavigationButtonsP == null) {
-                defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+                defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
             }
             
             portraitView.Children.Add(gotoVotingImgButton, 0, 2);

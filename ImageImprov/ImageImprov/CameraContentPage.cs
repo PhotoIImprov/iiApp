@@ -51,19 +51,16 @@ namespace ImageImprov {
         ScrollView contestStackP = new ScrollView();
         // this may be better as a dictionary...
         IList<CategoryJSON> loadedCategories = new List<CategoryJSON>();
-        IList<Button> takePictureP = new List<Button>();
-        IList<Button> takePictureL = new List<Button>();
+        //IList<Button> takePictureP = new List<Button>();
+        //IList<Button> takePictureL = new List<Button>();
 
         // @todo enable pictures from the camera roll
         //Button selectPictureFromCameraRoll;
         Button submitCurrentPictureP;
-        Button submitCurrentPictureL;
 
         Grid portraitView;
-        Grid landscapeView;
 
         KeyPageNavigator defaultNavigationButtonsP;
-        KeyPageNavigator defaultNavigationButtonsL;
 
         //
         //   BEGIN Variables related/needed for images to place background on screen.
@@ -84,64 +81,6 @@ namespace ImageImprov {
         public CameraContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
 
-            /*
-            categoryLabelP = new Label {
-                Text = "Waiting for current category from server",
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            };
-            categoryLabelL = new Label {
-                Text = "Waiting for current category from server",
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            };
-            */
-
-            /*
-            lastActionResultLabelP = new Label {
-                Text = "No actions performed yet",
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            };
-            lastActionResultLabelL = new Label {
-                Text = "No actions performed yet",
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            };
-            */
-            /* Need a create function for these.  Now happens in the category load.
-            takePictureP = new Button {
-                Text = "Start Camera!",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-                Command = new Command(o => ShouldTakePicture()),
-            };
-            takePictureL = new Button {
-                Text = "Start Camera!",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-                Command = new Command(o => ShouldTakePicture()),
-            };
-            */
-
             submitCurrentPictureP = new Button {
                 Text = "Submit picture",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
@@ -151,39 +90,10 @@ namespace ImageImprov {
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
-            submitCurrentPictureL = new Button {
-                Text = "Submit picture",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-                IsVisible = false
-            };
             submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
-            submitCurrentPictureL.Clicked += this.OnSubmitCurrentPicture;
 
-            defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
-            defaultNavigationButtonsL = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
 
-            /*
-            portraitLayout = new StackLayout {
-                VerticalOptions = LayoutOptions.Center,
-                Children = {
-                    categoryLabel,
-                    takePicture,
-                    currentSubmissionImg,
-                    latestTakenImg,
-                    submitCurrentPicture,
-                    lastActionResultLabel,
-                    defaultNavigationButtons,
-                },
-            };
-            */
-            // only have one active at a time as grid properties bind to the ui elements, meaning
-            // an element can only be defined correctly for one rotation at a time.
-            //buildPortraitView();
-            //buildLandscapeView();
             buildUI();
             //setView();
         }
@@ -266,15 +176,15 @@ namespace ImageImprov {
                 portraitView.IsEnabled = true;
             }
             //portraitView.Children.Add(categoryLabelP, 0, 0);  // col, row
-            StackLayout buttonStack = new StackLayout();
-            foreach (Button b in takePictureP) {
-                buttonStack.Children.Add(b);
-            }
-            contestStackP.Content = buttonStack;
-            portraitView.Children.Add(contestStackP, 0, 0);
-            Grid.SetRowSpan(contestStackP, 4);
+            //StackLayout buttonStack = new StackLayout();
+            //foreach (Button b in takePictureP) {
+            //    buttonStack.Children.Add(b);
+            //}
+            //contestStackP.Content = buttonStack;
+            //portraitView.Children.Add(contestStackP, 0, 0);
+            //Grid.SetRowSpan(contestStackP, 4);
             if (latestTakenImgP != null) {
-                portraitView.Children.Add(latestTakenImgP, 0, 4);
+                portraitView.Children.Add(latestTakenImgP, 0, 2);
                 Grid.SetRowSpan(latestTakenImgP, 12);
             }
             portraitView.Children.Add(submitCurrentPictureP, 0, 16);
@@ -344,67 +254,7 @@ namespace ImageImprov {
             return 1;
         }
         */
-        protected int buildLandscapeView() {
-            if (landscapeView == null) {
-                landscapeView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-                for (int i = 0; i < 10; i++) {
-                    landscapeView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                }
-                // 2 columns, 50% each
-                //landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                // I can add none, but if i add one, then i just have 1. So here's 2. :)
-                //landscapeView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            } else {
-                // flush the old children.
-                landscapeView.Children.Clear();
-                landscapeView.IsEnabled = true;
-            }
-            //landscapeView.Children.Add(categoryLabelL, 0, 0);  // col, row
-            StackLayout buttonStack = new StackLayout();
-            foreach (Button b in takePictureL) {
-                buttonStack.Children.Add(b);
-            }
-            landscapeView.Children.Add(buttonStack, 0, 1);
-            //landscapeView.Children.Add(lastActionResultLabelL, 0, 1);
-            //landscapeView.Children.Add(takePictureL, 0, 2);
-            landscapeView.Children.Add(submitCurrentPictureL, 0, 8);
-            landscapeView.Children.Add(defaultNavigationButtonsL, 0, 9);
-            //Grid.SetColumnSpan(defaultNavigationButtonsL, 1);
-
-            /* Moved to OnSizeAllocated to handle the disparate w,h amounts by rotation.
-            //if (latestTakenPath.Equals("")) {
-            if (latestTakenImgL == null) { 
-                // unfortunately, this just results in a missized bitmap.
-                //int w = (Width > -1) ? (int)Width : 1280;
-                //int h = ((Height > -1) ? (int)Height : 720);
-                int w = (int)Width;
-                int h = (int)Height;
-                // we maybe in portrait mode. switch w and h if we are.
-                // actually w and h aren't the w->h->w is not true. (ie the pixel ranges change with rotation).
-                // this is why background works when I set it in OnSizeAllocated, but not here!
-                if (h > w) {
-                    //int tmp = w;
-                    //w = h;
-                    //h = tmp;
-                    // skip!
-                } else {
-                    latestTakenImgL = GlobalSingletonHelpers.buildBackground(backgroundPatternFilename, assembly, w, h, GlobalStatusSingleton.PATTERN_PCT, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
-                }
-            } else {
-                */
-            if (!latestTakenPath.Equals("")) { 
-                // user has taken a photo, so rebuild the background with it.
-                latestTakenImgL = GlobalSingletonHelpers.buildBackgroundFromBytes(latestTakenImgBytes, assembly, (int)Width, (int)Height,
-                    GlobalStatusSingleton.PATTERN_FULL_COVERAGE, GlobalStatusSingleton.PATTERN_FULL_COVERAGE);
-            }
-            layoutL.Children.Clear();
-            if (latestTakenImgL != null) {
-                layoutL.Children.Add(latestTakenImgL, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
-            }
-            layoutL.Children.Add(landscapeView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
-            return 1;
-        }
-
+        /*
         protected void setView() {
             inPortraitMode = GlobalStatusSingleton.IsPortrait(this);
             if (inPortraitMode) {
@@ -413,6 +263,7 @@ namespace ImageImprov {
                 Content = landscapeView;
             }
         }
+        */
 
         public bool hasCamera() {
             // @todo learn how to check for camera exists on device
@@ -432,11 +283,8 @@ namespace ImageImprov {
             if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
                 //categoryLabelP.Text = "Today's category: " + GlobalStatusSingleton.uploadingCategories[0].description;
                 //categoryLabelL.Text = "Today's category: " + GlobalStatusSingleton.uploadingCategories[0].description;
-                if ((takePictureL.Count >0) && (loadedCategories.Count == 0)) {
-                    // clear out the no contests button
-                    takePictureP.Clear();
-                    takePictureL.Clear();
-                }
+
+                /* revert to just doing the first category. also, now setting submit rather than take picture.
                 foreach (CategoryJSON category in GlobalStatusSingleton.uploadingCategories) {
                     // make sure we aren't doubling up...
                     if (!loadedCategories.Contains(category)) {
@@ -465,7 +313,10 @@ namespace ImageImprov {
                         loadedCategories.Add(category);
                     }
                 }
+                */
+                submitCurrentPictureP.Text = "Enter competition " + GlobalSingletonHelpers.getUploadingCategoryDesc();
             } else {
+                /*
                 //categoryLabelP.Text = "No open contest";
                 //categoryLabelL.Text = "No open contest";
                 Button pButton = new Button {
@@ -490,7 +341,10 @@ namespace ImageImprov {
                 };
                 takePictureL.Add(lButton);
                 // loadedCategories stays empty, and we use the difference to know to clear this out.
+                */
+                submitCurrentPictureP.Text = "No open contests right now. Sorry.";
             }
+            
             buildUI();
         }
 
@@ -499,6 +353,9 @@ namespace ImageImprov {
         public event Action ShouldTakePicture = () => {  };
         //> ShouldTakePicture
 
+        public void startCamera() {
+            ShouldTakePicture.Invoke();
+        }
 
         // click handler for SubmitCurrentPicture.
         protected async virtual void OnSubmitCurrentPicture(object sender, EventArgs e) {
@@ -508,7 +365,7 @@ namespace ImageImprov {
 
             // prevent multiple click attempts; we heard ya
             submitCurrentPictureP.IsEnabled = false;
-            submitCurrentPictureL.IsEnabled = false;
+            //submitCurrentPictureL.IsEnabled = false;
             //lastActionResultLabelP.Text = "Uploading image to server...";
             //lastActionResultLabelL.Text = "Uploading image to server(may take a while)...";
             //submitCurrentPictureP.Text = "Uploading image to server...";
@@ -530,7 +387,7 @@ namespace ImageImprov {
                     //lastActionResultLabelP.Text = "Congratulations, you're in!";
                     //lastActionResultLabelL.Text = "Congratulations, you're in!";
                     submitCurrentPictureP.Text = "Congratulations, you're in!";
-                    submitCurrentPictureL.Text = "Congratulations, you're in!";
+                    //submitCurrentPictureL.Text = "Congratulations, you're in!";
 
                     // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
                     // also update when image is taken when fixing this.
@@ -544,7 +401,7 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture invalid response json: "+result);
                 Debug.WriteLine(err.ToString());
                 submitCurrentPictureP.Text = "Submit failed - try again";
-                submitCurrentPictureL.Text = "Submit failed";
+                //submitCurrentPictureL.Text = "Submit failed";
                 submitCurrentPictureP.IsEnabled = true;
                 buildUI();
             }
@@ -647,7 +504,8 @@ namespace ImageImprov {
 
             latestTakenImgP = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(latestTakenImgBytes);
             //latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(imgBytes);
-            submitCurrentPictureP.Text = "Submit picture";
+            //submitCurrentPictureP.Text = "Submit picture";
+            submitCurrentPictureP.Text = "Submit to: " + GlobalSingletonHelpers.getUploadingCategoryDesc();
             submitCurrentPictureP.IsEnabled = true;
             //submitCurrentPictureL.Text = "Submit picture";
             //submitCurrentPictureL.IsEnabled = true;

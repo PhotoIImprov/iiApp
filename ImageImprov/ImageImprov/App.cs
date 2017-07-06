@@ -108,6 +108,9 @@ namespace ImageImprov
         protected override void OnResume()
         {
             // Handle when your app resumes
+            // everything will already be good...
+            // only thing necessary is checking for a category reload.
+
         }
 
         // Currently setup correctly. 

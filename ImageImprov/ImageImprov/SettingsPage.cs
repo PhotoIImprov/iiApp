@@ -14,7 +14,7 @@ namespace ImageImprov {
 
         // flips between remaining logged in and out
         CheckBox maintainLoginCheckbox;
-        CheckBox aspectOrFillCheckbox;
+        //CheckBox aspectOrFillCheckbox;
 
         public SettingsPage() {
             buildUI();
@@ -29,6 +29,7 @@ namespace ImageImprov {
                     OnCheckBoxTapped(sender, new EventArgs());
                 };
             }
+            /*
             aspectOrFillCheckbox = new CheckBox {
                 Text = "Constrain img to original aspect ratio",
                 IsChecked = GlobalSingletonHelpers.AspectSettingToBool(GlobalStatusSingleton.aspectOrFillImgs),
@@ -37,8 +38,8 @@ namespace ImageImprov {
             {
                 OnCheckBoxTapped(sender, new EventArgs());
             };
-
-            defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            */
+            defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
 
             settingsGrid = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
             for (int i = 0; i < 10; i++) {
@@ -47,7 +48,7 @@ namespace ImageImprov {
             if (maintainLoginCheckbox != null) {
                 settingsGrid.Children.Add(maintainLoginCheckbox, 0, 4);
             }
-            settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
+            //settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
             settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
 
         }
@@ -58,9 +59,10 @@ namespace ImageImprov {
                 App myApp = ((App)Application.Current);
                 myApp.Properties["maintainLogin"] = GlobalStatusSingleton.maintainLogin.ToString();
                 myApp.SavePropertiesAsync();
-            } else if (sender == aspectOrFillCheckbox) {
-                GlobalStatusSingleton.aspectOrFillImgs = GlobalSingletonHelpers.BoolToAspectSetting(((CheckBox)sender).IsChecked);
             }
+            //else if (sender == aspectOrFillCheckbox) {
+              //  GlobalStatusSingleton.aspectOrFillImgs = GlobalSingletonHelpers.BoolToAspectSetting(((CheckBox)sender).IsChecked);
+            //}
         }
 
     }

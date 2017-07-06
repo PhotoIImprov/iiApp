@@ -448,7 +448,7 @@ namespace ImageImprov
             };
         }
         protected Layout<View> createDefaultNavigationButtons() {
-            defaultNavigationButtons = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+            defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
             return defaultNavigationButtons;
         }
 
@@ -466,7 +466,7 @@ namespace ImageImprov
                     passwordRow(),
                     connectButton,
                     blankRowLabel,
-                    anonymousPlayButton,
+                    //anonymousPlayButton,
                     blankRowLabel,
                     registerButton,
                 }
@@ -506,7 +506,7 @@ namespace ImageImprov
                     passwordRow(),
                     connectButton,
                     new Label { Text = " ", TextColor = Color.Black, },
-                    anonymousPlayButton,
+                    //anonymousPlayButton,
                     new Label { Text = " ", TextColor = Color.Black, },
                     registerButton,
                 }
@@ -670,7 +670,15 @@ namespace ImageImprov
                 Content = createAutoLoginLayout();
             } else {
                 // anonymous user
-                Content = createAnonLoggedInLayout();
+                if (GlobalStatusSingleton.firstTimePlaying == true) {
+                    Content = CenterConsole.InstructionsPage;
+                    GlobalStatusSingleton.firstTimePlaying = false;
+                } else if (Content == CenterConsole.InstructionsPage) {
+                    // do nothing - this means that I logged in and the token setting occurred already.
+                    // it's a time issue between multiple async event handlers.
+                } else { 
+                    Content = createAnonLoggedInLayout();
+                }
             }
             loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
         }
@@ -750,6 +758,10 @@ namespace ImageImprov
             } else if (anonRegistrationResult.Equals(REGISTRATION_FAILURE)) {
                 blankRowLabel.Text = anonRegistrationResult;
             } else {
+                // make sure we goto the instructions page.
+                GlobalStatusSingleton.firstTimePlaying = true;
+                //Content = CenterConsole.InstructionsPage;  // something resets me to registration page, so cant be here. is it MyLogin??
+
                 // registration success. Send a login request message.
                 if (MyLogin != null) {
                     MyLogin(this, eDummy);
@@ -852,6 +864,8 @@ namespace ImageImprov
         protected /* async */ virtual void OnRegisterSuccess(object sender, EventArgs e) {
             // right now, do nothing.
             // consider moving token request here...
+            // now we goto the instructions page.
+            this.Content = CenterConsole.InstructionsPage;
         }
 
 

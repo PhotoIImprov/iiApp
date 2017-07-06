@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Android.App;
 using Android.Content;
@@ -7,6 +8,8 @@ using Android.Content.PM;
 using Android.Net;
 using Android.OS;
 using Android.Provider;
+using Android.Hardware;
+//using Android.Hardware.Camera;
 using Java.IO;
 using Java.Util;
 using Xamarin.Forms;
@@ -68,6 +71,8 @@ namespace ImageImprov.Droid {
             }
 
             //< OnCreate
+            cameraSetup();
+
             // This is adding functionality to ShouldTakePicture based on the fact we are the droid app.
             // Can I pass through MainPage variable?
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShouldTakePicture += () => {
@@ -100,6 +105,59 @@ namespace ImageImprov.Droid {
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, bytes);
 
             //> OnActivityResult
+        }
+
+        /* the camera2 code
+        private void cameraSetup() {
+            CameraManager manager = (CameraManager)Forms.Context.GetSystemService(Context.CameraService);
+            try {
+                String[] cameraIds = manager.GetCameraIdList();
+                foreach (String cameraId in cameraIds) {
+                    CameraCharacteristics cc = manager.GetCameraCharacteristics(cameraId);
+                    var pixels = cc[SENSORInfo]
+                }
+            } catch (CameraAccessException e) {
+                System.Diagnostics.Debug.WriteLine("DHB:Droid:MainActivity:cameraSetup camera exception. " + e.ToString());
+            }
+        }
+        */
+        private void cameraSetup() {
+            Camera c = null;
+            int largestSquare = 0;
+            int shortestSideOfLargestCamera = 0;
+            try {
+                for (int i = 0; i < Camera.NumberOfCameras; i++) {
+                    c = Camera.Open(i);
+                    Camera.Parameters cParams = c.GetParameters();
+                    System.Diagnostics.Debug.WriteLine("Picture size at start:" + cParams.PictureSize.Width + ", " + cParams.PictureSize.Height);
+                    IList<Camera.Size> sizes = cParams.SupportedPictureSizes;
+                    foreach (Camera.Size s in sizes) {
+                        System.Diagnostics.Debug.WriteLine("size: " + s.Width + ", " + s.Height);
+                        if ((s.Width == s.Height) && (s.Width > largestSquare)) {
+                            largestSquare = s.Width;
+                        }
+                        int shortestSide = (s.Width > s.Height) ? s.Height : s.Width;
+                        if (shortestSide > shortestSideOfLargestCamera) {
+                            shortestSideOfLargestCamera = shortestSide;
+                        }
+                    }
+                    System.Diagnostics.Debug.WriteLine("Largest Square:" + largestSquare);
+                    System.Diagnostics.Debug.WriteLine("ShortestSide of Largest Size:" + shortestSideOfLargestCamera);
+                    //if (largestSquare==0) { largestSquare = shortestSideOfLargestCamera; }
+                    cParams.SetPictureSize(largestSquare, largestSquare);
+                    c.SetParameters(cParams);
+                    cParams = c.GetParameters();
+                    System.Diagnostics.Debug.WriteLine("Picture size post:" + cParams.PictureSize.Width + ", " + cParams.PictureSize.Height);
+                    c.Release();
+                    c = Camera.Open(i);
+                    cParams = c.GetParameters();
+                    System.Diagnostics.Debug.WriteLine("Picture size post release:" + cParams.PictureSize.Width + ", " + cParams.PictureSize.Height);
+                    c.Release();
+                }
+            } catch (Exception e) {
+                System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
+            }
+            System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
         }
     }
 }

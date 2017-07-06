@@ -17,21 +17,39 @@ namespace ImageImprov {
         Image gotoVotingImgButton;
         Image goHomeImgButton;
         Image gotoCameraImgButton;
+        Label categoryLabel;
+
         //StackLayout defaultNavigationButtons;
         //Grid defaultNavigationButtons;
+        Color navigatorColor = Color.FromRgb(100, 100, 100);
 
-        public KeyPageNavigator(bool horizontalOrientation=true) {
-            BackgroundColor = GlobalStatusSingleton.backgroundColor;
-            Padding = 10;
+        public KeyPageNavigator(string categoryDesc = "") {
+            BackgroundColor = navigatorColor;
+            //Padding = 10;
 
-            gotoVotingImgButton = new Image {
+            gotoVotingImgButton = new Image
+            {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png")
             };
-            goHomeImgButton = new Image {
+            goHomeImgButton = new Image
+            {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.home.png")
             };
-            gotoCameraImgButton = new Image {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png")
+            gotoCameraImgButton = new Image
+            {
+                Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png"),
+            };
+
+            categoryLabel = new Label
+            {
+                Text = categoryDesc,
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                HorizontalTextAlignment = TextAlignment.Center,
+                TextColor = Color.Black,
+                BackgroundColor = navigatorColor,
+                LineBreakMode = LineBreakMode.WordWrap,
+                FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
             };
 
             tapGesture = new TapGestureRecognizer();
@@ -40,22 +58,22 @@ namespace ImageImprov {
             goHomeImgButton.GestureRecognizers.Add(tapGesture);
             gotoCameraImgButton.GestureRecognizers.Add(tapGesture);
 
-            if (horizontalOrientation) {
-                // ColumnSpacing = 1; RowSpacing = 1;
-                ColumnDefinitions.Add(new ColumnDefinition());
-                ColumnDefinitions.Add(new ColumnDefinition());
-                ColumnDefinitions.Add(new ColumnDefinition());
-                Children.Add(gotoVotingImgButton, 0, 0);
-                Children.Add(goHomeImgButton, 1, 0);
-                Children.Add(gotoCameraImgButton, 2, 0);
-            } else {
-                // ColumnSpacing = 1; RowSpacing = 1;
-                RowDefinitions.Add(new RowDefinition());
-                RowDefinitions.Add(new RowDefinition());
-                RowDefinitions.Add(new RowDefinition());
-                Children.Add(gotoVotingImgButton, 0, 0);
-                Children.Add(goHomeImgButton, 0, 1);
-                Children.Add(gotoCameraImgButton, 0, 2);
+            // ColumnSpacing = 1; RowSpacing = 1;
+            ColumnDefinitions.Add(new ColumnDefinition());
+            ColumnDefinitions.Add(new ColumnDefinition());
+            ColumnDefinitions.Add(new ColumnDefinition());
+            ColumnDefinitions.Add(new ColumnDefinition());
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(7, GridUnitType.Star) });
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+            Children.Add(gotoVotingImgButton, 0, 1);
+            Children.Add(goHomeImgButton, 1, 1);
+            Children.Add(gotoCameraImgButton, 2, 1);
+            Children.Add(categoryLabel, 2, 2);
+
+            // This object should always be created AFTER the judging page, so this should exist...
+            if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
+                GlobalStatusSingleton.ptrToJudgingPageLoadCategory += new CategoryLoadSuccessEventHandler(OnCategoryLoad);
             }
         }
 
@@ -74,5 +92,8 @@ namespace ImageImprov {
             }
         }
 
+        public virtual void OnCategoryLoad(object sender, EventArgs e) {
+            categoryLabel.Text = GlobalSingletonHelpers.getUploadingCategoryDesc();
+        }
     }
 }

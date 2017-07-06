@@ -155,6 +155,9 @@ namespace ImageImprov {
             this.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(LoadBallotPics);
             this.DequeueBallotRequest += new DequeueBallotRequestEventHandler(OnDequeueBallotRequest);
 
+            GlobalStatusSingleton.ptrToJudgingPageLoadCategory = CategoryLoadSuccess;
+            
+
             // and to listen for vote sends; done as event so easy to process async.
             this.Vote += new EventHandler(OnVote);
 
@@ -301,8 +304,9 @@ namespace ImageImprov {
                     portraitView.IsEnabled = true;
                 }
                 if (defaultNavigationButtonsP == null) {
-                    defaultNavigationButtonsP = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
-                    defaultNavigationButtonsZ = new KeyPageNavigator { ColumnSpacing = 1, RowSpacing = 1 };
+                    defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
+                    this.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(defaultNavigationButtonsP.OnCategoryLoad);
+                    defaultNavigationButtonsZ = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
                 }
 
                 // ok. Everything has been initialized. So now I just need to decide where to put it.
@@ -728,6 +732,7 @@ namespace ImageImprov {
             //challengeLabelL.Text = challengeLabelP.Text;
             if (CategoryLoadSuccess != null) {
                 CategoryLoadSuccess(sender, e);
+                GlobalStatusSingleton.ptrToJudgingPageLoadCategory(sender, e);
             }
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName end");
         }

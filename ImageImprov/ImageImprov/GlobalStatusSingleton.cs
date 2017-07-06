@@ -88,8 +88,13 @@ namespace ImageImprov
         // A -1 indicates the category id has not been received from the server yet.
         //public static long uploadingCategoryId = NO_CATEGORY_INFO;
         //public static string uploadCategoryDescription = "";
+        // @see getUploadingCategoryDesc
         public static IList<CategoryJSON> uploadingCategories = new List<CategoryJSON>();
-
+        /// <summary>
+        /// Used for access from things like the KeyPageNavigator.
+        /// </summary>
+        public static CategoryLoadSuccessEventHandler ptrToJudgingPageLoadCategory = null;
+    
         //public static long mostRecentClosedCategoryId = NO_CATEGORY_INFO;
         //public static string mostRecentClosedCategoryDescription = "";
         public static IList<CategoryJSON> closedCategories = new List<CategoryJSON>();
@@ -131,6 +136,11 @@ namespace ImageImprov
         // will be set to false by android or iOS if the device has no camera.
         // need to check this in cameraContentPage still. (is that created before or after ios/android contexts?)
         public static bool hasCamera = true;
+
+        /// <summary>
+        /// Set to true on play anon click or register click from the starting page.
+        /// </summary>
+        public static bool firstTimePlaying = false;
     }
 }
 

@@ -63,13 +63,21 @@ namespace ImageImprov
         }
         public void gotoCameraPage() {
             this.CurrentPage = cameraPage;
+            //cameraPage.ShouldTakePicture.Invoke();
+            cameraPage.startCamera();
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
             // ok, we're in. add pages.
             this.Children.Insert(0, judgingPage);
             this.Children.Add(cameraPage);
-            gotoJudgingPage();
+            if (GlobalStatusSingleton.firstTimePlaying == true) {
+                // need to goto instructions page!
+                playerPage.Content = playerPage.CenterConsole.InstructionsPage;
+                GlobalStatusSingleton.firstTimePlaying = false;
+            } else {
+                gotoJudgingPage();
+            }
         }
 
         public virtual void OnLogoutClicked(object sender, EventArgs e) {

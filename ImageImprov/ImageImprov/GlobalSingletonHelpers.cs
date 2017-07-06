@@ -589,5 +589,13 @@ namespace ImageImprov {
             label.FontSize = lowerFontCalc.FontSize;
             label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
         }
+
+        public static string getUploadingCategoryDesc() {
+            string categoryDesc = "";
+            if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
+                categoryDesc = GlobalStatusSingleton.uploadingCategories[0].description;
+            }
+            return categoryDesc;
+        }
     }
 }
