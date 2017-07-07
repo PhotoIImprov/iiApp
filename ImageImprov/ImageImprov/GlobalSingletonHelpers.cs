@@ -597,5 +597,30 @@ namespace ImageImprov {
             }
             return categoryDesc;
         }
+
+        public static bool listContainsCategory(IList<CategoryJSON> theList, CategoryJSON theCategory) {
+            bool found = false;
+            foreach(CategoryJSON category in theList) {
+                if (category.categoryId == theCategory.categoryId) {
+                    found = true;
+                    break;
+                }
+            }
+            return found;
+        }
+
+        public static bool removeCategoryFromList(IList<CategoryJSON> theList, CategoryJSON theCategory) {
+            bool removed = false;
+            CategoryJSON foundCat = null;
+            foreach (CategoryJSON category in theList) {
+                if (category.categoryId == theCategory.categoryId) {
+                    removed = true;
+                    foundCat = category;
+                    break;
+                }
+            }
+            theList.Remove(foundCat);
+            return removed;
+        }
     }
 }

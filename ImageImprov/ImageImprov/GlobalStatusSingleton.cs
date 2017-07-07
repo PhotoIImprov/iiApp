@@ -68,6 +68,7 @@ namespace ImageImprov
         public static int imgsTakenTracker = 0;
 
         public static Color backgroundColor = Color.FromRgb(242, 242, 242);
+        public static Color highlightColor = Color.FromRgb(200, 200, 200);
         public static Color ButtonColor = Color.FromRgb(252, 213, 21);
         public static Color ActiveButtonColor = Color.FromRgb(252, 21, 21);
         /////////////////////////////////// 
@@ -77,6 +78,11 @@ namespace ImageImprov
 
         // holdover from when we used "login"
         //public static LoginResponseJSON loginCredentials;
+
+        /// <summary>
+        /// Checked on wakeup to see if categories should be reloaded.
+        /// </summary>
+        public static DateTime lastCategoryLoadTime;
 
         // The category id currently open for voting.
         // A -1 indicates the category id has not been received from the server yet.
@@ -109,11 +115,11 @@ namespace ImageImprov
         public static string persistedBallotAsString;
         public static Queue<string> persistedPreloadedBallots;
         // static ip completely off right now.
-        //#if DEBUG
-        //        public static string activeURL = "http://104.198.176.198:8080/";
-        //#else
+#if DEBUG
+        public static string activeURL = "http://104.196.67.188:8080/";
+#else
         public static string activeURL = "https://api.imageimprov.com/";
-//#endif
+#endif
 
         // returns true if we are in vertical mode, or false for landscape.
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }

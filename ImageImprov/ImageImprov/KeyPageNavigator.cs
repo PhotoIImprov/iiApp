@@ -17,6 +17,7 @@ namespace ImageImprov {
         Image gotoVotingImgButton;
         Image goHomeImgButton;
         Image gotoCameraImgButton;
+        Image gotoHamburgerImgButton;
         Label categoryLabel;
 
         //StackLayout defaultNavigationButtons;
@@ -39,7 +40,10 @@ namespace ImageImprov {
             {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png"),
             };
-
+            gotoHamburgerImgButton = new Image
+            {
+                Source = ImageSource.FromResource("ImageImprov.IconImages.Hamburger.png"),
+            };
             categoryLabel = new Label
             {
                 Text = categoryDesc,
@@ -57,6 +61,7 @@ namespace ImageImprov {
             gotoVotingImgButton.GestureRecognizers.Add(tapGesture);
             goHomeImgButton.GestureRecognizers.Add(tapGesture);
             gotoCameraImgButton.GestureRecognizers.Add(tapGesture);
+            gotoHamburgerImgButton.GestureRecognizers.Add(tapGesture);
 
             // ColumnSpacing = 1; RowSpacing = 1;
             ColumnDefinitions.Add(new ColumnDefinition());
@@ -70,6 +75,7 @@ namespace ImageImprov {
             Children.Add(goHomeImgButton, 1, 1);
             Children.Add(gotoCameraImgButton, 2, 1);
             Children.Add(categoryLabel, 2, 2);
+            Children.Add(gotoHamburgerImgButton, 3, 1);
 
             // This object should always be created AFTER the judging page, so this should exist...
             if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
@@ -86,6 +92,8 @@ namespace ImageImprov {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
                 // want to go instantly to this...
                 //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
+            } else if (sender == gotoHamburgerImgButton) {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
             } else {
                 // go home for default.
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();

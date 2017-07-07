@@ -13,10 +13,16 @@ namespace ImageImprov {
         // This takes the user to the PlayerContentPage.
         void gotoHomePage();
         void gotoCameraPage();
+        void gotoHamburgerPage();
 
-        //void gotoLeaderboardPage();
+        void gotoInstructionsPage();
+        void gotoLeaderboardPage();
+        void gotoSettingsPage();
+
+        //void gotoMedalsPage();
+        //void gotoMyFavoritesPage();
+        //void gotoMySubmissionsPage();
         //void gotoPurchasePage();
-        //void gotoSettingsPage();
     }
 }
 

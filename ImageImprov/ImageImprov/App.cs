@@ -111,6 +111,12 @@ namespace ImageImprov
             // everything will already be good...
             // only thing necessary is checking for a category reload.
 
+            // why do i not call load properties???  check this.
+            DateTime rightNow = DateTime.Now;
+            if (rightNow.Date != GlobalStatusSingleton.lastCategoryLoadTime.Date) {
+                // fire a category load.
+                ((MainPageSwipeUI)MainPage).FireLoadChallengeName();
+            }
         }
 
         // Currently setup correctly. 

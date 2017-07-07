@@ -15,6 +15,8 @@ using ExifLib;
 
 namespace ImageImprov {
     class LeaderboardPage : ContentView {
+        public const int MAX_LEADERBOARDS = 5;
+
         public readonly static string LOAD_FAILURE = "No open voting category currently available.";
         readonly static string LEADERBOARD = "leaderboard";
         readonly static string CATEGORY = "?category_id=";
@@ -66,6 +68,7 @@ namespace ImageImprov {
         StackLayout leaderStackP = new StackLayout() {
             HorizontalOptions = LayoutOptions.Center,
             VerticalOptions = LayoutOptions.Center,
+            Spacing = 2.0,
         };
 
         ScrollView leadersScrollP = new ScrollView();
@@ -256,6 +259,21 @@ namespace ImageImprov {
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
         }
 
+        /// <summary>
+        /// Removes by oldest leaderboard by enddate, not last load timestamp.
+        /// </summary>
+        private void removeOldestLeaderboard() {
+            if (listOfLeaderboards.Count > 0) {
+                CategoryJSON oldestKey = listOfLeaderboards.ElementAt(0).Key;
+                foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> leaderboard in listOfLeaderboards) {
+                    if (leaderboard.Key.end < oldestKey.end) {
+                        oldestKey = leaderboard.Key;
+                    }
+                }
+                listOfLeaderboards.Remove(oldestKey);
+            }
+        }
+
         private void drawLeaderImagesOrig() {
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
             if (leaderImgsP == null) {
@@ -292,9 +310,11 @@ namespace ImageImprov {
         public void managePersistedLeaderboard() {
             // timestamps and leaderboards are separated in the data.
             // load timestamps first as it has no draw function to suck down time...
+            Debug.WriteLine("DHB:LeaderboardPage:managePersistedLeaderboard timestamps:");
             if (GlobalStatusSingleton.persistedLeaderboardTimestamps.Count>0) {
                 foreach (KeyValuePair<CategoryJSON,DateTime> stamp in GlobalStatusSingleton.persistedLeaderboardTimestamps) {
                     leaderboardUpdateTimestamps[stamp.Key] = stamp.Value;
+                    Debug.WriteLine("   " + stamp.Value);
                 }
             }
             // move every leaderboard into listOfLeaderboards
@@ -309,10 +329,18 @@ namespace ImageImprov {
                 //selectLeaderboardDictL.Clear();
                 activeButton = null;
                 foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> leaderboard in GlobalStatusSingleton.persistedLeaderboards) {
-                    listOfLeaderboards.Add(leaderboard);
-                    Button pButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackP, selectLeaderboardDictP);
-                    //Button lButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackL, selectLeaderboardDictL);
+                    // only load if there are images in the leaderboard!
+                    if (leaderboard.Value.Count > 0) {
+                        listOfLeaderboards.Add(leaderboard);
+                        Button pButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackP, selectLeaderboardDictP);
+                        //Button lButton = createSelectButton(leaderboard.Key, selectBoardButtonsStackL, selectLeaderboardDictL);
+                    }
                 }
+
+                while (listOfLeaderboards.Count > MAX_LEADERBOARDS) {
+                    removeOldestLeaderboard();
+                }
+
                 activeLeaderboard = listOfLeaderboards.ElementAt(0).Key;
                 if (activeButton == null) {
                     long catId = activeLeaderboard.categoryId;
@@ -472,7 +500,8 @@ namespace ImageImprov {
                 // only do this if activeLeaderboard has been set; and then check it has been loaded!!
                 if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
                     for (int j = 0; j < listOfLeaderboards[activeLeaderboard].Count; j += 2) {
-                        /* does not contrain to screen width.
+                        // does not contrain to screen width.
+                        // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
                         StackLayout leaderRow = new StackLayout
                         {
                             Orientation = StackOrientation.Horizontal,
@@ -480,11 +509,14 @@ namespace ImageImprov {
                             HorizontalOptions = LayoutOptions.Center,
                             
                         };
+                        leaderImgsP[j].WidthRequest = (Width / 2.05);
                         leaderRow.Children.Add(leaderImgsP[j]);
                         if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
+                            leaderImgsP[j+1].WidthRequest = (Width / 2.05);
                             leaderRow.Children.Add(leaderImgsP[j + 1]);
                         }
-                        */
+                        leaderStackP.Children.Add(leaderRow);
+                        /*
                         Grid leaderRowGrid = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
                         leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
                         leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -493,6 +525,7 @@ namespace ImageImprov {
                             leaderRowGrid.Children.Add(leaderImgsP[j + 1],1,0);
                         }
                         leaderStackP.Children.Add(leaderRowGrid);
+                        */
                     }
 
                     /*

@@ -14,8 +14,11 @@ using Xamarin.Forms;
 using ExifLib;
 
 namespace ImageImprov {
+    public delegate void LoadBallotFromPhotoSubmissionEventHandler(object sender, EventArgs e);
+
     public class CameraContentPage : ContentPage, ICamera {
         const string PHOTO = "photo";
+        public event LoadBallotFromPhotoSubmissionEventHandler LoadBallotFromPhotoSubmission;
 
         protected bool inPortraitMode;
 
@@ -26,7 +29,7 @@ namespace ImageImprov {
         //Image currentSubmissionImgP = new Image();
         //Image currentSubmissionImgL = new Image();
         Image latestTakenImgP = null;
-        Image latestTakenImgL = null;
+        //Image latestTakenImgL = null;
 
         // filepath to the latest taken img
         string latestTakenPath = "";
@@ -376,9 +379,9 @@ namespace ImageImprov {
             string result = await sendSubmitAsync(latestTakenImgBytes);
             Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post async call");
             try {
-                PhotoSubmitResponseJSON response = JsonConvert.DeserializeObject<PhotoSubmitResponseJSON>(result);
+                BallotJSON response = JsonConvert.DeserializeObject<BallotJSON>(result);
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post json deserialize");
-                if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
+                //if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
                     // success. update the UI
                     //currentSubmissionImgP.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
                     //currentSubmissionImgL.Source = ImageSource.FromStream(() => new MemoryStream(latestTakenImgBytes));
@@ -386,16 +389,19 @@ namespace ImageImprov {
                     //currentSubmissionImgL = GlobalSingletonHelpers.buildFixedRotationImageFromStr(latestTakenImgBytes);
                     //lastActionResultLabelP.Text = "Congratulations, you're in!";
                     //lastActionResultLabelL.Text = "Congratulations, you're in!";
-                    submitCurrentPictureP.Text = "Congratulations, you're in!";
+                submitCurrentPictureP.Text = "Congratulations, you're in!";
                     //submitCurrentPictureL.Text = "Congratulations, you're in!";
 
                     // @todo hmm, shifting what the imgs point to doesn't update the ui. the below seems like an expensive approach...
                     // also update when image is taken when fixing this.
                     //buildPortraitView();
                     //buildLandscapeView();
-                    buildUI();
+                buildUI();
                     //setView();
-                    Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture end");
+                Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture end");
+                BallotFromPhotoSubmissionEventArgs ballotEvt = new BallotFromPhotoSubmissionEventArgs { ballotString = result, };
+                if (this.LoadBallotFromPhotoSubmission != null) {
+                    LoadBallotFromPhotoSubmission(this, ballotEvt);
                 }
             } catch (Exception err) {
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture invalid response json: "+result);
@@ -455,9 +461,10 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync pre send");
                 HttpResponseMessage submitResult = await client.SendAsync(request);
                 Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync post send");
-                if (submitResult.StatusCode == System.Net.HttpStatusCode.Created) {
+                if ((submitResult.StatusCode == System.Net.HttpStatusCode.Created) ||
+                    (submitResult.StatusCode == System.Net.HttpStatusCode.OK)) {
                     // tada
-                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync ok return");
+                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync returned with Ok or Create");
                     result = await submitResult.Content.ReadAsStringAsync();
                     Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync result read in");
                 } else {

@@ -182,7 +182,15 @@ namespace ImageImprov {
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
-            // right now, do nothing.
+            if (LoadChallengeName != null) {
+                LoadChallengeName(this, eDummy);
+            }
+        }
+
+        /// <summary>
+        /// Used by App:OnResume.
+        /// </summary>
+        public void FireLoadChallengeName() {
             if (LoadChallengeName != null) {
                 LoadChallengeName(this, eDummy);
             }
@@ -730,6 +738,7 @@ namespace ImageImprov {
             }
             //challengeLabelP.Text = await requestChallengeNameAsync();
             //challengeLabelL.Text = challengeLabelP.Text;
+            GlobalStatusSingleton.lastCategoryLoadTime = DateTime.Now;
             if (CategoryLoadSuccess != null) {
                 CategoryLoadSuccess(sender, e);
                 GlobalStatusSingleton.ptrToJudgingPageLoadCategory(sender, e);
@@ -819,17 +828,26 @@ namespace ImageImprov {
                         if (cat.state.Equals(CategoryJSON.VOTING)) {
                             //GlobalStatusSingleton.votingCategoryId = cat.categoryId;
                             //GlobalStatusSingleton.votingCategoryDescription = cat.description;
-                            GlobalStatusSingleton.votingCategories.Add(cat);
-                            // Need more than just this. This relies on there being an open voting category.
+                            if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.votingCategories, cat)) {
+                                GlobalStatusSingleton.votingCategories.Add(cat);
+                                // Need more than just this. This relies on there being an open voting category.
+                                GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.uploadingCategories, cat);
+                            }
                             result = cat.description;
                         } else if (cat.state.Equals(CategoryJSON.UPLOAD)) {
                             //GlobalStatusSingleton.uploadingCategoryId = cat.categoryId;
                             //GlobalStatusSingleton.uploadCategoryDescription = cat.description;
-                            GlobalStatusSingleton.uploadingCategories.Add(cat);
+                            if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.uploadingCategories, cat)) {
+                                GlobalStatusSingleton.uploadingCategories.Add(cat);
+                                // should not exist in voting or closed categories!
+                            }
                         } else if (cat.state.Equals(CategoryJSON.CLOSED)) {
                             //GlobalStatusSingleton.mostRecentClosedCategoryId = cat.categoryId;
                             //GlobalStatusSingleton.mostRecentClosedCategoryDescription = cat.description;
-                            GlobalStatusSingleton.closedCategories.Add(cat);
+                            if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.closedCategories, cat)) {
+                                GlobalStatusSingleton.closedCategories.Add(cat);
+                                GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.votingCategories, cat);
+                            }
                         }
                     }
                     // If below is true, we are in a no voting category open condition...
@@ -1371,7 +1389,10 @@ namespace ImageImprov {
             }
 #if DEBUG
             if (found == false) {
-                throw new Exception("A button clicked on an image not in my ballots.");
+                // This can actually happen after voting has finished.
+                // just throw a debugging statement.
+                //throw new Exception("A button clicked on an image not in my ballots.");
+                Debug.WriteLine("A button clicked on an image not in my ballots.");
             }
 #endif
             VoteJSON vote = new ImageImprov.VoteJSON();
@@ -1740,6 +1761,54 @@ namespace ImageImprov {
                 }
             }
         }
+
+        //
+        //
+        // Start Special Handling for Ballots that come from Photo submission
+        //
+        //
+        /// <summary>
+        /// Public as the event is generated outside this class and sent to me. (the camera page).
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public async virtual void OnLoadBallotFromSubmission(object sender, EventArgs e) {
+            // This should be coming from the camera page.
+            // The eventargs should hold a ballot string.
+            string ballot = ((BallotFromPhotoSubmissionEventArgs)e).ballotString;
+            // I'm competing with DeQueue ballot string.
+            // I want to make sure I'm firing and that dequeue is NOT in another thread.
+            lock(ballot) {
+                // the passed
+                // make sure we have a valid BallotJSON first...
+                BallotJSON testParse = JsonConvert.DeserializeObject<BallotJSON>(ballot);
+                if ((testParse != null) && (testParse.ballots!=null)) {
+                    ClearContent();
+                    try {
+                        BallotJSON currentBallot = GetBallot();
+                        Queue<string> qStart = new Queue<string>();
+                        qStart.Enqueue(JsonConvert.SerializeObject(currentBallot));
+                        qStart.Concat(preloadedBallots);
+                        preloadedBallots = qStart;
+                        processBallotString(ballot);
+                    } catch (Exception ex) {
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                        Debug.WriteLine(ex.ToString());
+                    }
+                    // let's just come here for starters.  This works! Booya
+                    ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
+                }
+            }
+        }
+        //
+        //
+        // End Special Handling for Ballots that come from Photo submission
+        //
+        //
     } // class
 } // namespace
 
