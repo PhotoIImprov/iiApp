@@ -43,6 +43,11 @@ namespace ImageImprov {
             get { return instructionsPage;  }
         }
 
+        HamburgerPage hamburgerPage;
+        public HamburgerPage HamburgerPage {
+            get { return hamburgerPage; }
+        }
+
         public PlayerPageCenterConsole(PlayerContentPage parent) {
             Padding = 10;
 
@@ -51,6 +56,7 @@ namespace ImageImprov {
             // purchasesPage = new PurchasesPage();
             //settingsPage = new SettingsPage(); // be careful. Settings is null, but being built late so we have correct user info.
             instructionsPage = new InstructionsPage();
+            hamburgerPage = new HamburgerPage();
 
             gotoLeaderboardButton= new Image
             {

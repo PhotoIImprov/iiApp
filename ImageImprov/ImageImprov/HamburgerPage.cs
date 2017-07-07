@@ -11,7 +11,7 @@ namespace ImageImprov {
     /// <summary>
     /// Provides the interface for going to the hamburger(navigation) page.
     /// </summary>
-    class HamburgerPage : ContentPage {
+    class HamburgerPage : ContentView {
         // List of buttons on the hamburger page:
         // Instructions page
         // Voting

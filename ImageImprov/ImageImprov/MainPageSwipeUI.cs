@@ -17,9 +17,9 @@ namespace ImageImprov
         CameraContentPage cameraPage;
         //LeaderboardPage leaderboardPage;  handled through playerPage.
 
-        HamburgerPage hamburgerPage;  // hamburger is never on the carousel.
+        //HamburgerPage hamburgerPage;  // hamburger is never on the carousel. trying moving to centerconsole.
         ContentPage lastPage = null;
-        // Testing if this solves the mac issue with views on the playerPage.
+        // needed if the lastPage was a PlayerPage view.
         View lastView = null;
 
         public MainPageSwipeUI()
@@ -30,7 +30,7 @@ namespace ImageImprov
             playerPage = new PlayerContentPage();  // player page must be built before judging page sets up listeners.
             judgingPage = new JudgingContentPage();
             cameraPage = new CameraContentPage();
-            hamburgerPage = new HamburgerPage();
+            //hamburgerPage = new HamburgerPage();
 
             // TokenReceived is my successful login event.
             playerPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
@@ -61,84 +61,51 @@ namespace ImageImprov
             return cameraPage;
         }
 
-        private void deHamburger(ContentPage newPage) {
-            Children.Add(judgingPage);
-            Children.Add(playerPage);
-            Children.Add(cameraPage);
-            Children.Remove(hamburgerPage);
-            this.CurrentPage = newPage;
-        }
         public void gotoJudgingPage(){
-            //this.CurrentPage = judgingPage;
-            deHamburger(judgingPage);            
+            this.CurrentPage = judgingPage;
         }
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {
             playerPage.goHome();
-            deHamburger(playerPage);
-            //this.CurrentPage = playerPage;
+            this.CurrentPage = playerPage;
         }
         public void gotoInstructionsPage() {
-            deHamburger(playerPage);
             playerPage.Content = playerPage.CenterConsole.InstructionsPage;
+            this.CurrentPage = playerPage;
         }
         public void gotoLeaderboardPage() {
-            deHamburger(playerPage);
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage dehamburgered");
+            Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage");
             playerPage.Content = playerPage.CenterConsole.LeaderboardPage;
+            this.CurrentPage = playerPage;
         }
         public void gotoSettingsPage() {
-            deHamburger(playerPage);
             playerPage.Content = playerPage.CenterConsole.SettingsPage;
+            this.CurrentPage = playerPage;
         }
 
         public void gotoCameraPage() {
-            deHamburger(cameraPage);
-            //this.CurrentPage = cameraPage;
-            //cameraPage.ShouldTakePicture.Invoke();
+            this.CurrentPage = cameraPage;
             cameraPage.startCamera();
         }
 
         public void gotoHamburgerPage() {
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage");
+            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage");
             foreach(ContentPage cp in Children) {
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage child:" +cp.ToString());
             }
-            if (this.CurrentPage == hamburgerPage) {
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage was hamburger. child start count=" + Children.Count);
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage was hamburger. leaving.");
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage was hamburger. leaving. lastpage was " + lastPage.ToString());
-                deHamburger(lastPage);
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage was hamburger. child end count=" + Children.Count);
+            if ((this.CurrentPage == playerPage) && (playerPage.Content == playerPage.CenterConsole.HamburgerPage)) {
                 if (lastPage == playerPage) {
                     playerPage.Content = lastView;
                 }
+                this.CurrentPage = lastPage;
             } else {
                 lastPage = this.CurrentPage;
-                if (lastPage == playerPage) {
-                    lastView = playerPage.Content;
-                }
-                this.Children.Add(hamburgerPage);
-                this.CurrentPage = hamburgerPage;
-                this.Children.Remove(judgingPage);
-                this.Children.Remove(playerPage);
-                this.Children.Remove(cameraPage);
+                if (lastPage == playerPage) { lastView = playerPage.Content; }
+                playerPage.Content = playerPage.CenterConsole.HamburgerPage;
+                this.CurrentPage = playerPage;
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. becoming");
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. left page " + lastPage.ToString());
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. child count=" + Children.Count);
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. carousel position=" + CurrentPage.ToString());
-                //hamburgerPage.ForceLayout();
-                //this.ForceLayout();
             }
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished TWEAK3");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished");
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished");
+            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished TWEAK4");
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
