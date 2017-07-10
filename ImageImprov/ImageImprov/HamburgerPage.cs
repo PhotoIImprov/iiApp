@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;  // for debug assertions.
+using System.Reflection;
 
 using Xamarin.Forms;
 
@@ -43,6 +44,23 @@ namespace ImageImprov {
         Image settingsButton;
         Label settingsLabel;
 
+        Label loggedInLabel = new Label
+        {
+            Text = "Connecting...",
+            HorizontalOptions = LayoutOptions.CenterAndExpand,
+            VerticalOptions = LayoutOptions.CenterAndExpand,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
+            TextColor = Color.Black,
+        };
+        //> loggedInLabel
+        Label versionLabel = new Label
+        {
+            HorizontalOptions = LayoutOptions.CenterAndExpand,
+            VerticalOptions = LayoutOptions.CenterAndExpand,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
+            TextColor = Color.Black,
+        };
+
         KeyPageNavigator defaultNavigationButtons;
 
         Grid portraitView;
@@ -51,6 +69,17 @@ namespace ImageImprov {
             // this is a bunch of buttons and text that click through to other pages.
             // clicking hamburger a second time needs to take the user back to previous page. (Handled in MainPageNavigation).
             buildUI();
+        }
+
+        private void setVersionLabelText() {
+            // see answer at this forum page for more details on what's in full name.
+            //https://forums.xamarin.com/discussion/26522/how-to-get-application-runtime-version-build-version-using-xamarin-forms
+            string version = this.GetType().GetTypeInfo().Assembly.FullName;
+            string[] splitString = version.Split(',');
+            versionLabel.Text = splitString[1];
+#if DEBUG
+            versionLabel.Text = "Debug " + versionLabel.Text;
+#endif
         }
 
         private int buildUI() {
@@ -69,6 +98,13 @@ namespace ImageImprov {
                 // need to actually goto instructions...
             };
 
+            setVersionLabelText();
+            if (GlobalSingletonHelpers.isEmailAddress(GlobalStatusSingleton.username)) {
+                loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
+            } else {
+                loggedInLabel.Text = "Logged in anonymously";
+            }
+            /*
             TapGestureRecognizer voteClick = new TapGestureRecognizer();
             votingButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png"), BackgroundColor = GlobalStatusSingleton.highlightColor, };
             votingLabel = new Label {
@@ -133,7 +169,7 @@ namespace ImageImprov {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
                 Debug.WriteLine("DHB:HamburgerPage:buildUI leaderboardClick. post move");
             };
-
+            */
             TapGestureRecognizer settingsClick = new TapGestureRecognizer();
             settingsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
             settingsLabel = new Label { Text = "The settings", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
@@ -148,11 +184,28 @@ namespace ImageImprov {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoSettingsPage();
             };
 
+            Label blankrow = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            Label blankrow2 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            Label blankrow3 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            Label comingSoon = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            Label medals = new Label { Text = "   My medals", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+
+            TapGestureRecognizer mySubmissionsClick = new TapGestureRecognizer();
+            Label mySubmissionsLabel = new Label { Text = "   My entries", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            mySubmissionsLabel.GestureRecognizers.Add(mySubmissionsClick);
+            mySubmissionsClick.Tapped += (sender, args) => {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoMySubmissionsPage();
+            };
+
+            Label myfavs = new Label { Text = "   My favorites", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            //Label purchases = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+
             StackLayout hamburger = new StackLayout
             {
                 Orientation = StackOrientation.Vertical,
                 Spacing = 6,
-                Children = { instructionsRow, votingRow, homeRow, cameraRow, leaderboardRow, settingsRow, }
+                //Children = { instructionsRow, votingRow, homeRow, cameraRow, leaderboardRow, settingsRow, }
+                Children = { instructionsRow, blankrow, settingsRow, blankrow2, comingSoon, medals, mySubmissionsLabel, myfavs, blankrow3, versionLabel, loggedInLabel, }
             };
             ScrollView scroller = new ScrollView { Padding = new Thickness(10) };
             scroller.Content = hamburger;
@@ -163,11 +216,16 @@ namespace ImageImprov {
 
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(6, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12, GridUnitType.Star) });
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8, GridUnitType.Star) });
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
-            portraitView.Children.Add(scroller, 0, 0);
-            portraitView.Children.Add(defaultNavigationButtons, 0, 1);
+            portraitView.Children.Add(scroller, 1, 1);
+            portraitView.Children.Add(defaultNavigationButtons, 0, 2);
+            Grid.SetColumnSpan(defaultNavigationButtons, 3);
 
             Content = portraitView;
             return 1;

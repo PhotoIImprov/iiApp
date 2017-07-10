@@ -464,7 +464,7 @@ namespace ImageImprov {
                 if ((submitResult.StatusCode == System.Net.HttpStatusCode.Created) ||
                     (submitResult.StatusCode == System.Net.HttpStatusCode.OK)) {
                     // tada
-                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync returned with Ok or Create");
+                    Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync returned with code:" +submitResult.StatusCode.ToString());
                     result = await submitResult.Content.ReadAsStringAsync();
                     Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync result read in");
                 } else {

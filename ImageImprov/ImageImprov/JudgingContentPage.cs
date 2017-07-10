@@ -469,6 +469,19 @@ namespace ImageImprov {
             return result;
         }
 
+        private Grid buildTextLogo() {
+            Grid textLogo = new Grid();
+            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(20, GridUnitType.Star) });
+            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(79, GridUnitType.Star) });
+            //textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(9, GridUnitType.Star) });
+            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            Image textImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ii_textlogo.png"), };
+            BoxView horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
+            textLogo.Children.Add(textImg, 0, 1);
+            textLogo.Children.Add(horizLine, 0, 2);
+            return textLogo;
+        }
+
         /// <summary>
         /// Helper function for buildPortraitView that constructs the layout when the current ballot has 4
         /// images exif defines as portrait images.
@@ -484,16 +497,21 @@ namespace ImageImprov {
             // I can add none, but if i add one, then i just have 1. So here's 2. :)
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            portraitView.Children.Add(ballotImgsP[0], 0, 0);
+            Grid textLogo = buildTextLogo();
+            portraitView.Children.Add(textLogo, 0, 0);
+            Grid.SetColumnSpan(textLogo, 2);
+            Grid.SetRowSpan(textLogo, 2);
+
+            portraitView.Children.Add(ballotImgsP[0], 0, 2);
             Grid.SetRowSpan(ballotImgsP[0], 6);
 
-            portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
+            portraitView.Children.Add(ballotImgsP[1], 1, 2);  // col, row format
             Grid.SetRowSpan(ballotImgsP[1], 6);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 6);  // col, row format
+            portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
             Grid.SetRowSpan(ballotImgsP[2], 6);
 
-            portraitView.Children.Add(ballotImgsP[3], 1, 6);  // col, row format
+            portraitView.Children.Add(ballotImgsP[3], 1, 8);  // col, row format
             Grid.SetRowSpan(ballotImgsP[3], 6);
 
 //#if DEBUG
@@ -503,7 +521,7 @@ namespace ImageImprov {
             // Calling this here is calling from an invalid height state that seems to fubar everything...
             //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
 //#endif
-            portraitView.Children.Add(challengeLabelP, 0, 13);
+            portraitView.Children.Add(challengeLabelP, 0, 15);
             Grid.SetColumnSpan(challengeLabelP, 2);
             Grid.SetRowSpan(challengeLabelP, 2);
 
@@ -1772,37 +1790,34 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public async virtual void OnLoadBallotFromSubmission(object sender, EventArgs e) {
+        public virtual void OnLoadBallotFromSubmission(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotFromSubmission");
             // This should be coming from the camera page.
             // The eventargs should hold a ballot string.
-            string ballot = ((BallotFromPhotoSubmissionEventArgs)e).ballotString;
+            string inBallot = ((BallotFromPhotoSubmissionEventArgs)e).ballotString;
             // I'm competing with DeQueue ballot string.
-            // I want to make sure I'm firing and that dequeue is NOT in another thread.
-            lock(ballot) {
-                // the passed
-                // make sure we have a valid BallotJSON first...
-                BallotJSON testParse = JsonConvert.DeserializeObject<BallotJSON>(ballot);
-                if ((testParse != null) && (testParse.ballots!=null)) {
-                    ClearContent();
-                    try {
-                        BallotJSON currentBallot = GetBallot();
-                        Queue<string> qStart = new Queue<string>();
-                        qStart.Enqueue(JsonConvert.SerializeObject(currentBallot));
-                        qStart.Concat(preloadedBallots);
-                        preloadedBallots = qStart;
-                        processBallotString(ballot);
-                    } catch (Exception ex) {
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine(ex.ToString());
+            Device.BeginInvokeOnMainThread(() => {
+                // I want to make sure I'm firing and that dequeue is NOT in another thread.
+                lock (ballot) {
+                    // make sure we have a valid BallotJSON first...
+                    BallotJSON testParse = JsonConvert.DeserializeObject<BallotJSON>(inBallot);
+                    if ((testParse != null) && (testParse.ballots != null)) {
+                        ClearContent();
+                        try {
+                            BallotJSON currentBallot = GetBallot();
+                            Queue<string> qStart = new Queue<string>();
+                            qStart.Enqueue(JsonConvert.SerializeObject(currentBallot));
+                            qStart.Concat(preloadedBallots);
+                            preloadedBallots = qStart;
+                            processBallotString(inBallot);
+                        } catch (Exception ex) {
+                            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotFromSubmission exception:" +ex.ToString());
+                        }
+                        // let's just come here for starters.  This works! Booya
+                        ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
                     }
-                    // let's just come here for starters.  This works! Booya
-                    ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
                 }
-            }
+            });
         }
         //
         //

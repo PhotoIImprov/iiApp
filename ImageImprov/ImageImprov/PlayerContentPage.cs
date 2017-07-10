@@ -667,7 +667,8 @@ namespace ImageImprov
             }
             */
             if (isEmailAddress(GlobalStatusSingleton.username)) {
-                Content = createAutoLoginLayout();
+                //Content = createAutoLoginLayout();
+                Content = CenterConsole.LeaderboardPage;
             } else {
                 // anonymous user
                 if (GlobalStatusSingleton.firstTimePlaying == true) {

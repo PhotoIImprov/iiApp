@@ -45,6 +45,9 @@ namespace ImageImprov.Droid {
             currentDomain.UnhandledException += HandleExceptions;
 
             GlobalStatusSingleton.imgsTakenTracker++;
+            GlobalStatusSingleton.imgPath = 
+                Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryPictures).ToString();
+
             file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
                 Android.OS.Environment.DirectoryPictures), "ImageImprov_" + GlobalStatusSingleton.imgsTakenTracker + ".jpg");
 
@@ -71,7 +74,7 @@ namespace ImageImprov.Droid {
             }
 
             //< OnCreate
-            cameraSetup();
+            //cameraSetup();  This doesn't work yet, so don't do it.
 
             // This is adding functionality to ShouldTakePicture based on the fact we are the droid app.
             // Can I pass through MainPage variable?
@@ -155,9 +158,13 @@ namespace ImageImprov.Droid {
                     c.Release();
                 }
             } catch (Exception e) {
-                System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
+                System.Diagnostics.Debug.WriteLine("DHB:MainActivity:CameraSetup exception:" +e.ToString());
             }
             System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
+        }
+
+        public IList<string> dirLoad(string path, string prefix) {
+            return (IList<string>)(System.IO.Directory.EnumerateFiles(GlobalStatusSingleton.imgPath, prefix));
         }
     }
 }

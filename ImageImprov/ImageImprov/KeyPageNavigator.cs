@@ -15,26 +15,33 @@ namespace ImageImprov {
     class KeyPageNavigator : Grid {
         TapGestureRecognizer tapGesture;
         Image gotoVotingImgButton;
-        Image goHomeImgButton;
+        //Image goHomeImgButton;
+        Image gotoLeaderboardImgButton;
         Image gotoCameraImgButton;
         Image gotoHamburgerImgButton;
         Label categoryLabel;
 
         //StackLayout defaultNavigationButtons;
         //Grid defaultNavigationButtons;
-        Color navigatorColor = Color.FromRgb(100, 100, 100);
+        //Color navigatorColor = Color.FromRgb(100, 100, 100);
+        BoxView horizLine;
 
         public KeyPageNavigator(string categoryDesc = "") {
-            BackgroundColor = navigatorColor;
+            BackgroundColor = GlobalStatusSingleton.backgroundColor;
             //Padding = 10;
 
             gotoVotingImgButton = new Image
             {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png")
             };
+            /*
             goHomeImgButton = new Image
             {
                 Source = ImageSource.FromResource("ImageImprov.IconImages.home.png")
+            };   */
+            gotoLeaderboardImgButton = new Image
+            {
+                Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png")
             };
             gotoCameraImgButton = new Image
             {
@@ -51,7 +58,7 @@ namespace ImageImprov {
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 HorizontalTextAlignment = TextAlignment.Center,
                 TextColor = Color.Black,
-                BackgroundColor = navigatorColor,
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 LineBreakMode = LineBreakMode.WordWrap,
                 FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
             };
@@ -59,23 +66,30 @@ namespace ImageImprov {
             tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += OnClicked;
             gotoVotingImgButton.GestureRecognizers.Add(tapGesture);
-            goHomeImgButton.GestureRecognizers.Add(tapGesture);
+            //goHomeImgButton.GestureRecognizers.Add(tapGesture);
+            gotoLeaderboardImgButton.GestureRecognizers.Add(tapGesture);
             gotoCameraImgButton.GestureRecognizers.Add(tapGesture);
             gotoHamburgerImgButton.GestureRecognizers.Add(tapGesture);
 
+            horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
             // ColumnSpacing = 1; RowSpacing = 1;
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
             ColumnDefinitions.Add(new ColumnDefinition());
             RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            RowDefinitions.Add(new RowDefinition { Height = new GridLength(7, GridUnitType.Star) });
-            RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
-            Children.Add(gotoVotingImgButton, 0, 1);
-            Children.Add(goHomeImgButton, 1, 1);
-            Children.Add(gotoCameraImgButton, 2, 1);
-            Children.Add(categoryLabel, 2, 2);
-            Children.Add(gotoHamburgerImgButton, 3, 1);
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(14, GridUnitType.Star) });
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(60, GridUnitType.Star) });
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(20, GridUnitType.Star) });
+            RowDefinitions.Add(new RowDefinition { Height = new GridLength(5, GridUnitType.Star) });
+            Children.Add(horizLine, 0, 0);
+            Grid.SetColumnSpan(horizLine, 4);
+            Children.Add(gotoVotingImgButton, 0, 2);
+            //Children.Add(goHomeImgButton, 1, 1);
+            Children.Add(gotoLeaderboardImgButton, 1, 2);
+            Children.Add(gotoCameraImgButton, 2, 2);
+            Children.Add(categoryLabel, 2, 3);
+            Children.Add(gotoHamburgerImgButton, 3, 2);
 
             // This object should always be created AFTER the judging page, so this should exist...
             if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
@@ -94,6 +108,8 @@ namespace ImageImprov {
                 //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
             } else if (sender == gotoHamburgerImgButton) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
+            } else if (sender == gotoLeaderboardImgButton) {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
             } else {
                 // go home for default.
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();

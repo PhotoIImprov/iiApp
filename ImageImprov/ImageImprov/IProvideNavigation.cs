@@ -21,7 +21,7 @@ namespace ImageImprov {
 
         //void gotoMedalsPage();
         //void gotoMyFavoritesPage();
-        //void gotoMySubmissionsPage();
+        void gotoMySubmissionsPage();
         //void gotoPurchasePage();
     }
 }

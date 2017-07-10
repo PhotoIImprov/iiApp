@@ -351,6 +351,7 @@ namespace ImageImprov {
                     reloadAnalysis(board.Key);
                 }
                 drawLeaderImages();
+                buildUI();
             }
         }
 
@@ -499,34 +500,7 @@ namespace ImageImprov {
             if (activeLeaderboard != null) {
                 // only do this if activeLeaderboard has been set; and then check it has been loaded!!
                 if (listOfLeaderboards.ContainsKey(activeLeaderboard)) {
-                    for (int j = 0; j < listOfLeaderboards[activeLeaderboard].Count; j += 2) {
-                        // does not contrain to screen width.
-                        // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
-                        StackLayout leaderRow = new StackLayout
-                        {
-                            Orientation = StackOrientation.Horizontal,
-                            VerticalOptions = LayoutOptions.Center,
-                            HorizontalOptions = LayoutOptions.Center,
-                            
-                        };
-                        leaderImgsP[j].WidthRequest = (Width / 2.05);
-                        leaderRow.Children.Add(leaderImgsP[j]);
-                        if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
-                            leaderImgsP[j+1].WidthRequest = (Width / 2.05);
-                            leaderRow.Children.Add(leaderImgsP[j + 1]);
-                        }
-                        leaderStackP.Children.Add(leaderRow);
-                        /*
-                        Grid leaderRowGrid = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-                        leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
-                        leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
-                        leaderRowGrid.Children.Add(leaderImgsP[j],0,0);
-                        if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
-                            leaderRowGrid.Children.Add(leaderImgsP[j + 1],1,0);
-                        }
-                        leaderStackP.Children.Add(leaderRowGrid);
-                        */
-                    }
+                    build3Across();
 
                     /*
                     int j=0;
@@ -551,6 +525,72 @@ namespace ImageImprov {
             return result;
         }
 
+        private void build3Across() {
+            for (int j = 0; j < listOfLeaderboards[activeLeaderboard].Count; j += 3) {
+                // does not contrain to screen width.
+                // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
+                StackLayout leaderRow = new StackLayout
+                {
+                    Orientation = StackOrientation.Horizontal,
+                    VerticalOptions = LayoutOptions.Center,
+                    HorizontalOptions = LayoutOptions.Center,
+
+                };
+                leaderImgsP[j].WidthRequest = (Width / 3.01);
+                leaderRow.Children.Add(leaderImgsP[j]);
+                if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
+                    leaderImgsP[j + 1].WidthRequest = (Width / 3.01);
+                    leaderRow.Children.Add(leaderImgsP[j + 1]);
+
+                    if ((j + 2) < listOfLeaderboards[activeLeaderboard].Count) {
+                        leaderImgsP[j + 2].WidthRequest = (Width / 3.01);
+                        leaderRow.Children.Add(leaderImgsP[j + 2]);
+                    }
+                }
+                leaderStackP.Children.Add(leaderRow);
+                /*
+                Grid leaderRowGrid = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                leaderRowGrid.Children.Add(leaderImgsP[j],0,0);
+                if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
+                    leaderRowGrid.Children.Add(leaderImgsP[j + 1],1,0);
+                }
+                leaderStackP.Children.Add(leaderRowGrid);
+                */
+            }
+        }
+
+        private void build2Across() {
+            for (int j = 0; j < listOfLeaderboards[activeLeaderboard].Count; j += 2) {
+                // does not contrain to screen width.
+                // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
+                StackLayout leaderRow = new StackLayout
+                {
+                    Orientation = StackOrientation.Horizontal,
+                    VerticalOptions = LayoutOptions.Center,
+                    HorizontalOptions = LayoutOptions.Center,
+
+                };
+                leaderImgsP[j].WidthRequest = (Width / 2.05);
+                leaderRow.Children.Add(leaderImgsP[j]);
+                if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
+                    leaderImgsP[j + 1].WidthRequest = (Width / 2.05);
+                    leaderRow.Children.Add(leaderImgsP[j + 1]);
+                }
+                leaderStackP.Children.Add(leaderRow);
+                /*
+                Grid leaderRowGrid = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
+                leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                leaderRowGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                leaderRowGrid.Children.Add(leaderImgsP[j],0,0);
+                if ((j + 1) < listOfLeaderboards[activeLeaderboard].Count) {
+                    leaderRowGrid.Children.Add(leaderImgsP[j + 1],1,0);
+                }
+                leaderStackP.Children.Add(leaderRowGrid);
+                */
+            }
+        }
 
         protected async virtual void OnRequestLeaderboard(object sender, EventArgs e) {
             // the current category command does not send back a category in leaderboard state.

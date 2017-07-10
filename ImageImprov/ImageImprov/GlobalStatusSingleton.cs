@@ -66,9 +66,10 @@ namespace ImageImprov
         /// Tracks how many images taken on this device for image improv so we don't overwrite previous images.
         /// </summary>
         public static int imgsTakenTracker = 0;
+        public static string imgPath = "";
 
         public static Color backgroundColor = Color.FromRgb(242, 242, 242);
-        public static Color highlightColor = Color.FromRgb(200, 200, 200);
+        public static Color highlightColor = Color.FromRgb(100, 100, 100);
         public static Color ButtonColor = Color.FromRgb(252, 213, 21);
         public static Color ActiveButtonColor = Color.FromRgb(252, 21, 21);
         /////////////////////////////////// 
@@ -115,11 +116,11 @@ namespace ImageImprov
         public static string persistedBallotAsString;
         public static Queue<string> persistedPreloadedBallots;
         // static ip completely off right now.
-#if DEBUG
-        public static string activeURL = "http://104.196.67.188:8080/";
-#else
+//#if DEBUG
+//        public static string activeURL = "http://104.196.67.188:8080/";
+//#else
         public static string activeURL = "https://api.imageimprov.com/";
-#endif
+//#endif
 
         // returns true if we are in vertical mode, or false for landscape.
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }

@@ -17,7 +17,6 @@ namespace ImageImprov
         CameraContentPage cameraPage;
         //LeaderboardPage leaderboardPage;  handled through playerPage.
 
-        //HamburgerPage hamburgerPage;  // hamburger is never on the carousel. trying moving to centerconsole.
         ContentPage lastPage = null;
         // needed if the lastPage was a PlayerPage view.
         View lastView = null;
@@ -44,6 +43,7 @@ namespace ImageImprov
             //judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.LeaderboardPage.OnCategoryLoad);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(judgingPage.OnLoadBallotFromSubmission);
+            cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnPhotoSubmit);
 
             // Change behavior. Don't want to be able to do stuff prior to successful login...
             // Easiest to add these pages POST login.
@@ -83,6 +83,11 @@ namespace ImageImprov
             this.CurrentPage = playerPage;
         }
 
+        public void gotoMySubmissionsPage() {
+            playerPage.Content = playerPage.CenterConsole.MySubmissionsPage;
+            this.CurrentPage = playerPage;
+        }
+
         public void gotoCameraPage() {
             this.CurrentPage = cameraPage;
             cameraPage.startCamera();
@@ -94,13 +99,13 @@ namespace ImageImprov
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage child:" +cp.ToString());
             }
             if ((this.CurrentPage == playerPage) && (playerPage.Content == playerPage.CenterConsole.HamburgerPage)) {
-                if (lastPage == playerPage) {
-                    playerPage.Content = lastView;
-                }
+                // always set the last view, as hamburger changes it.
+                playerPage.Content = lastView;
                 this.CurrentPage = lastPage;
             } else {
                 lastPage = this.CurrentPage;
-                if (lastPage == playerPage) { lastView = playerPage.Content; }
+                // always set the last view, as hamburger changes it. (see following line!)
+                lastView = playerPage.Content;
                 playerPage.Content = playerPage.CenterConsole.HamburgerPage;
                 this.CurrentPage = playerPage;
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. becoming");

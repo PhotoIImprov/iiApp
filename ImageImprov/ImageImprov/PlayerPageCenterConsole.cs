@@ -43,6 +43,11 @@ namespace ImageImprov {
             get { return instructionsPage;  }
         }
 
+        MySubmissionsPage mySubmissionsPage;
+        public MySubmissionsPage MySubmissionsPage {
+            get { return mySubmissionsPage; }
+        }
+
         HamburgerPage hamburgerPage;
         public HamburgerPage HamburgerPage {
             get { return hamburgerPage; }
@@ -56,6 +61,7 @@ namespace ImageImprov {
             // purchasesPage = new PurchasesPage();
             //settingsPage = new SettingsPage(); // be careful. Settings is null, but being built late so we have correct user info.
             instructionsPage = new InstructionsPage();
+            mySubmissionsPage = new MySubmissionsPage();
             hamburgerPage = new HamburgerPage();
 
             gotoLeaderboardButton= new Image
@@ -95,6 +101,9 @@ namespace ImageImprov {
             Children.Add(gotoPurchasesButton, 1, 1);
             Children.Add(gotoSettingsButton, 2, 1);
             Children.Add(gotoHelpButton, 2, 0);
+
+            // hide all the home page stuff and replace with leaderboard page
+            parent.Content = leaderboardPage;
         }
 
         public void OnClicked(object sender, EventArgs e) {
