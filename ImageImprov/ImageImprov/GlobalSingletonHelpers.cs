@@ -73,7 +73,7 @@ namespace ImageImprov {
         }
 
         public static async Task<bool> SendLogData(string logInfo) {
-            Debug.WriteLine("DHB:JudgingContentPage:requestVoteAsync start");
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:SendLogData start");
             string result = "fail";
 
             try {
@@ -153,6 +153,13 @@ namespace ImageImprov {
                 result = SKBitmap.Decode(stream);
             }
             return result;
+        }
+
+        public static SKBitmap loadSKBitmapFromFilename(string filename) {
+            SKBitmap unrotated = SKBitmap.Decode(filename);
+            // This won't work as we discard the exif info on load.
+            //SKBitmap rotated = buildFixedRotationSKBitmapFromBytes(unrotated.Bytes);
+            return unrotated;
         }
 
         public static Image buildBackground(string patternSource, Assembly assembly, int Width, int Height,

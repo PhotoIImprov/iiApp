@@ -170,9 +170,9 @@ namespace ImageImprov {
             buildRankImages();
 
             // Do I have a persisted ballot ready and waiting for me?
-            managePersistedBallot(this, eDummy);
-            // Do I have a persisted ballot ready and waiting for me?
             buildUI();
+            // Do I have a persisted ballot ready and waiting for me?
+            managePersistedBallot(this, eDummy);
         }
 
         protected void buildRankImages() {
@@ -319,6 +319,7 @@ namespace ImageImprov {
 
                 // ok. Everything has been initialized. So now I just need to decide where to put it.
                 if (ballotImgsP.Count > 0) {
+                    Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView drawing a ballot");
                     // new design is just 4 squares and that's the only orientation
                     result = buildFourPortraitImgPortraitView();
                     /*
@@ -331,6 +332,7 @@ namespace ImageImprov {
                     }
                     */
                 } else {
+                    Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView no ballot; building instruction");
                     // Note: This is reached on ctor call, so don't put an assert here.
                     //result = -1;  This is a valid exit case.  Result should be 1!
                     portraitView.RowDefinitions.Clear();
@@ -361,9 +363,9 @@ namespace ImageImprov {
                         Grid.SetRowSpan(ballotImgsP[3], 4);
                     }
                     
-//#if DEBUG
-//                    challengeLabelP.Text += " no image case";
-//#endif
+#if DEBUG
+                    challengeLabelP.Text += " no image case";
+#endif
 
                     portraitView.Children.Add(challengeLabelP, 0, 8);
                     Grid.SetColumnSpan(challengeLabelP, 1);
@@ -777,9 +779,12 @@ namespace ImageImprov {
             }
             Device.BeginInvokeOnMainThread(() =>
             {
-                lock (ballot) {
+                //lock (ballot) {
                     ClearContent();
                     try {
+                        if (portraitView == null) {
+                            this.buildUI();
+                        }
                         processBallotString(preloadedBallots.Dequeue());
                     } catch (Exception ex) {
                         Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
@@ -789,7 +794,7 @@ namespace ImageImprov {
                         Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
                         Debug.WriteLine(ex.ToString());
                     }
-                }
+                //}
             });
             // should be ok at this point. however, sometimes an invalid status gets saved.
             // this is how I pick that up and prevent it.
@@ -799,9 +804,11 @@ namespace ImageImprov {
                 if (preloadedBallots.Count > 0) {
                     //processBallotString(preloadedBallots.Dequeue());
                     Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest bad read. do I autofix with OnLoadBallotPics?");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest bad read. do I autofix with OnLoadBallotPics?");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest bad read. do I autofix with OnLoadBallotPics?");
                 }
             }
-
+            Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest queue length at end:" +preloadedBallots.Count);
             Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest end");
         }
 
@@ -889,7 +896,21 @@ namespace ImageImprov {
         }
         //> RequestTimeAsync
 
-         static int counter = 1;
+        /// <summary>
+        /// tracks ballot load attempts
+        /// </summary>
+        static int ballotLoadAttemptCounter = 1;
+
+        /// <summary>
+        /// Tracks whether there is an instance of OnLoadBallotPics running or not.
+        /// </summary>
+        bool loadLoopRunning = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         //<Ballot Loading
         protected async virtual void OnLoadBallotPics(object sender, EventArgs e) {
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics start");
@@ -924,11 +945,11 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post ballot read");
             } else {
                 // @todo need to update labels inside the build ui functions only.
-                //challengeLabelP.Text = "Currently unable to load ballots.  Attempts: " + counter;
-                //challengeLabelL.Text = "Currently unable to load ballots.  Attempts: " + counter;
-                counter++;
-                if (counter > 2) {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics " + counter + " load fails");
+                //challengeLabelP.Text = "Currently unable to load ballots.  Attempts: " + ballotLoadAttemptCounter ;
+                //challengeLabelL.Text = "Currently unable to load ballots.  Attempts: " + ballotLoadAttemptCounter ;
+                ballotLoadAttemptCounter++;
+                if (ballotLoadAttemptCounter > 2) {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics " + ballotLoadAttemptCounter + " load fails");
                 }
                 await Task.Delay(5000);
                 if (LoadBallotPics != null) {
@@ -938,30 +959,38 @@ namespace ImageImprov {
             }
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre while");
             // keep this thread going constantly, making sure we never run out.
-            while (true) {
-                if (preloadedBallots.Count < GlobalStatusSingleton.minBallotsToLoad) {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre async call 2");
-                    result = await requestBallotPicsAsync();
-                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post async call 2");
-                    if (!result.Equals("fail")) {
-                        preloadedBallots.Enqueue(result);
+            // however, this is a response to an event that can be fired from multiple places and reasons.
+            // do not want to have thousands of these building up and crushing the app.
+            if (loadLoopRunning == false) {
+                loadLoopRunning = true;
+
+                while (true) {
+                    if (preloadedBallots.Count < GlobalStatusSingleton.minBallotsToLoad) {
+                        Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics pre async call 2");
+                        result = await requestBallotPicsAsync();
+                        Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics post async call 2");
+                        if (!result.Equals("fail")) {
+                            preloadedBallots.Enqueue(result);
+                        }
+                    } else {
+                        // no need to go bonkers
+                        await Task.Delay(5000);
+                        //Thread.Sleep(500);
                     }
-                } else {
-                    // no need to go bonkers
-                    await Task.Delay(500);
+                    // this happens when i run out of ballots
+                    // but why??
+                    // unhappy with this solution as it means I don't understand what's happening.                
+                    if (((ballot.ballots == null) || (ballot.ballots.Count == 0)) && (preloadedBallots.Count > 1)) {
+                        Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics out of ballots, sending dqueue");
+                        //processBallotString(preloadedBallots.Dequeue());
+                        DequeueBallotRequest(this, eDummy);
+                    }
+                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics queue Length:" + preloadedBallots.Count);
+                    //}
                 }
-                // this happens when i run out of ballots
-                // but why??
-                // unhappy with this solution as it means I don't understand what's happening.                
-                if ((ballot.ballots == null) && (preloadedBallots.Count > 1)) {
-                    Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics out of ballots, sending dqueue");
-                    //processBallotString(preloadedBallots.Dequeue());
-                    DequeueBallotRequest(this, eDummy);
-                }
-                //}
             }
-            // This line gets tagged as unreachable, which it is... so just comment out.
-            //Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics end");
+            // This line gets tagged as unreachable, which it is... so just comment out.  Not anymore, so uncommented.
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotPics end");
         }
 
         /// <summary>
@@ -995,6 +1024,7 @@ namespace ImageImprov {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         protected virtual void managePersistedBallot(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:JudgingContentPage:managePersistedBallot start");
             if ((((ballot.ballots == null) || (ballot.ballots.Count == 0))) 
                 && (GlobalStatusSingleton.persistedBallotAsString != null) && (!GlobalStatusSingleton.persistedBallotAsString.Equals(""))) {
                 // check that persisted ballot is a valid string.
@@ -1011,6 +1041,7 @@ namespace ImageImprov {
                     preloadedBallots.Enqueue(GlobalStatusSingleton.persistedPreloadedBallots.Dequeue());
                 }
             }
+            Debug.WriteLine("DHB:JudgingContentPage:managePersistedBallot end; " + preloadedBallots.Count + " loaded.");
         }
 
         /// <summary>
@@ -1226,6 +1257,9 @@ namespace ImageImprov {
                 unvotedImgs = new List<BallotCandidateJSON>(ballot.ballots);
                 // handle category first.
                 //challengeLabelP.Text = "Category: " + ballot.category.description;
+                if (ballot.category.description == null) {
+                    bool falseBreak = true;
+                }
                 challengeLabelP.Text = ballot.category.description;
                 GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                 // now handle ballot

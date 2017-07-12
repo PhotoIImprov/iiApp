@@ -37,6 +37,14 @@ namespace ImageImprov.Droid {
             System.Console.WriteLine(e.ToString());
         }
 
+        /// <summary>
+        /// Saved for later retrieval and use by other activities. First instance was OAuth.
+        /// </summary>
+        public Bundle bundle;
+
+        FileServices fs = new FileServices();
+        //AuthServices authSvcs = new AuthServices();
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -44,12 +52,13 @@ namespace ImageImprov.Droid {
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += HandleExceptions;
 
-            GlobalStatusSingleton.imgsTakenTracker++;
             GlobalStatusSingleton.imgPath = 
                 Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryPictures).ToString();
+            GlobalStatusSingleton.imgsTakenTracker = fs.determineNumImagesTaken() + 1;
 
+            string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
             file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
-                Android.OS.Environment.DirectoryPictures), "ImageImprov_" + GlobalStatusSingleton.imgsTakenTracker + ".jpg");
+                Android.OS.Environment.DirectoryPictures),  nextFileName);
 
             Forms.Init(this, savedInstanceState);
             
@@ -73,6 +82,7 @@ namespace ImageImprov.Droid {
                 GlobalStatusSingleton.UUID = UUID.RandomUUID().ToString();
             }
 
+            //this.bundle = savedInstanceState;
             //< OnCreate
             //cameraSetup();  This doesn't work yet, so don't do it.
 
@@ -161,10 +171,6 @@ namespace ImageImprov.Droid {
                 System.Diagnostics.Debug.WriteLine("DHB:MainActivity:CameraSetup exception:" +e.ToString());
             }
             System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
-        }
-
-        public IList<string> dirLoad(string path, string prefix) {
-            return (IList<string>)(System.IO.Directory.EnumerateFiles(GlobalStatusSingleton.imgPath, prefix));
         }
     }
 }

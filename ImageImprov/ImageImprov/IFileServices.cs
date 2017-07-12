@@ -9,6 +9,8 @@ namespace ImageImprov {
     /// This is the interface that defines all the file service function calls needed.
     /// </summary>
     public interface IFileServices {
-        IList<string> fileSetup(string path, string filePrefix);
+        IList<string> getImageImprovFileNames();
+        byte[] loadImageBytes(string filename);
+        int determineNumImagesTaken();
     }
 }

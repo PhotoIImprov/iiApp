@@ -8,12 +8,15 @@ using UIKit;
 */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Foundation;
 using UIKit;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
+using Xamarin.Auth;
 using System.IO;
+using System.Net;
 
 namespace ImageImprov.iOS
 {
@@ -39,6 +42,9 @@ namespace ImageImprov.iOS
         public const string PROPERTY_LEADERBOARD_TIMESTAMP = "leaderboardCategoryLastLoadTimestamp";
         //public const string PROPERTY_REGISTERED = "registered";
 
+        private FileServices fs = new FileServices();
+        private AuthServices authSvcs = new AuthServices();
+
         //
         // This method is invoked when the application has loaded and is ready to run. In this 
         // method you should instantiate the window, load the UI into it and then make the window
@@ -50,6 +56,10 @@ namespace ImageImprov.iOS
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
             Forms.Init();
+
+            Debug.WriteLine("DHB:AppDelegate:FinishedLaunching pre imgPath.");
+            GlobalStatusSingleton.imgPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            Debug.WriteLine("DHB:AppDelegate:FinishedLaunching imgPath=" + GlobalStatusSingleton.imgPath);
 
             LoadApplication(new App());
 
@@ -77,8 +87,9 @@ namespace ImageImprov.iOS
                 var filepath = Path.Combine(Environment.GetFolderPath(
                                    Environment.SpecialFolder.MyDocuments), "tmp.png");
                                    */
+                string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
                 var filepath = Path.Combine(Environment.GetFolderPath(
-                                   Environment.SpecialFolder.MyDocuments), "ImageImprov_" + GlobalStatusSingleton.imgsTakenTracker + ".jpg");
+                                   Environment.SpecialFolder.MyDocuments), nextFileName);
 
                 var image = (UIImage)e.Info.ObjectForKey(new NSString("UIImagePickerControllerOriginalImage"));
                 InvokeOnMainThread(() => {
@@ -106,6 +117,14 @@ namespace ImageImprov.iOS
             return base.FinishedLaunching(uiApplication, launchOptions);
         }
 
+        public override bool OpenUrl(UIApplication app, NSUrl url, NSDictionary options) {
+            // convert NSUrl to Uri
+            var uri = new Uri(url.AbsoluteString);
+            // Load redirectUrl page from OAuth.
+
+            ImageImprov.ThirdPartyAuthenticator.authenticator.OnPageLoading(uri);
+            return true;
+        }
     }
 }
 

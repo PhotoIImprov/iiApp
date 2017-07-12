@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Xamarin.Forms;
+using SkiaSharp;
 
 namespace ImageImprov {
     /// <summary>
@@ -31,6 +32,7 @@ namespace ImageImprov {
         Grid portraitView;
 
         public MySubmissionsPage() {
+            submissionStack.SizeChanged += redrawImages;
             buildMyImages();
             buildUI();
         }
@@ -40,12 +42,16 @@ namespace ImageImprov {
         protected void buildMyImages() {
             myImages.Clear();
             // img tracker is 1-indexed...
-            for (int i=1;i<=GlobalStatusSingleton.imgsTakenTracker;i++) {
-                string thisFilename = GlobalStatusSingleton.imgPath + "/" + IMG_FILENAME_PREFIX + i;
-                ImageSource fis = ImageSource.FromFile(thisFilename);
-                if (fis != null) {
-                    Image img = new Image { Source = fis };
-                    myImages.Add(img);
+            //for (int i=1;i<=GlobalStatusSingleton.imgsTakenTracker;i++) {
+            //IList<string> filenames = DependencyService.Get<IFileServices>().getImageImprovFileNames();
+            IList<string> filenames = PlatformSpecificCalls.getImageImprovFileNames();
+            foreach (string f in filenames) {
+                byte[] raw = PlatformSpecificCalls.loadImageBytes(f);
+                if (raw != null) {
+                    Image final = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(raw);
+                    if (final != null) {
+                        myImages.Add(final);
+                    }
                 }
             }
         }
@@ -92,6 +98,15 @@ namespace ImageImprov {
                     }
                 }
                 submissionStack.Children.Add(leaderRow);
+            }
+        }
+
+        double lastRedrawnWidth = -2.0;
+        public void redrawImages(object sender, EventArgs args) {
+            if ((Width > 0) && (Width != lastRedrawnWidth)) {
+                submissionStack.Children.Clear();
+                lastRedrawnWidth = Width;
+                buildUI();
             }
         }
 

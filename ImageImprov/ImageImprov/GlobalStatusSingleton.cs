@@ -26,6 +26,7 @@ namespace ImageImprov
             set { uuid = GlobalSingletonHelpers.stripHyphens(value);  }
         }
 
+
         // set to true on a successful login.
         // deactivated on a logout.
         public static bool loggedIn = false;
@@ -67,6 +68,7 @@ namespace ImageImprov
         /// </summary>
         public static int imgsTakenTracker = 0;
         public static string imgPath = "";
+        public const string IMAGE_NAME_PREFIX = "ImageImprov_";
 
         public static Color backgroundColor = Color.FromRgb(242, 242, 242);
         public static Color highlightColor = Color.FromRgb(100, 100, 100);

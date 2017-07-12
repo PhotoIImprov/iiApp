@@ -11,9 +11,21 @@ namespace ImageImprov {
     /// or something changes that is platform specific it is all in one place.
     /// </summary>
     class PlatformSpecificCalls {
-        public static IList<string> dirLoad() {
+        public static IList<string> getImageImprovFileNames() {
             IFileServices ifs = DependencyService.Get<IFileServices>();
-            return ifs.fileSetup("7", "7");
+            return ifs.getImageImprovFileNames();
+        }
+
+        public static byte[] loadImageBytes(string filename) {
+            IFileServices ifs = DependencyService.Get<IFileServices>();
+            return ifs.loadImageBytes(filename);
+        }
+
+        public static void authInit() {
+            IAuthServices ias = DependencyService.Get<IAuthServices>();
+            if (ias != null) {
+                ias.Init();
+            }
         }
     }
 }

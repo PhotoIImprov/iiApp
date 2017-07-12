@@ -113,7 +113,7 @@ namespace ImageImprov
 
             // why do i not call load properties???  check this.
             DateTime rightNow = DateTime.Now;
-            if (rightNow.Date != GlobalStatusSingleton.lastCategoryLoadTime.Date) {
+            if ((rightNow.Date != GlobalStatusSingleton.lastCategoryLoadTime.Date) && (GlobalStatusSingleton.loggedIn==true)) {
                 // fire a category load.
                 ((MainPageSwipeUI)MainPage).FireLoadChallengeName();
             }

@@ -99,6 +99,16 @@ namespace ImageImprov
         // triggers anonymous registration
         Button anonymousPlayButton;
 
+        /// <summary>
+        /// Button that triggers the facebook oauth login process.
+        /// </summary>
+        Image facebookLogin;
+        /// <summary>
+        /// Button that triggers the google oauth login process.
+        /// </summary>
+        Image googleLogin;
+
+
         // logs the user out
         Button logoutButton;
 
@@ -199,7 +209,10 @@ namespace ImageImprov
             };
 
             createRegisterButton();
+            createFacebookButton();
+            createGoogleButton();
             // Object creation portion done...   Determine what ui to fire up! :)
+
 
             if (GlobalStatusSingleton.maintainLogin) {
                 if (isEmailAddress(GlobalStatusSingleton.username)) {
@@ -505,6 +518,8 @@ namespace ImageImprov
                     usernameRow(),
                     passwordRow(),
                     connectButton,
+                    facebookLogin,
+                    googleLogin,
                     new Label { Text = " ", TextColor = Color.Black, },
                     //anonymousPlayButton,
                     new Label { Text = " ", TextColor = Color.Black, },
@@ -1019,6 +1034,7 @@ namespace ImageImprov
                 // change to the force login page
                 Device.BeginInvokeOnMainThread(() => {
                     backgroundImg = null;
+                    GlobalStatusSingleton.loggedIn = false;
                     Content = createForceLoginLayout();
                 });
             }
@@ -1031,6 +1047,27 @@ namespace ImageImprov
             return CenterConsole.LeaderboardPage.GetLeaderboardTimestamps();
         }
 
+        ///////// BEGIN OAUTH Coding
+        ThirdPartyAuthenticator oauthManager = new ThirdPartyAuthenticator();
+        private void createGoogleButton() {
+            googleLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.google_login.jpg"), };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += (sender, EventArgs) => {
+                oauthManager.configForGoogle();
+                oauthManager.startAuthentication(Navigation);
+            };
+            googleLogin.GestureRecognizers.Add(tap);
+        }
+        
+        private void createFacebookButton() {
+            facebookLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.facebook_login.jpg"), };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += (sender, EventArgs) => {
+                oauthManager.configForFacebook();
+                oauthManager.startAuthentication(Navigation);
+            };
+            facebookLogin.GestureRecognizers.Add(tap);
+        }
     }  // class
 
 }  // namespace
