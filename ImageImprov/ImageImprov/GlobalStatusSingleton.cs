@@ -114,7 +114,6 @@ namespace ImageImprov
 
         public static AuthenticationToken authToken;
 
-
         public static string persistedBallotAsString;
         public static Queue<string> persistedPreloadedBallots;
         // static ip completely off right now.

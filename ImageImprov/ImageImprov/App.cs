@@ -15,7 +15,12 @@ namespace ImageImprov
         public const string PROPERTY_USERNAME = "username";
         public const string PROPERTY_PWD = "pwd";
         public const string PROPERTY_MAINTAIN_LOGIN = "maintainlogin";
+        //public const string PROPERTY_REFRESH_TOKEN = "refresh_token";
+        public const string PROPERTY_AUTH_ACCOUNT = "auth_account";
+        public const string PROPERTY_OAUTH_DATA = "oauth";
         public const string PROPERTY_ASPECT_OR_FILL_IMGS = "aspectOrFillImgs";
+        public const string PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP = "lastLightbulbTimestamp";
+        public const string PROPERTY_LIGHTBULB_COUNT = "lightbulbCount";
         public const string PROPERTY_MIN_BALLOTS_TO_LOAD = "minBallotsToLoad";
         public const string PROPERTY_IMGS_TAKEN_COUNT = "imgsTakenCount";
         public const string PROPERTY_ACTIVE_BALLOT = "activeBallot";
@@ -60,9 +65,14 @@ namespace ImageImprov
             Properties[PROPERTY_PWD] = GlobalStatusSingleton.password;
             Properties[PROPERTY_MAINTAIN_LOGIN] = GlobalStatusSingleton.maintainLogin.ToString();
             Debug.WriteLine("DHB:App:OnSleep set maintainlogin to " + Properties[PROPERTY_MAINTAIN_LOGIN]);
+            //Properties[PROPERTY_REFRESH_TOKEN] = ThirdPartyAuthenticator.refreshToken;
+            Properties[PROPERTY_AUTH_ACCOUNT] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.authAccount);
+            Properties[PROPERTY_OAUTH_DATA] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.oauthData);
             Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
+            Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] = LightbulbTracker.timeOfLastEarnedLightbulb;
+            Properties[PROPERTY_LIGHTBULB_COUNT] = LightbulbTracker.todaysCount;
             Properties[PROPERTY_MIN_BALLOTS_TO_LOAD] = GlobalStatusSingleton.minBallotsToLoad.ToString();
-            Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
+            //Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
 
             storeBallot();
             storeLeaderboards();
@@ -139,16 +149,35 @@ namespace ImageImprov
                 GlobalStatusSingleton.maintainLogin = Convert.ToBoolean(properties[PROPERTY_MAINTAIN_LOGIN] as string);
                 //GlobalStatusSingleton.maintainLogin = false;
             }
+            if (properties.ContainsKey(PROPERTY_AUTH_ACCOUNT)) {
+                ThirdPartyAuthenticator.authAccount = JsonConvert.DeserializeObject<Xamarin.Auth.Account>(properties[PROPERTY_AUTH_ACCOUNT] as string);
+            }
+            if (properties.ContainsKey(PROPERTY_OAUTH_DATA)) {
+                ThirdPartyAuthenticator.oauthData = JsonConvert.DeserializeObject<OAUTHDataJSON>(properties[PROPERTY_OAUTH_DATA] as string);
+            }
             if (properties.ContainsKey(PROPERTY_ASPECT_OR_FILL_IMGS)) {
                 GlobalStatusSingleton.aspectOrFillImgs = ((properties[PROPERTY_ASPECT_OR_FILL_IMGS] as string).Equals("AspectFit") ? Aspect.AspectFit : Aspect.Fill);
+            }
+            if (properties.ContainsKey(PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP)) {
+                DateTime stamp;
+                bool readSuccess = DateTime.TryParse(Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] as string, out stamp);
+                if (readSuccess) {
+                    LightbulbTracker.timeOfLastEarnedLightbulb = stamp;
+                } else {
+                    LightbulbTracker.timeOfLastEarnedLightbulb = new DateTime(); // set to zero if there's none.
+                }
+            }
+            if (properties.ContainsKey(PROPERTY_LIGHTBULB_COUNT)) {
+                LightbulbTracker.todaysCount = (int)properties[PROPERTY_LIGHTBULB_COUNT];
             }
             if (properties.ContainsKey(PROPERTY_MIN_BALLOTS_TO_LOAD)) {
                 GlobalStatusSingleton.minBallotsToLoad= Convert.ToInt32(properties[PROPERTY_MIN_BALLOTS_TO_LOAD] as string);
             }
+            /* This is flakey, and can conflict with the better file based method. Cut it.
             if (properties.ContainsKey(PROPERTY_IMGS_TAKEN_COUNT)) {
                 GlobalStatusSingleton.imgsTakenTracker = Convert.ToInt32(properties[PROPERTY_IMGS_TAKEN_COUNT] as string);
             }
-
+            */
             // this is called from the constructor, and before everything exists, so put these into the Global Static for later retrieval.
             // Put this in GlobalStatusSingleton, as I need the above properties set before building the ui.
 

@@ -157,7 +157,7 @@ namespace ImageImprov {
 
         public static SKBitmap loadSKBitmapFromFilename(string filename) {
             SKBitmap unrotated = SKBitmap.Decode(filename);
-            // This won't work as we discard the exif info on load.
+            // This won't work as we discard the exif info on load.  Also, given the filename it already knew it was grabbing a jpg.
             //SKBitmap rotated = buildFixedRotationSKBitmapFromBytes(unrotated.Bytes);
             return unrotated;
         }
@@ -326,6 +326,8 @@ namespace ImageImprov {
         public static SKBitmap SKBitmapFromBytes(byte[] imgBits) {
             SKBitmap bitmap = null;
             MemoryStream mems = new MemoryStream(imgBits);
+            // meh. not sure how to do this if i don't already have it decoded and sized...
+            //SKImageInfo skii = new SKImageInfo(-1, -1, SKColorType.Rgb565);
             bitmap = SKBitmap.Decode(mems);
 
             // a quickie test. it worked. yay 
@@ -418,11 +420,15 @@ namespace ImageImprov {
             return rotatedBmp;
         }
 
-        public static Image buildFixedRotationImageFromBytes(byte[] inImg, ExifOrientation imgExifO = ExifOrientation.Undefined) {
+        public static Image buildFixedRotationImageFromBytes(byte[] inImg, ExifOrientation imgExifO = ExifOrientation.Undefined, int width = -1, int height = -1) {
             DateTime step0 = DateTime.Now;
             Image result = new Image();
             DateTime step1 = DateTime.Now;
             SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg, imgExifO);
+            if ((width>-1) && (height>1)) {
+                SKImageInfo sizing = new SKImageInfo(width, height);
+                rotatedBmp = rotatedBmp.Resize(sizing, SKBitmapResizeMethod.Hamming);
+            }
             DateTime step2 = DateTime.Now;
             if (rotatedBmp != null) {
                 result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));

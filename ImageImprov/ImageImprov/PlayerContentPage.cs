@@ -30,7 +30,7 @@ namespace ImageImprov
      * @todo Enable user credential input
      * @todo Build registration UI and interactions
      */
-    class PlayerContentPage : ContentPage {
+    public class PlayerContentPage : ContentPage {
         const int LAYOUT_NOT_SET = 0;
         const int LAYOUT_PRE_CONNECT_AUTO_LOGIN = 1;
         const int LAYOUT_CONNECTED_AUTO = 2;
@@ -47,12 +47,12 @@ namespace ImageImprov
         public static string ANON_REGISTRATION_FAILURE = "Sorry, only one anonymous registration per device is supported.";
 
         //< loggedInLabel
-        readonly Label loggedInLabel = new Label
+        public Label loggedInLabel = new Label
         {
-            Text = "Connecting...",
+            Text = " ",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = GlobalStatusSingleton.ButtonColor,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
         };
         //> loggedInLabel
@@ -211,11 +211,14 @@ namespace ImageImprov
             createRegisterButton();
             createFacebookButton();
             createGoogleButton();
+            oauthManager = new ThirdPartyAuthenticator(this);
+
             // Object creation portion done...   Determine what ui to fire up! :)
 
 
             if (GlobalStatusSingleton.maintainLogin) {
                 if (isEmailAddress(GlobalStatusSingleton.username)) {
+                    // how do I know if I am in oauth, or username/password?
                     Content = createPreConnectAutoLoginLayout();
                 } else {
                     // anonymous user
@@ -241,6 +244,7 @@ namespace ImageImprov
                     Content = createNewDeviceLayout();
                 }
             }
+
         }
 
         /*
@@ -466,6 +470,7 @@ namespace ImageImprov
         }
 
         protected Layout<View> createNewDeviceLayout() {
+            Debug.WriteLine("DHB:PlayerContentPage:createNewDevideLayout");
             activeLayout = LAYOUT_NEW_DEVICE;
             newDeviceLayout = new StackLayout
             {
@@ -478,12 +483,17 @@ namespace ImageImprov
                     usernameRow(),
                     passwordRow(),
                     connectButton,
+                    facebookLogin,
                     blankRowLabel,
                     //anonymousPlayButton,
                     blankRowLabel,
                     registerButton,
                 }
             };
+            // @todo fix on android so this goes away!
+            if (Device.OS == TargetPlatform.iOS) {
+                newDeviceLayout.Children.Insert(7, googleLogin);
+            }
             return newDeviceLayout;
             /*
             buildBackground();
@@ -519,13 +529,17 @@ namespace ImageImprov
                     passwordRow(),
                     connectButton,
                     facebookLogin,
-                    googleLogin,
+                    //googleLogin,
                     new Label { Text = " ", TextColor = Color.Black, },
                     //anonymousPlayButton,
                     new Label { Text = " ", TextColor = Color.Black, },
                     registerButton,
                 }
             };
+            // @todo fix on android so this goes away!
+            if (Device.OS == TargetPlatform.iOS) {
+                forceLoginLayout.Children.Insert(7, googleLogin);
+            }
             return forceLoginLayout;
             /*
             buildBackground();
@@ -669,7 +683,10 @@ namespace ImageImprov
             }
         }
 
-        private void LoginSuccess() {
+        /// <summary>
+        /// Public so that ThirdPartyAuthenticator can call back to here on auth success.
+        /// </summary>
+        public void LoginSuccess() {
             if (TokenReceived != null) {
                 TokenReceived(this, eDummy);
             }
@@ -699,33 +716,50 @@ namespace ImageImprov
             loggedInLabel.Text = "Logged in as " + GlobalStatusSingleton.username;
         }
 
+        public async void handleLoginFail(string loginResult) {
+            loggedInLabel.Text = loginResult + "(" + loginAttemptCounter + ")";
+            // if I was in autologin and failed (may have happened from a pwd theft, or because of a db wipe in testing), need to reset ui.
+            if (isEmailAddress(GlobalStatusSingleton.username)) {
+                Content = createForceLoginLayout();
+            } else {
+                // I'm in the anon case. Therefore, I only autologin.
+                // therefore, I need to repeat until success...
+                bool nologin = true;
+                while (nologin) {
+                    loginResult = await requestTokenAsync();
+                    if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
+                        loggedInLabel.Text = loginResult + "(" + loginAttemptCounter + ")";
+                    } else {
+                        nologin = false;
+                    }
+                }
+                LoginSuccess();
+            }
+
+        }
+
         protected async virtual void OnMyLogin(object sender, EventArgs e) {
             //string loginResult = await requestLoginAsync();
+            Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin");
             loggedInLabel.Text = " Connecting... ";
-            loginAttemptCounter++;
-            string loginResult = await requestTokenAsync();
-            if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
-                loggedInLabel.Text = loginResult +"("+loginAttemptCounter+")";
-                // if I was in autologin and failed (may have happened from a pwd theft, or because of a db wipe in testing), need to reset ui.
-                if (isEmailAddress(GlobalStatusSingleton.username)) {
-                    Content = createForceLoginLayout();
+            if ((ThirdPartyAuthenticator.oauthData == null)|| (ThirdPartyAuthenticator.oauthData.refreshToken == null) || (ThirdPartyAuthenticator.oauthData.refreshToken.Equals(""))) {
+                Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin no oauth data");
+                loginAttemptCounter++;
+                string loginResult = await requestTokenAsync();
+                Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin requestToken result:" +loginResult);
+                if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
+                    handleLoginFail(loginResult);
                 } else {
-                    // I'm in the anon case. Therefore, I only autologin.
-                    // therefore, I need to repeat until success...
-                    bool nologin = true;
-                    while (nologin) {
-                        loginResult = await requestTokenAsync();
-                        if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
-                            loggedInLabel.Text = loginResult + "(" + loginAttemptCounter + ")";
-                        } else {
-                            nologin = false;
-                        }
-                    }
                     LoginSuccess();
                 }
             } else {
-                LoginSuccess();
-
+                Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin oauthdata");
+                if (oauthManager == null) {
+                    Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin oauthdata wtf oauth mgr was null");
+                }
+                Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin oauthdata post null check");
+                // oauth case. use the refresh token to grab a new access token.
+                oauthManager.refreshAuthentication();
             }
         }
 
@@ -866,9 +900,11 @@ namespace ImageImprov
                         MyLogin(this, eDummy);
                     }
 
-                    Content = createAutoLoginLayout();
+                    // why?
+                    //Content = createAutoLoginLayout();
                     loggedInLabel.Text = "Registration success! logging in...";
                     if (RegisterSuccess != null) {
+                        Debug.WriteLine("DHB:PlayerContentPage:OnRegisterNow sending RegisterSuccess event");
                         RegisterSuccess(this, eDummy);
                     }
                 }
@@ -879,7 +915,6 @@ namespace ImageImprov
 
         protected /* async */ virtual void OnRegisterSuccess(object sender, EventArgs e) {
             // right now, do nothing.
-            // consider moving token request here...
             // now we goto the instructions page.
             this.Content = CenterConsole.InstructionsPage;
         }
@@ -928,10 +963,12 @@ namespace ImageImprov
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
                 // Or, is it a connection fail?
+                Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync Webexception");
                 Debug.WriteLine(err.ToString());
                 resultMsg = "Network error. Please check your connection and try again.";
             } catch (HttpRequestException err) {
                 // do something!!
+                Debug.WriteLine("DHB:PlayerContentPage:requestRegistrationAsync HttpException");
                 Debug.WriteLine(err.ToString());
                 resultMsg = REGISTRATION_FAILURE;
             }
@@ -952,15 +989,23 @@ namespace ImageImprov
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
                 string jsonQuery = JsonConvert.SerializeObject(loginInfo);
+                Debug.WriteLine("DHB:PlayerContentPage:requestTokenAsync queryJson:" + jsonQuery);
                 HttpRequestMessage tokenRequest = new HttpRequestMessage(HttpMethod.Post, "auth");
                 tokenRequest.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
                 HttpResponseMessage tokenResult = await client.SendAsync(tokenRequest);
+                Debug.WriteLine("DHB:PlayerContentPage:requestTokenAsync requestResultCode:" + System.Net.HttpStatusCode.OK);
                 if (tokenResult.StatusCode == System.Net.HttpStatusCode.OK) {
-                    GlobalStatusSingleton.authToken
-                        = JsonConvert.DeserializeObject<AuthenticationToken>
-                        (await tokenResult.Content.ReadAsStringAsync());
+                    string tknResult = await tokenResult.Content.ReadAsStringAsync();
+                    Debug.WriteLine("DHB:PlayerContentPage:requestTokenAsync result:" + tknResult);
+                    var settings = new JsonSerializerSettings {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    GlobalStatusSingleton.authToken = JsonConvert.DeserializeObject<AuthenticationToken>(tknResult, settings);
                     GlobalStatusSingleton.loggedIn = true;
                     result = "Success";
+                    Debug.WriteLine("DHB:PlayerContentPage:requestTokenAsync good end.");
+
                 }
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?
@@ -1048,7 +1093,7 @@ namespace ImageImprov
         }
 
         ///////// BEGIN OAUTH Coding
-        ThirdPartyAuthenticator oauthManager = new ThirdPartyAuthenticator();
+        ThirdPartyAuthenticator oauthManager;
         private void createGoogleButton() {
             googleLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.google_login.jpg"), };
             TapGestureRecognizer tap = new TapGestureRecognizer();

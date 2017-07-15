@@ -12,7 +12,7 @@ namespace ImageImprov {
     /// <summary>
     /// Provides the interface for going to the hamburger(navigation) page.
     /// </summary>
-    class HamburgerPage : ContentView {
+    public class HamburgerPage : ContentView {
         // List of buttons on the hamburger page:
         // Instructions page
         // Voting
@@ -35,8 +35,8 @@ namespace ImageImprov {
         Label leaderboardLabel;
         //Image medalsButton;
         Label medalsLabel;
-        //Image myEntriesButton;
-        Label myEntriesLabel;
+        Image mySubmissionsButton;
+        Label mySubmissionsLabel;
         //Image myFavoritesButton;
         Label myFavsLabel;
         Image storeButton;
@@ -170,6 +170,21 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:HamburgerPage:buildUI leaderboardClick. post move");
             };
             */
+
+            TapGestureRecognizer mySubmissionsClick = new TapGestureRecognizer();
+            mySubmissionsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.contests_inactive.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+            mySubmissionsLabel = new Label { Text = "   My entries", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            StackLayout submissionsRow= new StackLayout
+            {
+                Orientation = StackOrientation.Horizontal,
+                Children = { mySubmissionsButton, mySubmissionsLabel, }
+            };
+            mySubmissionsButton.GestureRecognizers.Add(mySubmissionsClick);
+            mySubmissionsLabel.GestureRecognizers.Add(mySubmissionsClick);
+            mySubmissionsClick.Tapped += (sender, args) => {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoMySubmissionsPage();
+            };
+
             TapGestureRecognizer settingsClick = new TapGestureRecognizer();
             settingsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
             settingsLabel = new Label { Text = "The settings", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
@@ -187,15 +202,9 @@ namespace ImageImprov {
             Label blankrow = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label blankrow2 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label blankrow3 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
+            Label blankrow4 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label comingSoon = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label medals = new Label { Text = "   My medals", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-
-            TapGestureRecognizer mySubmissionsClick = new TapGestureRecognizer();
-            Label mySubmissionsLabel = new Label { Text = "   My entries", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            mySubmissionsLabel.GestureRecognizers.Add(mySubmissionsClick);
-            mySubmissionsClick.Tapped += (sender, args) => {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoMySubmissionsPage();
-            };
 
             Label myfavs = new Label { Text = "   My favorites", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             //Label purchases = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
@@ -205,7 +214,7 @@ namespace ImageImprov {
                 Orientation = StackOrientation.Vertical,
                 Spacing = 6,
                 //Children = { instructionsRow, votingRow, homeRow, cameraRow, leaderboardRow, settingsRow, }
-                Children = { instructionsRow, blankrow, settingsRow, blankrow2, comingSoon, medals, mySubmissionsLabel, myfavs, blankrow3, versionLabel, loggedInLabel, }
+                Children = { instructionsRow, blankrow, submissionsRow, blankrow2, settingsRow, blankrow3, comingSoon, medals, myfavs, blankrow4, versionLabel, loggedInLabel, }
             };
             ScrollView scroller = new ScrollView { Padding = new Thickness(10) };
             scroller.Content = hamburger;

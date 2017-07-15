@@ -121,6 +121,7 @@
     <Compile Include="AuthServices.cs" />
     <Compile Include="FileServices.cs" />
     <Compile Include="MainActivity.cs" />
+    <Compile Include="MemoryHelper.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SplashActivity.cs" />

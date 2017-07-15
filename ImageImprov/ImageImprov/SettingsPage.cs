@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Xamarin.Forms;
 
 namespace ImageImprov {
-    class SettingsPage : ContentView {
+    public class SettingsPage : ContentView {
         KeyPageNavigator defaultNavigationButtons;
 
         Grid settingsGrid;

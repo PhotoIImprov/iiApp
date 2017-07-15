@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Xamarin.Forms;
 
 namespace ImageImprov {
-    class InstructionsPage : ContentView {
+    public class InstructionsPage : ContentView {
         Grid portraitView;
         KeyPageNavigator defaultNavigationButtonsP = null;
 

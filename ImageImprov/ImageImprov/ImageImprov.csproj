@@ -54,6 +54,7 @@
     <Compile Include="ICamera.cs" />
     <Compile Include="IExposeCamera.cs" />
     <Compile Include="IFileServices.cs" />
+    <Compile Include="IMemoryService.cs" />
     <Compile Include="InstructionsPage.cs" />
     <Compile Include="IProvideNavigation.cs" />
     <Compile Include="JsonHelper.cs" />
@@ -61,12 +62,17 @@
     <Compile Include="KeyPageNavigator.cs" />
     <Compile Include="LeaderboardJSON.cs" />
     <Compile Include="LeaderboardPage.cs" />
+    <Compile Include="LightbulbTracker.cs" />
     <Compile Include="LoggingJSON.cs" />
     <Compile Include="LoginRequestJSON.cs" />
     <Compile Include="LoginResponseJSON.cs" />
     <Compile Include="MainPageSwipeUI.cs" />
+    <Compile Include="MemoryInfo.cs" />
     <Compile Include="MySubmissionsPage.cs" />
+    <Compile Include="OAUTHDataJSON.cs" />
     <Compile Include="OAuthLoginPage.cs" />
+    <Compile Include="OAuthRefreshResponseJSON.cs" />
+    <Compile Include="OAUTHTokenRequestJSON.cs" />
     <Compile Include="PhotoSubmitJSON.cs" />
     <Compile Include="PhotoSubmitResponseJSON.cs" />
     <Compile Include="PlatformSpecificCalls.cs" />
@@ -186,6 +192,18 @@
   <ItemGroup>
     <EmbeddedResource Include="IconImages\facebook_login.jpg" />
     <EmbeddedResource Include="IconImages\google_login.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IconImages\badges.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IconImages\ImageMetaIcons\reward.png" />
+    <EmbeddedResource Include="IconImages\ImageMetaIcons\reward_10.png" />
+    <EmbeddedResource Include="IconImages\ImageMetaIcons\reward_10_inactive.png" />
+    <EmbeddedResource Include="IconImages\ImageMetaIcons\reward_inactive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IconImages\contests_inactive.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="..\..\packages\Xamarin.Forms.2.3.3.180\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+Xamarin.iOS10+xamarinmac20\Xamarin.Forms.targets" Condition="Exists('..\..\packages\Xamarin.Forms.2.3.3.180\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+Xamarin.iOS10+xamarinmac20\Xamarin.Forms.targets')" />

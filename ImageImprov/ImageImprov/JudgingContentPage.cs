@@ -138,6 +138,8 @@ namespace ImageImprov {
         //   END Variables related/needed for double clicking an image
         // 
 
+        // lightbulb stars for voting!
+        LightbulbTracker lightbulbRow; // = new LightbulbTracker();
 
         public JudgingContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
@@ -340,38 +342,60 @@ namespace ImageImprov {
                     for (int i = 0; i < 20; i++) {
                         portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                     }
+                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
                     // want to show the instruction!
                     loadInstructions();
+
+                    Grid textLogo = buildTextLogo();
+                    portraitView.Children.Add(textLogo, 0, 0);
+                    Grid.SetColumnSpan(textLogo, 2);
+                    Grid.SetRowSpan(textLogo, 2);
+
                     if (ballotImgsP.Count > 0) {
-                        portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                        Grid.SetRowSpan(ballotImgsP[0], 4);
+                        portraitView.Children.Add(ballotImgsP[0], 0, 2);
+                        Grid.SetRowSpan(ballotImgsP[0], 6);
                     }
 
                     if (ballotImgsP.Count > 1) {
-                        portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[1], 4);
+                        portraitView.Children.Add(ballotImgsP[1], 1, 2);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[1], 6);
                     }
 
                     if (ballotImgsP.Count > 2) {
-                        portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[2], 4);
+                        portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[2], 6);
                     }
 
                     if (ballotImgsP.Count > 3) {
-                        portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
-                        Grid.SetRowSpan(ballotImgsP[3], 4);
+                        portraitView.Children.Add(ballotImgsP[3], 1, 8);  // col, row format
+                        Grid.SetRowSpan(ballotImgsP[3], 6);
                     }
-                    
+
+                    challengeLabelP.Text = "Loading images...";
 #if DEBUG
                     challengeLabelP.Text += " no image case";
 #endif
 
-                    portraitView.Children.Add(challengeLabelP, 0, 8);
-                    Grid.SetColumnSpan(challengeLabelP, 1);
+
+                    //#if DEBUG
+                    //challengeLabelP.Text += " 4P_P case";
+                    //@todo Periodically check to see if my xamarin forums query solved this.
+                    //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
+                    // Calling this here is calling from an invalid height state that seems to fubar everything...
+                    //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                    //#endif
+                    portraitView.Children.Add(challengeLabelP, 0, 15);
+                    Grid.SetColumnSpan(challengeLabelP, 2);
                     Grid.SetRowSpan(challengeLabelP, 2);
+
                     portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-                    Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
+                    Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
+                    Grid.SetRowSpan(defaultNavigationButtonsP, 2);
+
+                    portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
+                    Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
                     Grid.SetRowSpan(defaultNavigationButtonsP, 2);
                 }
             } catch (Exception e) {
@@ -526,6 +550,15 @@ namespace ImageImprov {
             portraitView.Children.Add(challengeLabelP, 0, 15);
             Grid.SetColumnSpan(challengeLabelP, 2);
             Grid.SetRowSpan(challengeLabelP, 2);
+
+            if (lightbulbRow == null) {
+                lightbulbRow = new LightbulbTracker { HorizontalOptions = LayoutOptions.FillAndExpand, };
+                lightbulbRow.buildUI();
+            }
+            
+            //Grid.LayoutChildIntoBoundingRegion(lightbulbRow, new Xamarin.Forms.Rectangle(0.0, 17.0, 2.0, 1.0) );
+            portraitView.Children.Add(lightbulbRow, 0, 17);
+            Grid.SetColumnSpan(lightbulbRow, 2);
 
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
@@ -1281,10 +1314,6 @@ namespace ImageImprov {
                 }
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " +orientationCount);
-                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
-                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
-                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
-                Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " + orientationCount);
                 if (orientationCount == 2) {
                     checkImgOrderAndReorderAsNeeded();
                 }
@@ -1598,7 +1627,9 @@ namespace ImageImprov {
 
 #if DEBUG
             if (found == false) {
-                throw new Exception("A button clicked on an image not in my ballots.");
+                //throw new Exception("A button clicked on an image not in my ballots.");
+                Debug.WriteLine("A button clicked on an image not in my ballots.");
+                return;
             }
 #endif
             if (uncheckCase(selectionId, bid, votedOnCandidate)) {
@@ -1650,7 +1681,7 @@ namespace ImageImprov {
                     t.Wait();
                     buildUI();
                     */
-
+                    lightbulbRow.incrementLightbulbCounter();
                     await Task.Delay(500);
 
                     // Ok. I want to be running the request right now!
@@ -1830,7 +1861,8 @@ namespace ImageImprov {
             // The eventargs should hold a ballot string.
             string inBallot = ((BallotFromPhotoSubmissionEventArgs)e).ballotString;
             // I'm competing with DeQueue ballot string.
-            Device.BeginInvokeOnMainThread(() => {
+            Device.BeginInvokeOnMainThread(() =>
+            {
                 // I want to make sure I'm firing and that dequeue is NOT in another thread.
                 lock (ballot) {
                     // make sure we have a valid BallotJSON first...
@@ -1845,13 +1877,14 @@ namespace ImageImprov {
                             preloadedBallots = qStart;
                             processBallotString(inBallot);
                         } catch (Exception ex) {
-                            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotFromSubmission exception:" +ex.ToString());
+                            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotFromSubmission exception:" + ex.ToString());
                         }
-                        // let's just come here for starters.  This works! Booya
-                        ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
                     }
                 }
             });
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadBallotFromSubmission moving loc.");
+            // let's just come here for starters.  This works! Booya
+            ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
         }
         //
         //

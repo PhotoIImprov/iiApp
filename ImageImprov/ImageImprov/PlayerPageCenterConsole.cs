@@ -11,7 +11,7 @@ namespace ImageImprov {
     /// This is the central bit with all the buttons that shows when a player logs in
     /// or whenever they press home
     /// </summary>
-    class PlayerPageCenterConsole : Grid {
+    public class PlayerPageCenterConsole : Grid {
         TapGestureRecognizer tapGesture;
         Image gotoLeaderboardButton;
         Image gotoPurchasesButton;

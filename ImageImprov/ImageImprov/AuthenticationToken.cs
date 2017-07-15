@@ -15,5 +15,8 @@ namespace ImageImprov
     {
         [JsonProperty("access_token")]
         public string accessToken { get; set; }
+
+        [JsonProperty("email")]
+        public string email { get; set; }
     }
 }

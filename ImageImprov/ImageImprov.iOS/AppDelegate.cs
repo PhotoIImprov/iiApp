@@ -63,13 +63,15 @@ namespace ImageImprov.iOS
 
             LoadApplication(new App());
 
-            if (!Xamarin.Forms.Application.Current.Properties.ContainsKey(App.PROPERTY_UUID)) {
+            if ((!Xamarin.Forms.Application.Current.Properties.ContainsKey(App.PROPERTY_UUID)) 
+                || (Xamarin.Forms.Application.Current.Properties[App.PROPERTY_UUID].Equals(""))) {
                 NSUuid generator = new NSUuid();
                 generator.Init();
                 GlobalStatusSingleton.UUID = generator.ToString();
                 // this gives the device id.
                 //UIKit.UIDevice.CurrentDevice.IdentifierForVendor.AsString();
             }
+            Debug.WriteLine("DHB:AppDelegate:FinishedLaunching guid set to:" + GlobalStatusSingleton.UUID);
 
             //< imagePicker
             var imagePicker = new UIImagePickerController { SourceType = UIImagePickerControllerSourceType.Camera };
@@ -77,8 +79,7 @@ namespace ImageImprov.iOS
 
             //< PresentViewController
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShouldTakePicture += () =>
-                uiApplication.KeyWindow.RootViewController.PresentViewController(
-                imagePicker, true, null);
+                uiApplication.KeyWindow.RootViewController.PresentViewController(imagePicker, true, null);
             //> PresentViewController
 
             //< FinishedPickingMedia
@@ -87,12 +88,13 @@ namespace ImageImprov.iOS
                 var filepath = Path.Combine(Environment.GetFolderPath(
                                    Environment.SpecialFolder.MyDocuments), "tmp.png");
                                    */
-                string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
-                var filepath = Path.Combine(Environment.GetFolderPath(
-                                   Environment.SpecialFolder.MyDocuments), nextFileName);
 
                 var image = (UIImage)e.Info.ObjectForKey(new NSString("UIImagePickerControllerOriginalImage"));
                 InvokeOnMainThread(() => {
+                    string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
+                    var filepath = Path.Combine(Environment.GetFolderPath(
+                                       Environment.SpecialFolder.MyDocuments), nextFileName);
+
                     //image.AsPNG().Save(filepath, false);
                     image.AsJPEG().Save(filepath, false);
 
@@ -105,6 +107,7 @@ namespace ImageImprov.iOS
                     }
 
                     ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(filepath, imgBytes);
+                    GlobalStatusSingleton.imgsTakenTracker++;
                 });
                 uiApplication.KeyWindow.RootViewController.DismissViewController(true, null);
             };

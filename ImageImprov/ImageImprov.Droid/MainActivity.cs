@@ -56,10 +56,6 @@ namespace ImageImprov.Droid {
                 Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryPictures).ToString();
             GlobalStatusSingleton.imgsTakenTracker = fs.determineNumImagesTaken() + 1;
 
-            string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
-            file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
-                Android.OS.Environment.DirectoryPictures),  nextFileName);
-
             Forms.Init(this, savedInstanceState);
             
             // @todo find a device with no camera to test this with.
@@ -89,6 +85,10 @@ namespace ImageImprov.Droid {
             // This is adding functionality to ShouldTakePicture based on the fact we are the droid app.
             // Can I pass through MainPage variable?
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShouldTakePicture += () => {
+                string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
+                file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
+                    Android.OS.Environment.DirectoryPictures), nextFileName);
+
                 var intent = new Intent(MediaStore.ActionImageCapture);
                 intent.PutExtra("android.intent.extra.quickCapture", true);
                 intent.PutExtra(MediaStore.ExtraOutput, Android.Net.Uri.FromFile(file));
@@ -117,6 +117,7 @@ namespace ImageImprov.Droid {
             //< OnActivityResult
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, bytes);
 
+            GlobalStatusSingleton.imgsTakenTracker++;
             //> OnActivityResult
         }
 

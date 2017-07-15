@@ -27,5 +27,14 @@ namespace ImageImprov {
                 ias.Init();
             }
         }
+
+        public static string GetMemoryStatus() {
+            string res = "";
+            IMemoryService ims = DependencyService.Get<IMemoryService>();
+            if (ims != null) {
+                res = ims.GetInfo().ToString();
+            }
+            return res;
+        }
     }
 }

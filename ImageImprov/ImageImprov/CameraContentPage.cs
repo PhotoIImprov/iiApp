@@ -36,7 +36,7 @@ namespace ImageImprov {
         // To get img bytes we have to use native Android and iOS code.
         // Consequently, I pass the bytes back from the Android and iOS projects
         // so I can work with them in a cross platform manner.  Joy.
-        byte[] latestTakenImgBytes = null;
+        public byte[] latestTakenImgBytes = null;
         //> images
 
         // provides category info for today's contest to the user...
@@ -88,8 +88,8 @@ namespace ImageImprov {
                 Text = "Submit picture",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ActiveButtonColor,
+                TextColor = Color.White,
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
                 FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
                 IsVisible = false
             };
