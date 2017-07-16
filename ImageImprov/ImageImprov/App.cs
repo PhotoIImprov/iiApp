@@ -69,7 +69,7 @@ namespace ImageImprov
             Properties[PROPERTY_AUTH_ACCOUNT] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.authAccount);
             Properties[PROPERTY_OAUTH_DATA] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.oauthData);
             Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
-            Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] = LightbulbTracker.timeOfLastEarnedLightbulb;
+            Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] = LightbulbTracker.timeOfLastEarnedLightbulb.ToString();
             Properties[PROPERTY_LIGHTBULB_COUNT] = LightbulbTracker.todaysCount;
             Properties[PROPERTY_MIN_BALLOTS_TO_LOAD] = GlobalStatusSingleton.minBallotsToLoad.ToString();
             //Properties[PROPERTY_IMGS_TAKEN_COUNT] = GlobalStatusSingleton.imgsTakenTracker.ToString();
@@ -159,6 +159,7 @@ namespace ImageImprov
                 GlobalStatusSingleton.aspectOrFillImgs = ((properties[PROPERTY_ASPECT_OR_FILL_IMGS] as string).Equals("AspectFit") ? Aspect.AspectFit : Aspect.Fill);
             }
             if (properties.ContainsKey(PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP)) {
+                /*
                 DateTime stamp;
                 bool readSuccess = DateTime.TryParse(Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] as string, out stamp);
                 if (readSuccess) {
@@ -166,6 +167,14 @@ namespace ImageImprov
                 } else {
                     LightbulbTracker.timeOfLastEarnedLightbulb = new DateTime(); // set to zero if there's none.
                 }
+                */
+                DateTime stamp;
+                try {
+                    stamp = DateTime.Parse(Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] as string);
+                } catch (Exception e) {
+                    stamp = DateTime.Now;
+                }
+                LightbulbTracker.timeOfLastEarnedLightbulb = stamp;
             }
             if (properties.ContainsKey(PROPERTY_LIGHTBULB_COUNT)) {
                 LightbulbTracker.todaysCount = (int)properties[PROPERTY_LIGHTBULB_COUNT];

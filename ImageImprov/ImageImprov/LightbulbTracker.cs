@@ -28,9 +28,12 @@ namespace ImageImprov {
 
         public LightbulbTracker() {
             myRow.SizeChanged += redrawImages;
+            changePoints.Add(1);  // needed in case the user was playing across the midnight barrier.
             changePoints.Add(3);
             changePoints.Add(10);
             changePoints.Add(20);
+
+            checkTimestamp();  // happens here rather than the app.load point as object does not exist then.
         }
 
         public void buildUI() {
@@ -53,18 +56,18 @@ namespace ImageImprov {
         private void changeLighting() {
             int starsToLight = todaysCount;
             int i = 0;
-            while (starsToLight > 10) {
+            while (starsToLight >= 10) {
                 litStars[i].IsVisible = true;
                 unlitStars[i].IsVisible = false;
                 i++;
                 starsToLight -= 10;
             }
             // there are now less than 10 stars to light left...
-            for (int j=i; j< starsToLight; j++) {
+            for (int j=i; j< starsToLight+i; j++) {
                 litStars[j].IsVisible = true;
                 unlitStars[j].IsVisible = false;
             }
-            for (int k=starsToLight; k<unlitStars.Count; k++) {
+            for (int k=starsToLight+i; k<unlitStars.Count; k++) {
                 litStars[k].IsVisible = false;
                 unlitStars[k].IsVisible = true;
             }
@@ -83,6 +86,11 @@ namespace ImageImprov {
             unlitStars[bulbIndex].IsVisible = false;
         }
 
+        /// <summary>
+        /// BUilds the stars in the generic case
+        /// </summary>
+        /// <param name="numStars">Total number I have earned ceilinged to the nearest 10s digit.</param>
+        /// <param name="startingX"></param>
         private void createStars(int numStars, int startingX) {
             int j = 0;
             while (numStars>10) {
@@ -95,11 +103,12 @@ namespace ImageImprov {
                 j++;
                 numStars -= 10;
             }
-            for (int k=j; k < numStars; k++) {
+            // num stars is the right count of stars left, but wrong for indexing.
+            for (int k=j; k < numStars+j; k++) {
                 litStars.Add(newStarImage(LIT_STAR_IMG));
                 unlitStars.Add(newStarImage(UNLIT_STAR_IMG));
-                myRow.Children.Add(litStars[k], startingX+j+k, 0);  // col, row
-                myRow.Children.Add(unlitStars[k], startingX+j+k, 0);  // col, row
+                myRow.Children.Add(litStars[k], startingX+k, 0);  // col, row
+                myRow.Children.Add(unlitStars[k], startingX+k, 0);  // col, row
                 litStars[k].IsVisible = false;
                 unlitStars[k].IsVisible = false;
             }
@@ -141,30 +150,40 @@ namespace ImageImprov {
             changeLighting();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="currentStars">Should be today's star count.</param>
         private void buildNStarRow(int currentStars) {
+            int numCols = ((int)(currentStars / 10))+10;
             myRow.ColumnDefinitions.Clear();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < numCols; i++) {
                 //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 myRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
             litStars.Clear();
             unlitStars.Clear();
-            int allStars = ((currentStars % 10)+1)*10;
+            // ceiling to the nearest 10s digit
+            int allStars = (currentStars - (currentStars % 10)) + 10;
             createStars(allStars, 0);
             changeLighting();
         }
 
         private void checkTimestamp() {
-            if (DateTime.Now.Date != GlobalStatusSingleton.lastCategoryLoadTime.Date) {
+            if (DateTime.Now.Date != timeOfLastEarnedLightbulb.Date) {
                 // A new day. Reset!
                 todaysCount = 0;
             }
+            timeOfLastEarnedLightbulb = DateTime.Now;
         }
 
         double lastRedrawnWidth = -2.0;
         public void redrawImages(object sender, EventArgs args) {
-            if ((Width > 0) && (Width != lastRedrawnWidth)) {
+            //if ((Width > 0) && (Width != lastRedrawnWidth)) {
+            // don't want spurious redraw spamming from grid shrinking and growing my draw area.
+            if ((Width > 0) && (Width > lastRedrawnWidth)) {
                 buildUI();
+                lastRedrawnWidth = Width;
             }
         }
 
@@ -172,7 +191,7 @@ namespace ImageImprov {
             checkTimestamp();
             todaysCount++;
             //buildUI();
-            if (changePoints.Contains<int>(todaysCount)) {
+            if ((changePoints.Contains<int>(todaysCount)) || (todaysCount%10 == 0)) {
                 buildUI();
             } else {
                 changeLastBulb();

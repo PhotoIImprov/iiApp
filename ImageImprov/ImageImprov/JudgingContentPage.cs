@@ -555,10 +555,11 @@ namespace ImageImprov {
                 lightbulbRow = new LightbulbTracker { HorizontalOptions = LayoutOptions.FillAndExpand, };
                 lightbulbRow.buildUI();
             }
-            
+
             //Grid.LayoutChildIntoBoundingRegion(lightbulbRow, new Xamarin.Forms.Rectangle(0.0, 17.0, 2.0, 1.0) );
+            //Grid.SetColumnSpan(lightbulbRow, 2);  // Wanted this to hold the width stable, which it does, but sadly at half width.
             portraitView.Children.Add(lightbulbRow, 0, 17);
-            Grid.SetColumnSpan(lightbulbRow, 2);
+            Grid.SetColumnSpan(lightbulbRow, 2);  // this this line has to be after adding.
 
             portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
             Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
