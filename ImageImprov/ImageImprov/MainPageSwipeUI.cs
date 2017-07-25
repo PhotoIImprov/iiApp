@@ -34,6 +34,7 @@ namespace ImageImprov
             // TokenReceived is my successful login event.
             playerPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
             playerPage.TokenReceived += new TokenReceivedEventHandler(judgingPage.TokenReceived);
+            playerPage.TokenReceived += new TokenReceivedEventHandler(playerPage.CenterConsole.HamburgerPage.TokenReceived);
             playerPage.LogoutClicked += new LogoutClickedEventHandler(this.OnLogoutClicked);
 
             // These lines enable another page to process a first page's events.

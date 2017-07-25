@@ -151,6 +151,7 @@ namespace ImageImprov
             }
             if (properties.ContainsKey(PROPERTY_AUTH_ACCOUNT)) {
                 ThirdPartyAuthenticator.authAccount = JsonConvert.DeserializeObject<Xamarin.Auth.Account>(properties[PROPERTY_AUTH_ACCOUNT] as string);
+                //Xamarin.Auth.Account account.
             }
             if (properties.ContainsKey(PROPERTY_OAUTH_DATA)) {
                 ThirdPartyAuthenticator.oauthData = JsonConvert.DeserializeObject<OAUTHDataJSON>(properties[PROPERTY_OAUTH_DATA] as string);

@@ -239,5 +239,15 @@ namespace ImageImprov {
             Content = portraitView;
             return 1;
         }
+
+        /// <summary>
+        /// We listen for token received so we can update login info with correct username.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public virtual void TokenReceived(object sender, EventArgs e) {
+            loggedInLabel.Text = GlobalStatusSingleton.username;
+        }
+
     }
 }

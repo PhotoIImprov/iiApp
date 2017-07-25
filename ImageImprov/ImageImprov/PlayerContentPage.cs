@@ -116,6 +116,11 @@ namespace ImageImprov
         Button registerButton;
         Button cancelRegistrationButton;
 
+        Label termsOfServiceLabel;
+        iiWebPage tosPage;
+        Label privacyPolicyLabel;
+        iiWebPage privacyPolicyPage;
+
         KeyPageNavigator defaultNavigationButtons;
 
         //TapGestureRecognizer tapGesture;
@@ -188,6 +193,8 @@ namespace ImageImprov
             {
                 GlobalStatusSingleton.username = usernameEntry.Text;
                 GlobalStatusSingleton.password = passwordEntry.Text;
+                // clear oauth data so we force(ensure) a regular password login.
+                ThirdPartyAuthenticator.oauthData = null;
                 if (MyLogin != null) {
                     MyLogin(this, eDummy);
                 }
@@ -464,6 +471,44 @@ namespace ImageImprov
                 }
             };
         }
+
+        View returnLayout;
+        protected void createWebButtons() {
+            tosPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
+            //tosPage.setReturnPoint(this.Content);
+            termsOfServiceLabel = new Label {
+                Text = "Tap here to read our Terms of Service",
+                TextColor = Color.Blue,
+                FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
+                HorizontalTextAlignment = TextAlignment.Center,
+            };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            termsOfServiceLabel.GestureRecognizers.Add(tap);
+            tap.Tapped += (sender, args) => {
+                //boom.
+                returnLayout = Content;
+                iiWebPage newPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
+                Content = newPage;
+                // oww... CenterConsole won't work as we aren't always logged in when showing this.
+            };
+
+            privacyPolicyPage = iiWebPage.getInstance(GlobalStatusSingleton.PRIVACY_POLICY_URL, this, Content);
+            privacyPolicyLabel = new Label
+            {
+                Text = "And here for our Privacy Policy",
+                TextColor = Color.Blue,
+                FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
+                HorizontalTextAlignment = TextAlignment.Center,
+            };
+            tap = new TapGestureRecognizer();
+            privacyPolicyLabel.GestureRecognizers.Add(tap);
+            tap.Tapped += (sender, args) => {
+                returnLayout = Content;
+                iiWebPage newPage = iiWebPage.getInstance(GlobalStatusSingleton.PRIVACY_POLICY_URL, this, Content);
+                Content = newPage;
+            };
+        }
+
         protected Layout<View> createDefaultNavigationButtons() {
             defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
             return defaultNavigationButtons;
@@ -472,6 +517,14 @@ namespace ImageImprov
         protected Layout<View> createNewDeviceLayout() {
             Debug.WriteLine("DHB:PlayerContentPage:createNewDevideLayout");
             activeLayout = LAYOUT_NEW_DEVICE;
+
+            if (registerButton == null) {
+                createRegisterButton();
+            }
+            if (termsOfServiceLabel == null) {
+                createWebButtons();
+            }
+
             newDeviceLayout = new StackLayout
             {
                 BackgroundColor = GlobalStatusSingleton.backgroundColor,
@@ -486,8 +539,13 @@ namespace ImageImprov
                     facebookLogin,
                     blankRowLabel,
                     //anonymousPlayButton,
-                    blankRowLabel,
+                    new Label { Text = "Enter an email, password and click register to register", HorizontalTextAlignment = TextAlignment.Center, },
                     registerButton,
+                    new Label { Text = " ", TextColor = Color.Black, },
+                    new Label { Text = " ", TextColor = Color.Black, },
+                    termsOfServiceLabel,
+                    privacyPolicyLabel,
+
                 }
             };
             // @todo fix on android so this goes away!
@@ -513,6 +571,9 @@ namespace ImageImprov
             if (registerButton == null) {
                 createRegisterButton();
             }
+            if (termsOfServiceLabel == null) {
+                createWebButtons();
+            }
 
             alreadyAMemberLabel.Text = "Enter password to play";
             //loggedInLabel.Text = "";
@@ -532,8 +593,12 @@ namespace ImageImprov
                     //googleLogin,
                     new Label { Text = " ", TextColor = Color.Black, },
                     //anonymousPlayButton,
-                    new Label { Text = " ", TextColor = Color.Black, },
+                    new Label { Text = "Enter an email, password and click register to register" },
                     registerButton,
+                    new Label { Text = " ", TextColor = Color.Black, },
+                    new Label { Text = " ", TextColor = Color.Black, },
+                    termsOfServiceLabel,
+                    privacyPolicyLabel,
                 }
             };
             // @todo fix on android so this goes away!
@@ -735,7 +800,6 @@ namespace ImageImprov
                 }
                 LoginSuccess();
             }
-
         }
 
         protected async virtual void OnMyLogin(object sender, EventArgs e) {
@@ -759,7 +823,7 @@ namespace ImageImprov
                 }
                 Debug.WriteLine("DHB:PlayerContentPage:OnMyLogin oauthdata post null check");
                 // oauth case. use the refresh token to grab a new access token.
-                oauthManager.refreshAuthentication();
+                oauthManager.refreshAuthentication(this.Navigation);
             }
         }
 
@@ -1003,6 +1067,7 @@ namespace ImageImprov
                     };
                     GlobalStatusSingleton.authToken = JsonConvert.DeserializeObject<AuthenticationToken>(tknResult, settings);
                     GlobalStatusSingleton.loggedIn = true;
+                    GlobalStatusSingleton.username = GlobalStatusSingleton.authToken.email;
                     result = "Success";
                     Debug.WriteLine("DHB:PlayerContentPage:requestTokenAsync good end.");
 
@@ -1080,6 +1145,8 @@ namespace ImageImprov
                 Device.BeginInvokeOnMainThread(() => {
                     backgroundImg = null;
                     GlobalStatusSingleton.loggedIn = false;
+                    // need to clear the old oauth token, or the user will stay logged in.
+                    ThirdPartyAuthenticator.oauthData = null;
                     Content = createForceLoginLayout();
                 });
             }
@@ -1095,7 +1162,7 @@ namespace ImageImprov
         ///////// BEGIN OAUTH Coding
         ThirdPartyAuthenticator oauthManager;
         private void createGoogleButton() {
-            googleLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.google_login.jpg"), };
+            googleLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.google_login.png"), };
             TapGestureRecognizer tap = new TapGestureRecognizer();
             tap.Tapped += (sender, EventArgs) => {
                 oauthManager.configForGoogle();
@@ -1105,7 +1172,7 @@ namespace ImageImprov
         }
         
         private void createFacebookButton() {
-            facebookLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.facebook_login.jpg"), };
+            facebookLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.facebook_login.png"), };
             TapGestureRecognizer tap = new TapGestureRecognizer();
             tap.Tapped += (sender, EventArgs) => {
                 oauthManager.configForFacebook();

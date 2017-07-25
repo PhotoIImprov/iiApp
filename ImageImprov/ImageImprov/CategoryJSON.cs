@@ -15,8 +15,9 @@ namespace ImageImprov
         public readonly static string UNKNOWN = "UNKNOWN";   // i shouldn't recv this one.
         public readonly static string UPLOAD = "UPLOAD";
         public readonly static string VOTING = "VOTING";
-        public readonly static string COUNTING = "COUNTING";  // i shouldn't recv this one.
+        public readonly static string COUNTING = "COUNTING";
         public readonly static string CLOSED = "CLOSED";
+        public readonly static string PENDING = "PENDING";
         // @todo confirm all state strings are accounted for.
 
         [JsonProperty("id")]

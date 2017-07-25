@@ -48,7 +48,7 @@ namespace ImageImprov {
         private Uri facebookAuthorizeUrl = new Uri("https://m.facebook.com/dialog/oauth/");
         private Uri facebookAccessTokenUrl = new Uri("https://graph.facebook.com/oauth/access_token");
         //private Uri facebookRedirectUrl = new Uri(GlobalStatusSingleton.activeURL);
-        private Uri facebookRedirectUrl = new Uri("http://www.imageimprov.com/static/ii_logo.png");
+        private Uri facebookRedirectUrl = new Uri("https://www.imageimprov.com/static/ii_logo.png");
         //https://developers.facebook.com/docs/facebook-login/permissions/
         private string scope_facebook = "public_profile,user_friends,email";
         //private string scope_facebook = "email";
@@ -67,6 +67,23 @@ namespace ImageImprov {
             this.parent = parent;
         }
 
+        /// <summary>
+        /// Sets config off Method string.
+        /// </summary>
+        /// <param name="inMethod"></param>
+        /// <returns>1 on success. -1 on method not found. </returns>
+        public int configForMethod(string inMethod) {
+            int result = 1;
+            if (inMethod.Equals(METHOD_GOOGLE)) {
+                configForGoogle();
+            } else if (inMethod.Equals(METHOD_FACEBOOK)) {
+                configForFacebook();
+            } else {
+                result = -1;
+            }
+            return result;
+        }
+
         public void configForGoogle() {
             Device.OnPlatform(Android: () => clientId = GOOGLE_ANDROID_ID,
                 iOS: () => clientId = GOOGLE_IOS_ID);
@@ -78,6 +95,9 @@ namespace ImageImprov {
 
             scope = scope_google;
             method = METHOD_GOOGLE;
+
+            // trick the linker into having this...
+            Xamarin.Auth.Account x = new Xamarin.Auth.Account();
         }
 
         public void configForFacebook() {
@@ -135,7 +155,7 @@ namespace ImageImprov {
         /// Gets a new access_token from the service with the refresh_token.
         /// I assume expiration has been checked for BEFORE entering this function!
         /// </summary>
-        public async void refreshAuthentication() {
+        public async void refreshAuthentication(INavigation navigation) {
             Debug.WriteLine("DHB:ThirdPartyAuthentiator:refreshAuthentication");
             if (authorizeUrl == null) {
                 if ((oauthData.method == null) || (oauthData.method.Equals(""))) {
@@ -205,10 +225,18 @@ namespace ImageImprov {
                 parent.handleLoginFail("Please reconnect to " + method);
             } else {
                 Debug.WriteLine("DHB:ThirdPartyAuthentiator:refreshAuthentication login success. grabbing token");
-                string result = await requestTokenAsync(method, oauthData.accessToken);
-                if (result.Equals("Success")) {
-                    // request token takes care of housekeeping issues, like setting the email address. goto login success steps.
-                    parent.LoginSuccess();
+                Debug.WriteLine("DHB:ThirdPartyAuthentiator:refreshAuthentication method=" + method);
+                try {
+                    string result = await requestTokenAsync(method, oauthData.accessToken);
+                    if (result.Equals("Success")) {
+                        // request token takes care of housekeeping issues, like setting the email address. goto login success steps.
+                        parent.LoginSuccess();
+                    }
+                } catch (TaskCanceledException e) {
+                    parent.loggedInLabel.Text = "Unable to use existing token. Please relogin.";
+                    this.navigation = navigation;
+                    configForMethod(method);
+                    startAuthentication(this.navigation);
                 }
             }            
         }
@@ -221,9 +249,15 @@ namespace ImageImprov {
         public async void OnAuthCompleted(object sender, EventArgs args) {
             Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed...
 
+            if (((AuthenticatorCompletedEventArgs)args).Account == null) {
+                Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted User backed out of oauth. Exit and return to regular login ui.");
+                return;
+            }
             // and now returning to our regularly scheduled programming
             Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted Successful login!");
-            if (oauthData == null) { oauthData = new OAUTHDataJSON();  }
+            if (oauthData == null) {
+                oauthData = new OAUTHDataJSON();
+            }
             oauthData.accessToken = ((AuthenticatorCompletedEventArgs)args).Account.Properties["access_token"];
             Debug.WriteLine("AccessToken:"+ oauthData.accessToken.ToString());
             Debug.WriteLine("Auth Account:" + ((AuthenticatorCompletedEventArgs)args).Account.ToString());
@@ -248,7 +282,7 @@ namespace ImageImprov {
                 authAccount = ((AuthenticatorCompletedEventArgs)args).Account;
                 // we have refresh tokens and auth servers get snippy about relogins... make sure maintain login is true.
                 GlobalStatusSingleton.maintainLogin = true;
-
+                Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted have auth; going for token");
                 string result = await requestTokenAsync(method, oauthData.accessToken);
                 if (result.Equals("Success")) {
                     // request token takes care of housekeeping issues, like setting the email address. goto login success steps.
@@ -282,6 +316,7 @@ namespace ImageImprov {
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
                 string jsonQuery = JsonConvert.SerializeObject(loginInfo);
+                Debug.WriteLine("DHB:ThirdPartyAuthenticator:requestTokenAsync json:" + jsonQuery);
                 HttpRequestMessage tokenRequest = new HttpRequestMessage(HttpMethod.Post, OAUTH_API_CALL);
                 tokenRequest.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
                 HttpResponseMessage tokenResult = await client.SendAsync(tokenRequest);

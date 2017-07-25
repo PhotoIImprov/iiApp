@@ -44,6 +44,7 @@ namespace ImageImprov.iOS
 
         private FileServices fs = new FileServices();
         private AuthServices authSvcs = new AuthServices();
+        private Notifications notify = new ImageImprov.iOS.Notifications();
 
         //
         // This method is invoked when the application has loaded and is ready to run. In this 
@@ -72,6 +73,9 @@ namespace ImageImprov.iOS
                 //UIKit.UIDevice.CurrentDevice.IdentifierForVendor.AsString();
             }
             Debug.WriteLine("DHB:AppDelegate:FinishedLaunching guid set to:" + GlobalStatusSingleton.UUID);
+
+            //notificationTest();
+            notify.RequestAuthorization();
 
             //< imagePicker
             var imagePicker = new UIImagePickerController { SourceType = UIImagePickerControllerSourceType.Camera };
@@ -127,6 +131,22 @@ namespace ImageImprov.iOS
 
             ImageImprov.ThirdPartyAuthenticator.authenticator.OnPageLoading(uri);
             return true;
+        }
+
+        protected void notificationTest() {
+            notify.RequestAuthorization();
+            //bool canNotify = notify.CheckNotificationPriveledges();
+            bool canNotify = true;
+            if (canNotify) {
+                Debug.WriteLine("DHB:AppDelegate:notificationTest adding a notification");
+                var content = notify.BuildNotificationContent("iiTest", "this is a testing message");
+                notify.ScheduleNotification(content, DateTime.Now, "1337");
+                Debug.WriteLine("DHB:AppDelegate:notificationTest scheduled");
+                notify.RetrieveNotifications();
+                Debug.WriteLine("DHB:AppDelegate:notificationTest done");
+            } else {
+                Debug.WriteLine("DHB:AppDelegate:notificationTest No notification priviledges.");
+            }
         }
     }
 }

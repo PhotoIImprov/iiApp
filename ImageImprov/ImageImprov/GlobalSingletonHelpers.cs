@@ -52,6 +52,11 @@ namespace ImageImprov {
             return m.Success;
         }
 
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static long GetMillisecondsSinceUnixEpoch(DateTime forThisTime) {
+            return  (long)((forThisTime.ToUniversalTime() - UnixEpoch).TotalMilliseconds);
+        }
+
         /// <summary>
         /// Given an input Aspect converts to a bool with
         /// Aspect.AspectFit == true, Aspect.Fill == false and Aspect.AspectFill == false.

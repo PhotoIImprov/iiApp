@@ -108,6 +108,11 @@ namespace ImageImprov
         //public static string mostRecentClosedCategoryDescription = "";
         public static IList<CategoryJSON> closedCategories = new List<CategoryJSON>();
 
+        /// <summary>
+        /// Used for setting notifications.
+        /// </summary>
+        public static IList<CategoryJSON> pendingCategories = new List<CategoryJSON>();
+
         // Key is CategoryJson, value is the associated leaderboard.
         public static IDictionary<CategoryJSON, IList<LeaderboardJSON>> persistedLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
         public static IDictionary<CategoryJSON, DateTime> persistedLeaderboardTimestamps = new Dictionary<CategoryJSON, DateTime>();
@@ -118,10 +123,12 @@ namespace ImageImprov
         public static Queue<string> persistedPreloadedBallots;
         // static ip completely off right now.
 //#if DEBUG
-//        public static string activeURL = "http://104.196.67.188:8080/";
+//        public static string activeURL = "http://35.190.162.96:8080/";
 //#else
         public static string activeURL = "https://api.imageimprov.com/";
-//#endif
+        //#endif
+        public static string TERMS_OF_SERVICE_URL = "https://www.imageimprov.com/en-US/landing/terms-of-service.html";
+        public static string PRIVACY_POLICY_URL = "https://www.imageimprov.com/en-US/landing/privacy-policy.html";
 
         // returns true if we are in vertical mode, or false for landscape.
         public static bool IsPortrait(Page p) { return p.Width < p.Height; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,6 +36,15 @@ namespace ImageImprov {
                 res = ims.GetInfo().ToString();
             }
             return res;
+        }
+
+        public static void SetupNotification(string title, string message, DateTime executeTime, long requestId) {
+            Debug.WriteLine("DHB:PlatformSpecificCalls setupNotification");
+            INotifications ins = DependencyService.Get<INotifications>();
+            if (ins != null) {
+                ins.SetupNotification(title, message, executeTime, requestId);
+                Debug.WriteLine("DHB:PlatformSpecificCalls setupNotification sent.");
+            }
         }
     }
 }

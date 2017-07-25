@@ -24,7 +24,8 @@ namespace ImageImprov.Droid {
         //Theme = "@android:Theme.Holo.Light.NoActionBar",
         //MainLauncher = true, // removed to enable splash screen...
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,  
-        ScreenOrientation = ScreenOrientation.Portrait)]
+        ScreenOrientation = ScreenOrientation.Portrait,
+        Exported = true)]
     public class MainActivity : FormsApplicationActivity
     {
         //< file
@@ -44,6 +45,8 @@ namespace ImageImprov.Droid {
 
         FileServices fs = new FileServices();
         //AuthServices authSvcs = new AuthServices();
+
+        Notifications ns;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -77,6 +80,8 @@ namespace ImageImprov.Droid {
                 || (GlobalStatusSingleton.UUID.Equals(string.Empty))) {
                 GlobalStatusSingleton.UUID = UUID.RandomUUID().ToString();
             }
+
+            ns = new Notifications(this);
 
             //this.bundle = savedInstanceState;
             //< OnCreate

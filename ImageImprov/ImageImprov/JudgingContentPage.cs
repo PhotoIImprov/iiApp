@@ -797,6 +797,10 @@ namespace ImageImprov {
                 CategoryLoadSuccess(sender, e);
                 GlobalStatusSingleton.ptrToJudgingPageLoadCategory(sender, e);
             }
+
+            // Time to post the notifications
+            postCategoryNotifications();
+            Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName posted a notification");
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName end");
         }
 
@@ -906,6 +910,11 @@ namespace ImageImprov {
                             if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.closedCategories, cat)) {
                                 GlobalStatusSingleton.closedCategories.Add(cat);
                                 GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.votingCategories, cat);
+                            }
+                        } else if (cat.state.Equals(CategoryJSON.PENDING)) {
+                            // For now I don't persist pending categories, so no further housekeeping is needed with any cateogry.
+                            if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.pendingCategories, cat)) {
+                                GlobalStatusSingleton.pendingCategories.Add(cat);
                             }
                         }
                     }
@@ -1892,6 +1901,28 @@ namespace ImageImprov {
         // End Special Handling for Ballots that come from Photo submission
         //
         //
+
+        /// <summary>
+        /// Called from OnCategoryLoad after successfully loading categories.
+        /// We want to make sure the future categories all have notifications posted.
+        /// </summary>
+        protected void postCategoryNotifications() {
+            string title = "Image Improv";
+            string msg1_1 = "Time to take your best ";
+            string msg1_2 = " pic!";
+            string msg2_1 = "Only 5 hrs left for ";
+            string msg2_2 = " pics.";
+
+            foreach (CategoryJSON futureCat in GlobalStatusSingleton.pendingCategories) {
+                string msg = msg1_1 + futureCat.description + msg1_2;
+                DateTime postTime = futureCat.start.AddHours(5);
+                PlatformSpecificCalls.SetupNotification(title, msg, postTime, futureCat.categoryId);
+                msg = msg2_1 + futureCat.description + msg2_2;
+                postTime = futureCat.start.AddHours(19);
+                PlatformSpecificCalls.SetupNotification(title, msg, postTime, -futureCat.categoryId);
+                Debug.WriteLine("DHB:JudgingContentPage:postCategoryNotificaiton posted for category " + futureCat.description);
+            }
+        }
     } // class
 } // namespace
 
