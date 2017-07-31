@@ -9,6 +9,7 @@ using UIKit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 using Foundation;
 using UIKit;
@@ -57,6 +58,8 @@ namespace ImageImprov.iOS
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
             Forms.Init();
+            var cv = typeof(Xamarin.Forms.CarouselView);
+            var assembly = Assembly.Load(cv.FullName);
 
             Debug.WriteLine("DHB:AppDelegate:FinishedLaunching pre imgPath.");
             GlobalStatusSingleton.imgPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

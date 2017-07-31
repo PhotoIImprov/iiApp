@@ -48,7 +48,7 @@ namespace ImageImprov {
             get { return mySubmissionsPage; }
         }
 
-        HamburgerPage hamburgerPage;
+        HamburgerPage hamburgerPage = new HamburgerPage();
         public HamburgerPage HamburgerPage {
             get { return hamburgerPage; }
         }
@@ -62,7 +62,7 @@ namespace ImageImprov {
             //settingsPage = new SettingsPage(); // be careful. Settings is null, but being built late so we have correct user info.
             instructionsPage = new InstructionsPage();
             mySubmissionsPage = new MySubmissionsPage();
-            hamburgerPage = new HamburgerPage();
+            //hamburgerPage = new HamburgerPage();
 
             gotoLeaderboardButton= new Image
             {

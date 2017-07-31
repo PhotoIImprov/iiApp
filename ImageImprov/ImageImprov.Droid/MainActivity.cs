@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -60,7 +61,10 @@ namespace ImageImprov.Droid {
             GlobalStatusSingleton.imgsTakenTracker = fs.determineNumImagesTaken() + 1;
 
             Forms.Init(this, savedInstanceState);
-            
+            var cv = typeof(Xamarin.Forms.CarouselView);
+            var assembly = Assembly.Load(cv.FullName);
+
+
             // @todo find a device with no camera to test this with.
             if (Forms.Context.PackageManager.HasSystemFeature(PackageManager.FeatureCamera) == false) {
                 GlobalStatusSingleton.hasCamera = false;
@@ -102,7 +106,7 @@ namespace ImageImprov.Droid {
                 
             };
             //> OnCreate
-
+            bool fakeBool = false;
         }
 
         protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)

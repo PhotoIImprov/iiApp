@@ -21,15 +21,13 @@ namespace ImageImprov {
     public delegate void DequeueBallotRequestEventHandler(object sender, EventArgs e);
 
     // This is the first roog page of the judging.
-    class JudgingContentPage : ContentPage {
+    class JudgingContentPage : ContentView {
         public static string LOAD_FAILURE = "No open voting category currently available.";
 
         // A dummy object for controlling lock on ui resources
         static readonly object uiLock = new object();
 
         Grid portraitView = null;
-        KeyPageNavigator defaultNavigationButtonsP;
-        KeyPageNavigator defaultNavigationButtonsZ;
 
         // Yesterday's challenge 
         //< challengeLabel
@@ -297,11 +295,6 @@ namespace ImageImprov {
         /// <returns>1 on success, -1 if there are the wrong number of ballot imgs.</returns>
         private int buildPortraitView() {
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView begin");
-            // ignoring orientation count for now.
-            // the current implemented case is orientationCount == 0. (displays as a stack)
-            // There are two other options... 
-            //    orientationCount == 2 - displays as 2xstack or stackx2 per first img orientation
-            //    orientationCount == 4 - display as a 2x2 grid
             int result = 1;
             try {
                 // all my elements are already members...
@@ -313,33 +306,19 @@ namespace ImageImprov {
                     portraitView.Children.Clear();
                     portraitView.IsEnabled = true;
                 }
-                if (defaultNavigationButtonsP == null) {
-                    defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-                    this.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(defaultNavigationButtonsP.OnCategoryLoad);
-                    defaultNavigationButtonsZ = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-                }
 
                 // ok. Everything has been initialized. So now I just need to decide where to put it.
                 if (ballotImgsP.Count > 0) {
                     Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView drawing a ballot");
                     // new design is just 4 squares and that's the only orientation
                     result = buildFourPortraitImgPortraitView();
-                    /*
-                    if (orientationCount < 2) {
-                        result = buildFourLandscapeImgPortraitView();
-                    } else if (orientationCount > 2) {
-                        result = buildFourPortraitImgPortraitView();
-                    } else {
-                        result = buildTwoXTwoImgPortraitView();
-                    }
-                    */
                 } else {
                     Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView no ballot; building instruction");
                     // Note: This is reached on ctor call, so don't put an assert here.
                     //result = -1;  This is a valid exit case.  Result should be 1!
                     portraitView.RowDefinitions.Clear();
                     portraitView.ColumnDefinitions.Clear();
-                    for (int i = 0; i < 20; i++) {
+                    for (int i = 0; i < 16; i++) {
                         portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                     }
                     portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -347,11 +326,6 @@ namespace ImageImprov {
 
                     // want to show the instruction!
                     loadInstructions();
-
-                    Grid textLogo = buildTextLogo();
-                    portraitView.Children.Add(textLogo, 0, 0);
-                    Grid.SetColumnSpan(textLogo, 2);
-                    Grid.SetRowSpan(textLogo, 2);
 
                     if (ballotImgsP.Count > 0) {
                         portraitView.Children.Add(ballotImgsP[0], 0, 2);
@@ -389,14 +363,6 @@ namespace ImageImprov {
                     portraitView.Children.Add(challengeLabelP, 0, 15);
                     Grid.SetColumnSpan(challengeLabelP, 2);
                     Grid.SetRowSpan(challengeLabelP, 2);
-
-                    portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-                    Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
-                    Grid.SetRowSpan(defaultNavigationButtonsP, 2);
-
-                    portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-                    Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
-                    Grid.SetRowSpan(defaultNavigationButtonsP, 2);
                 }
             } catch (Exception e) {
                 Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView exception");
@@ -464,7 +430,7 @@ namespace ImageImprov {
             int result = 1;
             if (zoomView == null) {
                 zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 16; i++) {
                     zoomView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -477,35 +443,21 @@ namespace ImageImprov {
                 flaggedImg.IsVisible = ballot.isFlagged;
             }
             activeMetaBallot = ballot;
+            mainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
+            mainImage.Aspect = Aspect.AspectFill;
 
             zoomView.Children.Clear();
-            zoomView.Children.Add(mainImage,0,1);
-            Grid.SetRowSpan(mainImage, 6);
+            zoomView.Children.Add(mainImage,0,0);
+            Grid.SetRowSpan(mainImage, 10);
             Grid.SetColumnSpan(mainImage, 2);
-            zoomView.Children.Add(unlikedImg,0,8);
-            zoomView.Children.Add(likedImg,0,8);
-            zoomView.Children.Add(unflaggedImg,1,8);
-            zoomView.Children.Add(flaggedImg,1,8);
-            zoomView.Children.Add(backButton,0,11);
+            zoomView.Children.Add(unlikedImg,0,11);
+            zoomView.Children.Add(likedImg,0,11);
+            zoomView.Children.Add(unflaggedImg,1,11);
+            zoomView.Children.Add(flaggedImg,1,11);
+            zoomView.Children.Add(backButton,0,14);
             Grid.SetColumnSpan(backButton, 2);
             Grid.SetRowSpan(backButton, 2);
-            zoomView.Children.Add(defaultNavigationButtonsZ,0,18);
-            Grid.SetRowSpan(defaultNavigationButtonsZ, 2);
-            Grid.SetColumnSpan(defaultNavigationButtonsZ, 2);
             return result;
-        }
-
-        private Grid buildTextLogo() {
-            Grid textLogo = new Grid();
-            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(20, GridUnitType.Star) });
-            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(79, GridUnitType.Star) });
-            //textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(9, GridUnitType.Star) });
-            textLogo.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            Image textImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ii_textlogo.png"), };
-            BoxView horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
-            textLogo.Children.Add(textImg, 0, 1);
-            textLogo.Children.Add(horizLine, 0, 2);
-            return textLogo;
         }
 
         /// <summary>
@@ -516,28 +468,23 @@ namespace ImageImprov {
         public int buildFourPortraitImgPortraitView() {
             portraitView.RowDefinitions.Clear();
             portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 16; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             // I can add none, but if i add one, then i just have 1. So here's 2. :)
             portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            Grid textLogo = buildTextLogo();
-            portraitView.Children.Add(textLogo, 0, 0);
-            Grid.SetColumnSpan(textLogo, 2);
-            Grid.SetRowSpan(textLogo, 2);
-
-            portraitView.Children.Add(ballotImgsP[0], 0, 2);
+            portraitView.Children.Add(ballotImgsP[0], 0, 0);
             Grid.SetRowSpan(ballotImgsP[0], 6);
 
-            portraitView.Children.Add(ballotImgsP[1], 1, 2);  // col, row format
+            portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
             Grid.SetRowSpan(ballotImgsP[1], 6);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
+            portraitView.Children.Add(ballotImgsP[2], 0, 6);  // col, row format
             Grid.SetRowSpan(ballotImgsP[2], 6);
 
-            portraitView.Children.Add(ballotImgsP[3], 1, 8);  // col, row format
+            portraitView.Children.Add(ballotImgsP[3], 1, 6);  // col, row format
             Grid.SetRowSpan(ballotImgsP[3], 6);
 
 //#if DEBUG
@@ -547,7 +494,7 @@ namespace ImageImprov {
             // Calling this here is calling from an invalid height state that seems to fubar everything...
             //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
 //#endif
-            portraitView.Children.Add(challengeLabelP, 0, 15);
+            portraitView.Children.Add(challengeLabelP, 0, 13);
             Grid.SetColumnSpan(challengeLabelP, 2);
             Grid.SetRowSpan(challengeLabelP, 2);
 
@@ -558,120 +505,11 @@ namespace ImageImprov {
 
             //Grid.LayoutChildIntoBoundingRegion(lightbulbRow, new Xamarin.Forms.Rectangle(0.0, 17.0, 2.0, 1.0) );
             //Grid.SetColumnSpan(lightbulbRow, 2);  // Wanted this to hold the width stable, which it does, but sadly at half width.
-            portraitView.Children.Add(lightbulbRow, 0, 17);
+            portraitView.Children.Add(lightbulbRow, 0, 15);
             Grid.SetColumnSpan(lightbulbRow, 2);  // this this line has to be after adding.
 
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
             return 1;
         }
-
-        /// <summary>
-        /// Helper function for buildPortraitView that constructs the layout when the current ballot has 4
-        /// images exif defines as landscape images.
-        /// </summary>
-        /// <returns></returns>
-        public int buildFourLandscapeImgPortraitView() {
-            // setup rows.
-            portraitView.RowDefinitions.Clear();
-            portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 20; i++) {
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            }
-            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            portraitView.Children.Add(ballotImgsP[0], 0, 0);
-            Grid.SetRowSpan(ballotImgsP[0], 4);
-
-            portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[1], 4);
-
-            portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[2], 4);
-
-            portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
-            Grid.SetRowSpan(ballotImgsP[3], 4);
-
-#if DEBUG
-            challengeLabelP.Text += " 4L_P case";
-#endif
-
-            portraitView.Children.Add(challengeLabelP, 0, 8);
-            Grid.SetRowSpan(challengeLabelP, 2);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetColumnSpan(defaultNavigationButtonsP, 1);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
-
-            return 1;
-        }
-
-        /// <summary>
-        /// Helper function for buildPortraitView that constructs the layout when the current ballot has 2
-        /// images exif defines as portrait images and 2 it defines as landscape.
-        /// </summary>
-        /// NOTE UNTESTED STILL. OUT OF IMGS and NO AUTO-ROUND SWITCH
-        /// <returns></returns>
-        public int buildTwoXTwoImgPortraitView() {
-            // setup rows and cols.
-            // regardless, 26 rows, 2 cols
-            portraitView.RowDefinitions.Clear();
-            portraitView.ColumnDefinitions.Clear();
-            for (int i = 0; i < 20; i++) {
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            }
-            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            // I can add none, but if i add one, then i just have 1. So here's 2. :)
-            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            // am I in two landscape on top or two portrait on top?
-            if (ballot.ballots[0].isPortrait == BallotCandidateJSON.PORTRAIT) {
-                // portrait on top
-                portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                Grid.SetRowSpan(ballotImgsP[0], 8);
-
-                portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[1], 8);
-
-                portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[2], 4);
-                Grid.SetColumnSpan(ballotImgsP[2], 2);
-
-                portraitView.Children.Add(ballotImgsP[3], 0, 14);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[3], 4);
-                Grid.SetColumnSpan(ballotImgsP[3], 2);
-            } else {
-                // landscape on top
-                portraitView.Children.Add(ballotImgsP[0], 0, 0);
-                Grid.SetRowSpan(ballotImgsP[0], 4);
-                Grid.SetColumnSpan(ballotImgsP[0], 2);
-
-                portraitView.Children.Add(ballotImgsP[1], 0, 4);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[1], 4);
-                Grid.SetColumnSpan(ballotImgsP[1], 2);
-
-                portraitView.Children.Add(ballotImgsP[2], 0, 10);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[2], 8);
-
-                portraitView.Children.Add(ballotImgsP[3], 1, 10);  // col, row format
-                Grid.SetRowSpan(ballotImgsP[3], 8);
-            }
-#if DEBUG
-            challengeLabelP.Text += " 2x2P case";
-            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
-#endif
-
-            portraitView.Children.Add(challengeLabelP, 0, 8);
-            Grid.SetColumnSpan(challengeLabelP, 2);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
-
-
-            return 1;
-        }
-
-
 
         // image clicks
         // @todo adjust so that voting occurs on a long click
@@ -1344,7 +1182,7 @@ namespace ImageImprov {
 #endif // Debug            
             } catch (Exception e) {
                 // probably thrown by Deserialize.
-                Debug.WriteLine(e.ToString());
+                Debug.WriteLine("DHB:JudgingContentPage:processBallotString exception:"+e.ToString());
                 //Image imgX = setupImgFromBallotCandidate(ballot.ballots[0]);
                 //imgX = setupImgFromBallotCandidate(ballot.ballots[1]);
                 //imgX = setupImgFromBallotCandidate(ballot.ballots[2]);

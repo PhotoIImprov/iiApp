@@ -22,17 +22,17 @@ namespace ImageImprov {
         };
 
         // Not visible UI elements on this page.  These are for when I close.
-        ContentPage parent;
+        ContentView parent;
         View returnPoint;
 
         private static Dictionary<string,iiWebPage> activeWebPages;
 
-        private iiWebPage(ContentPage parent, View returnPoint) {
+        private iiWebPage(ContentView parent, View returnPoint) {
             this.parent = parent;
             setReturnPoint(returnPoint);
         }
 
-        public static iiWebPage getInstance(string urlString, ContentPage parent, View returnPoint) {
+        public static iiWebPage getInstance(string urlString, ContentView parent, View returnPoint) {
             iiWebPage result = null;
             if (activeWebPages == null) {
                 activeWebPages = new Dictionary<string, iiWebPage>();

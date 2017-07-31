@@ -43,7 +43,7 @@ namespace ImageImprov
 
             // Right now I'm focusing on the Swipe UI.
             // When that is working, we'll move on to the navigation pane version.
-            MainPage = new MainPageSwipeUI();
+            MainPage = new MasterPage();
             // Whatever MainPage class I use, it MUST implement IExposeCamera!
             Debug.Assert(MainPage is IExposeCamera);
 
@@ -82,11 +82,11 @@ namespace ImageImprov
             // Is this the correct way to access this stuff?
             // I think so. Retrieval is more complex.
             // Note: Not guaranteed to have an active ballot, so check before saving a null.
-            if (((MainPageSwipeUI)this.MainPage).GetActiveBallot().ballots != null) {
-                Properties[PROPERTY_ACTIVE_BALLOT] = JsonConvert.SerializeObject(((MainPageSwipeUI)this.MainPage).GetActiveBallot());
-                Properties[PROPERTY_QUEUE_SIZE] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count.ToString();
-                for (int i = 0; i < ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Count; i++) {
-                    Properties[PROPERTY_BALLOT_QUEUE + "_" + i] = ((MainPageSwipeUI)this.MainPage).GetBallotQueue().Dequeue();
+            if (((ILifecycleManager)this.MainPage).GetActiveBallot().ballots != null) {
+                Properties[PROPERTY_ACTIVE_BALLOT] = JsonConvert.SerializeObject(((ILifecycleManager)this.MainPage).GetActiveBallot());
+                Properties[PROPERTY_QUEUE_SIZE] = ((ILifecycleManager)this.MainPage).GetBallotQueue().Count.ToString();
+                for (int i = 0; i < ((ILifecycleManager)this.MainPage).GetBallotQueue().Count; i++) {
+                    Properties[PROPERTY_BALLOT_QUEUE + "_" + i] = ((ILifecycleManager)this.MainPage).GetBallotQueue().Dequeue();
                 }
             } else {
                 Properties[PROPERTY_ACTIVE_BALLOT] = "";
@@ -99,8 +99,8 @@ namespace ImageImprov
         /// </summary>
         private void storeLeaderboards() {
             // pull from leaderboard.  Alternative is to put leaderboard into GlobalSingleton... which I don't like since not a shared asset.
-            IDictionary<CategoryJSON, IList<LeaderboardJSON>> ldrBoard = (((MainPageSwipeUI)this.MainPage).GetLeaderboardList());
-            IDictionary<CategoryJSON, DateTime> ldrTimestamps = (((MainPageSwipeUI)this.MainPage).GetLeaderboardTimestamps());
+            IDictionary<CategoryJSON, IList<LeaderboardJSON>> ldrBoard = (((ILifecycleManager)this.MainPage).GetLeaderboardList());
+            IDictionary<CategoryJSON, DateTime> ldrTimestamps = (((ILifecycleManager)this.MainPage).GetLeaderboardTimestamps());
             if (ldrBoard != null) {
                 Properties[PROPERTY_LEADERBOARD_CATEGORY_LIST_SIZE] = ldrBoard.Count;
                 int i = 0;
@@ -125,7 +125,7 @@ namespace ImageImprov
             DateTime rightNow = DateTime.Now;
             if ((rightNow.Date != GlobalStatusSingleton.lastCategoryLoadTime.Date) && (GlobalStatusSingleton.loggedIn==true)) {
                 // fire a category load.
-                ((MainPageSwipeUI)MainPage).FireLoadChallengeName();
+                ((ILifecycleManager)MainPage).FireLoadChallengeName();
             }
         }
 

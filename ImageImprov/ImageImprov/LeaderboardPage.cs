@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.IO;
 
 using Xamarin.Forms;
+using SkiaSharp;
 using ExifLib;
 
 namespace ImageImprov {
@@ -25,44 +26,24 @@ namespace ImageImprov {
 
         static object uiLock = new object();
 
-        KeyPageNavigator defaultNavigationButtonsP;
-
         public event EventHandler RequestLeaderboard;
         EventArgs eDummy = null;
 
         Grid portraitView = null;
+        ListView myListView;
+        IList<LeaderboardElement> leaderboards = new List<LeaderboardElement>();
+        DataTemplate myDataTemplate = new DataTemplate(typeof(LeaderboardCell));
 
-        StackLayout selectBoardButtonsStackP = new StackLayout();
-
-        ScrollView selectBoardScrollP = new ScrollView();
-
-        Label leaderboardLabelP = new Label
-        {
-            Text = "BEST OF: ",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
-            TextColor = Color.Black,
-            BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-        };
 
         // tracks what category I'm showing
         //long activeCategory;
 
         //IList<LeaderboardJSON> leaders;
         // originally categoryJSON, but this means there's no match in ContainsKey when checking dicts.
+
+            // hmm, by holding the JSON like this, I'm holding a 2nd copy of the image... so this will change.
         IDictionary<CategoryJSON, IList<LeaderboardJSON>> listOfLeaderboards = new Dictionary<CategoryJSON, IList<LeaderboardJSON>>();
         IDictionary<CategoryJSON, DateTime> leaderboardUpdateTimestamps = new Dictionary<CategoryJSON, DateTime>();
-
-        IDictionary<CategoryJSON, IList<Image>> leaderImgsP = null;
-        StackLayout leaderStackP = new StackLayout()
-        {
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center,
-            Spacing = 2.0,
-        };
-
-        ScrollView leadersScrollP = new ScrollView();
 
         //
         //   BEGIN Variables related/needed for images to place background on screen.
@@ -79,7 +60,6 @@ namespace ImageImprov {
             assembly = this.GetType().GetTypeInfo().Assembly;
             // This class is hooked up to JudgingContentPage to tell me when the categories for leaderboards are available.
             // That happens in MainPageSwipeUI.
-            leaderImgsP = new Dictionary<CategoryJSON, IList<Image>>();
 
             // and to listen for leaderboard requests; done as event so easy to process async.
             this.RequestLeaderboard += new EventHandler(OnRequestLeaderboard);
@@ -87,11 +67,7 @@ namespace ImageImprov {
             // fire a loadChallengeNameEvent.
             eDummy = new EventArgs();
 
-            leaderStackP.SizeChanged += redrawImages;
-            // place holder.
-            //Content = leaderboardLabelP;
-            managePersistedLeaderboard();
-            buildUI();
+            setupUI();
         }
 
         /// <summary>
@@ -134,22 +110,13 @@ namespace ImageImprov {
             }
         }
 
-        // cant update the ui objects in a separate thread.
-        private void drawLeaderImages() {
-            foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> category in listOfLeaderboards) {
-                drawLeaderImages(category.Key);
-            }
+        private async void setupUI() {
+            await Task.Run(() => managePersistedLeaderboard());
+            buildUI();
         }
 
-        private void drawLeaderImages(CategoryJSON category) {
-            var t = Task.Run(() =>
-            {
-                leaderImgsP[category] = buildLeaderboardImagesForCategory(category);
-            });
-            t.Wait();
-        }
-
-        private IList<Image> buildLeaderboardImagesForCategory(CategoryJSON category) {
+        /*
+        private Task<IList<Image>> buildLeaderboardImagesForCategory(CategoryJSON category) {
             Debug.WriteLine("DHB:LeaderboardPage:buildLeaderboardImagesForCategory begin");
             IList<Image> images = new List<Image>();
             if ((listOfLeaderboards != null) && (listOfLeaderboards.Count > 0) && listOfLeaderboards.ContainsKey(category)) {
@@ -161,10 +128,12 @@ namespace ImageImprov {
                 }
             }
             Debug.WriteLine("DHB:LeaderboardPage:buildLeaderboardImagesForCategory end");
-            return images;
+            //return images;
+            return new Task<IList<Image>>(() => images);
         }
+        */
 
-
+        /*
         //private void drawLeaderImagesActual(ref IList<Image> pImgs, ref IList<Image> lImgs) {
         private void drawLeaderImagesActual(ref IList<Image> pImgs, CategoryJSON category) {
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual begin");
@@ -178,6 +147,7 @@ namespace ImageImprov {
             }
             Debug.WriteLine("DHB:LeaderboardPage:drawLeaderImagesActual end");
         }
+        */
 
         /// <summary>
         /// Removes by oldest leaderboard by enddate, not last load timestamp.
@@ -227,8 +197,8 @@ namespace ImageImprov {
                     reloadAnalysis(board.Key);
                 }
                 // this is the first time through, so none of this is ready.
-                drawLeaderImages();
-                buildUI();
+                //drawLeaderImages();  // this will run async...  let listview handle this...
+                //buildUI(); this results in a double tap of buildUI
             }
         }
 
@@ -269,26 +239,10 @@ namespace ImageImprov {
         DateTime buildUIstartTime;
 
         public int buildUI() {
-            /*
-            buildUIstartTime = DateTime.Now;
             int res = 0;
-            int res2 = 0;
-            Device.BeginInvokeOnMainThread(() => {
-                DateTime timeForThread = DateTime.Now;
-                res = buildPortraitView();
-                Debug.WriteLine("DHB:LeaderboardPage:buildUI portrait time:" + (DateTime.Now - buildUIstartTime));
-                res2 = buildLandscapeView();
-                // why OnSizeAllocated?
-                //OnSizeAllocated(Width, Height);
-                Debug.WriteLine("DHB:LeaderboardPage:buildUI thread catch time:" + (timeForThread - buildUIstartTime));
-            });
-            Debug.WriteLine("DHB:LeaderboardPage:buildUI total elapsedTime:" + (DateTime.Now - buildUIstartTime));
-            return ((res < res2) ? res : res2);
-            */
-            int res = 0;
+            DateTime timeForThread = DateTime.Now;
             Device.BeginInvokeOnMainThread(() =>
             {
-                DateTime timeForThread = DateTime.Now;
                 res = buildPortraitView();
                 if (res == 1) {
                     Content = portraitView;
@@ -302,90 +256,46 @@ namespace ImageImprov {
             // all my elements are already members...
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1 };
-                for (int i = 0; i < 20; i++) {
-                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                }
+                //for (int i = 0; i < 16; i++) {
+                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                //}
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(16, GridUnitType.Star) });
             }
-            if (defaultNavigationButtonsP == null) {
-                defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-            }
-            // no button scroll
-            leaderStackP.Children.Clear();
 
-            if (listOfLeaderboards.Count != leaderImgsP.Count) {
-                drawLeaderImages();   // will want a fast version that just loads the missings...
+            // ok. How do I build the rows in leaderboards
+            if ((listOfLeaderboards != null) && (listOfLeaderboards.Count > 0)) {
+                foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> kvpCatBoard in listOfLeaderboards) {
+                    LeaderboardElement le = buildLeaderboardElement(kvpCatBoard.Key, kvpCatBoard.Value);
+                    if (le != null) {
+                        leaderboards.Add(le);
+                    }
+                }
             }
-            bool notFirstPass = false;
-            foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> kvpCatBoard in listOfLeaderboards) {
-                Label catLabel = new Label {
-                    Text = kvpCatBoard.Key.description,
-                    BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                    TextColor = Color.White,
-                    HorizontalOptions = LayoutOptions.Center,
-                    FontAttributes = FontAttributes.Bold,
-                    HorizontalTextAlignment = TextAlignment.Center,
-                    WidthRequest = Width,
-                    MinimumHeightRequest = Height/15.0,
-                };
-                if ((Width>-1)&&(Height>-1)) {
-                    GlobalSingletonHelpers.fixLabelHeight(catLabel, Width, Height / 5.0, 30);
-                    //Debug.WriteLine("DHB:LeaderboardPage:buildPortraitView labelHeight=" + catLabel.Height);
-                } else {
-                    catLabel.FontSize = 30;
-                }
-                if (notFirstPass) {
-                    leaderStackP.Children.Add(new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, });
-                }
-                leaderStackP.Children.Add(catLabel);
-                if ((Width > -1) && (Height > -1)) {
-                    // get nothing without out a positive W!
-                    build3Across(kvpCatBoard.Key, MAX_IMAGES);
-                }
-                notFirstPass = true;
-            }
-            leadersScrollP.Content = leaderStackP;
 
-            portraitView.Children.Add(leadersScrollP, 0, 2);
-            Grid.SetRowSpan(leadersScrollP, 16);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
+            // want to fill a listview instead of a scroller holding a stack.
+            myListView = new ListView { RowHeight = 450, ItemsSource = leaderboards, ItemTemplate = myDataTemplate };
 
-            Debug.WriteLine("DHB:LeaderboardPage:buildPortraitView final mem status:" + PlatformSpecificCalls.GetMemoryStatus());
+            portraitView.Children.Add(myListView, 0, 0);
+            Grid.SetRowSpan(myListView, 16);
+
+            //Debug.WriteLine("DHB:LeaderboardPage:buildPortraitView final mem status:" + PlatformSpecificCalls.GetMemoryStatus());
+            Debug.WriteLine("DHB:LeaderboardPage:buildPortraitView end");
             return result;
         }
 
-        /// <summary>
-        /// Builds the images to display
-        /// </summary>
-        /// <param name="numImages">-1 signifies build all images returned, o/w build the number passed in.</param>
-        private void build3Across(CategoryJSON category, int numImages = -1) {
-            int numToDraw = listOfLeaderboards[category].Count;
-            if ((numImages > -1) && (numImages < listOfLeaderboards[category].Count)) {
-                numToDraw = numImages;
-            }
-            for (int j = 0; j < numToDraw; j += 3) {
-                // does not contrain to screen width.
-                // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
-                StackLayout leaderRow = new StackLayout
-                {
-                    Orientation = StackOrientation.Horizontal,
-                    VerticalOptions = LayoutOptions.Center,
-                    HorizontalOptions = LayoutOptions.Center,
-
-                };
-                leaderImgsP[category][j].WidthRequest = (Width / 3.01);
-                leaderRow.Children.Add(leaderImgsP[category][j]);
-                if ((j + 1) < listOfLeaderboards[category].Count) {
-                    leaderImgsP[category][j + 1].WidthRequest = (Width / 3.01);
-                    leaderRow.Children.Add(leaderImgsP[category][j + 1]);
-
-                    if ((j + 2) < listOfLeaderboards[category].Count) {
-                        leaderImgsP[category][j + 2].WidthRequest = (Width / 3.01);
-                        leaderRow.Children.Add(leaderImgsP[category][j + 2]);
+        protected LeaderboardElement buildLeaderboardElement(CategoryJSON category, IList<LeaderboardJSON> leaderboard) {
+            LeaderboardElement le = null;
+            List<SKBitmap> bitmaps = new List<SKBitmap>();
+            if (leaderboard.Count > 0) {  // only build leaderboards with images.
+                foreach (LeaderboardJSON leader in leaderboard) {
+                    SKBitmap bitmap = GlobalSingletonHelpers.SKBitmapFromBytes(leader.imgStr);
+                    if (bitmap != null) {
+                        bitmaps.Add(bitmap);
                     }
                 }
-                leaderStackP.Children.Add(leaderRow);
+                le = new LeaderboardElement(category.description, category.categoryId, bitmaps);
             }
+            return le;
         }
 
         double lastDrawnWidth = -1.0;
@@ -408,7 +318,7 @@ namespace ImageImprov {
             string result = await requestLeaderboardAsync(loadCategory);
 
             if (result.Equals(LOAD_FAILURE)) {
-                leaderboardLabelP.Text = "Connection failed. Please check connection";
+                //leaderboardLabelP.Text = "Connection failed. Please check connection";
                 while (result.Equals(LOAD_FAILURE)) {
                     await Task.Delay(3000);
                     Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard sending re-request.");
@@ -416,7 +326,7 @@ namespace ImageImprov {
                 }
             }
             // fix labels, connection is back...
-            leaderboardLabelP.Text = "BEST OF: ";
+            //leaderboardLabelP.Text = "BEST OF: ";
 
             // process successful leaderboard result string
             IList<LeaderboardJSON> newLeaderBoard = JsonHelper.DeserializeToList<LeaderboardJSON>(result);
@@ -424,12 +334,32 @@ namespace ImageImprov {
             // may have been added already. this approach throws an exception if key exists
             //listOfLeaderboards.Add(((RequestLeaderboardEventArgs)e).Category, newLeaderBoard);
             // this one resets the value:
-            listOfLeaderboards[(((RequestLeaderboardEventArgs)e).Category)] = newLeaderBoard;
+            CategoryJSON category = (((RequestLeaderboardEventArgs)e).Category);
+            listOfLeaderboards[category] = newLeaderBoard;
+            leaderboardUpdateTimestamps[category] = DateTime.Now;
 
-            leaderboardUpdateTimestamps[((RequestLeaderboardEventArgs)e).Category] = DateTime.Now;
-            drawLeaderImages(((RequestLeaderboardEventArgs)e).Category);
+            // create a new leaderrow and insert or replace.
+            LeaderboardElement le = buildLeaderboardElement(category, newLeaderBoard);
+            if (le != null) {
+                // actually need to determine where to put this, and whether to remove another leaderboard...
+                // and can this happen in an async func?
+                int leaderboardStatus = leaderboardAlreadyDrawn(category.categoryId);
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    if (leaderboardStatus == -1) {
+                        leaderboards.Add(le);
+                    } else {
+                        leaderboards.RemoveAt(leaderboardStatus);
+                        leaderboards.Insert(leaderboardStatus, le);
+                    }
+                });
+            }
+
+            //drawLeaderImages(((RequestLeaderboardEventArgs)e).Category);  // this happens async... so build afterwards is meaningless...
             // I do need to update the ui now...
-            buildUI();
+            // this should fix with the switch to listview...
+            //buildUI();
+
             Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard UI Change");
 #if DEBUG
             // will be null if everything went ok.
@@ -442,7 +372,21 @@ namespace ImageImprov {
             Debug.WriteLine("DHB:LeaderboardPage:OnRequestLeaderboard end");
         }
         
-
+        protected int leaderboardAlreadyDrawn(long categoryId) {
+            bool found = false;
+            int i = 0;
+            while ((!found) && (i<leaderboards.Count)) {
+                if (leaderboards[i].categoryId == categoryId) {
+                    found = true;
+                } else {
+                    i++;
+                }
+            }
+            if (!found) {
+                i = -1;
+            }
+            return i;
+        }
 
         static async Task<string> requestLeaderboardAsync(long category_id) {
             Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync start");

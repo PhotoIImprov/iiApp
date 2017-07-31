@@ -16,7 +16,7 @@ using ExifLib;
 namespace ImageImprov {
     public delegate void LoadBallotFromPhotoSubmissionEventHandler(object sender, EventArgs e);
 
-    public class CameraContentPage : ContentPage, ICamera {
+    public class CameraContentPage : ContentView, ICamera {
         const string PHOTO = "photo";
         public event LoadBallotFromPhotoSubmissionEventHandler LoadBallotFromPhotoSubmission;
 
@@ -63,8 +63,6 @@ namespace ImageImprov {
 
         Grid portraitView;
 
-        KeyPageNavigator defaultNavigationButtonsP;
-
         //
         //   BEGIN Variables related/needed for images to place background on screen.
         //
@@ -94,8 +92,6 @@ namespace ImageImprov {
                 IsVisible = false
             };
             submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
-
-            defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
 
             buildUI();
             //setView();
@@ -169,7 +165,7 @@ namespace ImageImprov {
         protected int buildPortraitView() {
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor=GlobalStatusSingleton.backgroundColor };
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 16; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -187,14 +183,14 @@ namespace ImageImprov {
             //portraitView.Children.Add(contestStackP, 0, 0);
             //Grid.SetRowSpan(contestStackP, 4);
             if (latestTakenImgP != null) {
-                portraitView.Children.Add(latestTakenImgP, 0, 2);
-                Grid.SetRowSpan(latestTakenImgP, 12);
+                portraitView.Children.Add(latestTakenImgP, 0, 0);
+                Grid.SetRowSpan(latestTakenImgP, 14);
             }
-            portraitView.Children.Add(submitCurrentPictureP, 0, 16);
+            //Label dummy = new Label { Text = "You are on camera page", TextColor=Color.Black };
+            //portraitView.Children.Add(dummy, 0, 8);
+            portraitView.Children.Add(submitCurrentPictureP, 0, 14);
             Grid.SetRowSpan(submitCurrentPictureP, 2);
             //portraitView.Children.Add(lastActionResultLabelP, 0, 9);
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
 
             /* w,h are not consistent when rotated ie h=616 portrait, but w=640 landscape
              * so build default background in OnSizeAllocated, and image based background here.

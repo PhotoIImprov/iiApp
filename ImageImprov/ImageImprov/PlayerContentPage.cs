@@ -30,7 +30,7 @@ namespace ImageImprov
      * @todo Enable user credential input
      * @todo Build registration UI and interactions
      */
-    public class PlayerContentPage : ContentPage {
+    public class PlayerContentPage : ContentView {
         const int LAYOUT_NOT_SET = 0;
         const int LAYOUT_PRE_CONNECT_AUTO_LOGIN = 1;
         const int LAYOUT_CONNECTED_AUTO = 2;

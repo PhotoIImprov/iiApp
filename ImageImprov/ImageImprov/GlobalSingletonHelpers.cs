@@ -9,6 +9,7 @@ using Xamarin.Forms;
 
 using SkiaSharp;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using ExifLib;
 using System.Net.Http;
@@ -55,6 +56,11 @@ namespace ImageImprov {
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public static long GetMillisecondsSinceUnixEpoch(DateTime forThisTime) {
             return  (long)((forThisTime.ToUniversalTime() - UnixEpoch).TotalMilliseconds);
+        }
+
+        public static PropertyInfo GetProperty(object source, string propertyName) {
+            var property = source.GetType().GetRuntimeProperties().FirstOrDefault(p => string.Equals(p.Name, propertyName));
+            return property;
         }
 
         /// <summary>

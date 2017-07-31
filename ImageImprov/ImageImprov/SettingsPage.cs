@@ -8,7 +8,7 @@ using Xamarin.Forms;
 
 namespace ImageImprov {
     public class SettingsPage : ContentView {
-        KeyPageNavigator defaultNavigationButtons;
+        //KeyPageNavigator defaultNavigationButtons;
 
         Grid settingsGrid;
 
@@ -39,18 +39,18 @@ namespace ImageImprov {
                 OnCheckBoxTapped(sender, new EventArgs());
             };
             */
-            defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
+            //defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
 
-            settingsGrid = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            for (int i = 0; i < 10; i++) {
-                settingsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            Grid someGrid = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            for (int i = 0; i < 8; i++) {
+                someGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             if (maintainLoginCheckbox != null) {
-                settingsGrid.Children.Add(maintainLoginCheckbox, 0, 4);
+                someGrid.Children.Add(maintainLoginCheckbox, 0, 3);
             }
             //settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
-            settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
-
+            //settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
+            settingsGrid = someGrid;
         }
 
         void OnCheckBoxTapped(object sender, EventArgs args) {

@@ -35,7 +35,10 @@ namespace ImageImprov {
         public MySubmissionsPage() {
             submissionStack.SizeChanged += redrawImages;
 
+            // right now, the next two lines take 35 secs on boot.
+
             buildMyImages();
+            Debug.WriteLine("DHB:MySubmissionsPage:MySubmissionsPage async test");
             // wait till the redraw to call this. due to the resize...
             buildUI();
             
@@ -46,9 +49,10 @@ namespace ImageImprov {
 
         IList<Image> myImages = new List<Image>();
 
-        protected void buildMyImages() {
+        protected async void buildMyImages() {
             Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages: memory:" + PlatformSpecificCalls.GetMemoryStatus());
-            var t = Task.Run(() => {
+            //var t = await Task.Run(() => {  see if this solves my load time issue
+            await Task.Run(() => {
                 myImages.Clear();
                 // img tracker is 1-indexed...
                 //for (int i=1;i<=GlobalStatusSingleton.imgsTakenTracker;i++) {
@@ -70,9 +74,10 @@ namespace ImageImprov {
                     }
                 //}
             });
-            t.Wait();  // what if we don't wait?  never loads.
+            //t.Wait();  // what if we don't wait?  never loads.
 
             Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages startup done.");
+            Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages async test");
             //Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages: memory:" + PlatformSpecificCalls.GetMemoryStatus());
         }
 

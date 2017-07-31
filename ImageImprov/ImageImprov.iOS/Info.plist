@@ -10,15 +10,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>MinimumOSVersion</key>
 	<string>8.0</string>
@@ -27,39 +18,54 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.imageimprov</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
-	<key>CFBundleIconFiles</key>
+	<string>2.0</string>
+  <!-- key>CFBundleIconFiles</key>
 	<array>
 		<string>Icon-60@2x</string>
 		<string>Icon-60@3x</string>
 		<string>Icon-76</string>
 		<string>Icon-76@2x</string>
-		<string>Default</string>
-		<string>Default@2x</string>
-		<string>Default-568h@2x</string>
-		<string>Default-Portrait</string>
-		<string>Default-Portrait@2x</string>
 		<string>Icon-Small-40</string>
 		<string>Icon-Small-40@2x</string>
 		<string>Icon-Small-40@3x</string>
 		<string>Icon-Small</string>
 		<string>Icon-Small@2x</string>
 		<string>Icon-Small@3x</string>
-	</array>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIRequiresFullScreen</key>
-	<true/>
+	</array> -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>URL Type 1</string>
+			<string>Xamarin.Auth Google OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.198313221875-3999a4ev376dplugmig89thjffq34ai8</string>
+			</array>
+			<key>CFBundleURLTypes</key>
+			<string>Viewer</string>
 		</dict>
 	</array>
-  <key>NSLocationWhenInUseUsageDescription</key>
-  <string>You can compare your entries to those of nearby folks.</string>
-  <key>NSCameraUsageDescription</key>
-  <string>The goal of the game is to take pictures!</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>You can compare your entries to those of nearby folks.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>The goal of the game is to take pictures!</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Image Improv does not access your contacts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Image Improv does not use the microphone.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Image Improv does not access your music library.</string>
+	<key>NSSiriUsageDescription</key>
+	<string>Image Improv does not use Siri.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Image Improv does not use your calendar.</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.1</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>XSLaunchImageAssets</key>
+	<string>Resources/Media.xcassets/LaunchImages.launchimage</string>
+	<key>XSAppIconAssets</key>
+	<string>Resources/Media.xcassets/AppIcons.appiconset</string>
 </dict>
 </plist>

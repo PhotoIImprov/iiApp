@@ -61,13 +61,14 @@ namespace ImageImprov {
             TextColor = Color.Black,
         };
 
-        KeyPageNavigator defaultNavigationButtons;
+        //KeyPageNavigator defaultNavigationButtons;
 
         Grid portraitView;
 
         public HamburgerPage() {
             // this is a bunch of buttons and text that click through to other pages.
             // clicking hamburger a second time needs to take the user back to previous page. (Handled in MainPageNavigation).
+            Content = new Label { Text = "Loading...", TextColor = Color.Black };
             buildUI();
         }
 
@@ -82,7 +83,14 @@ namespace ImageImprov {
 #endif
         }
 
-        private int buildUI() {
+        private async void buildUI() {
+            await Task.Run(() => buildPortraitView());
+            Device.BeginInvokeOnMainThread(() => {
+                Content = portraitView;
+            });
+        }
+
+        private int buildPortraitView() {
             TapGestureRecognizer instructionsClick = new TapGestureRecognizer();
             instructionsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.Help.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
             instructionsLabel = new Label { Text = "Show me how to play!", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
@@ -216,27 +224,26 @@ namespace ImageImprov {
                 //Children = { instructionsRow, votingRow, homeRow, cameraRow, leaderboardRow, settingsRow, }
                 Children = { instructionsRow, blankrow, submissionsRow, blankrow2, settingsRow, blankrow3, comingSoon, medals, myfavs, blankrow4, versionLabel, loggedInLabel, }
             };
-            ScrollView scroller = new ScrollView { Padding = new Thickness(10) };
-            scroller.Content = hamburger;
+            //ScrollView scroller = new ScrollView { Padding = new Thickness(10) };
+            //scroller.Content = hamburger;
 
-            if (defaultNavigationButtons == null) {
-                defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-            }
+            //if (defaultNavigationButtons == null) {
+            //    defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
+            //}
 
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(6, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(4, GridUnitType.Star) });
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12, GridUnitType.Star) });
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
-            portraitView.Children.Add(scroller, 1, 1);
-            portraitView.Children.Add(defaultNavigationButtons, 0, 2);
-            Grid.SetColumnSpan(defaultNavigationButtons, 3);
-
-            Content = portraitView;
+            //portraitView.Children.Add(scroller, 1, 1);
+            portraitView.Children.Add(hamburger, 1, 1);
+            //portraitView.Children.Add(defaultNavigationButtons, 0, 2);
+            //Grid.SetColumnSpan(defaultNavigationButtons, 3);
             return 1;
         }
 

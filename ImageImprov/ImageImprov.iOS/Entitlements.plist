@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+  <dict>
+    <!-- hmm. setting this blew up on the install. unsetting it allows it to run again. but the docs seem to say this is the setting
+      maybe I actually have to "DO" something for it to work.
+      hmm2. Still doesn't like setting the aps-environment key. looks like it may only be needed if we use push notifcations, which are server based.
+    -->
+    <!-- key>aps-environment</key>
+    <string>development</string -->
+    <!-- string>production</string -->
+    <!-- key>get-task-allow</key>
+    <false/> -->
+  </dict>
 </plist>

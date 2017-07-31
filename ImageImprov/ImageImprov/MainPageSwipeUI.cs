@@ -10,14 +10,25 @@ using Xamarin.Forms;
 namespace ImageImprov
 {
     // this is the main page when we are using the carousel to manage the ui.
-    public class MainPageSwipeUI : CarouselPage, IExposeCamera, IProvideNavigation
+    public class MainPageSwipeUI : CarouselView, IExposeCamera, IProvideNavigation
     {
+        List<View> _children = new List<View> { };
+        public List<View> Children {
+            get { return _children; }
+            set {
+                _children = value;
+                OnPropertyChanged();
+                //Debug.WriteLine("DHB:MainPageSwipeUI:Children:Set called");
+            }
+        }
+
         JudgingContentPage judgingPage;
         PlayerContentPage playerPage;
         CameraContentPage cameraPage;
         //LeaderboardPage leaderboardPage;  handled through playerPage.
 
-        ContentPage lastPage = null;
+        //ContentPage lastPage = null;
+        int lastPage = -1;
         // needed if the lastPage was a PlayerPage view.
         View lastView = null;
 
@@ -51,9 +62,16 @@ namespace ImageImprov
             //Children.Add(judgingPage);
             Children.Add(playerPage);
             //Children.Add(cameraPage);
-            
+
+            Debug.WriteLine("DHB:MainPageSwipeUI:MainPageSwipeUI Children count is:" + Children.Count);
+
             // leaderboard is not part of the carousel.  It's reached from the player page only.
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.ItemTemplate = new CarouselTemplateSelector();
+            this.ItemsSource = Children;
+            this.SetBinding(CarouselView.ItemsSourceProperty, "Children");
+            BindingContext = this;
+            Position = 0; // this is player page, but since it is currently the only page, it is at position 0.
             //this.IsEnabled = false;  // does this turn everything off, or just the carousel? does fuck all as far as i can tell.
         }
 
@@ -63,52 +81,69 @@ namespace ImageImprov
         }
 
         public void gotoJudgingPage(){
-            this.CurrentPage = judgingPage;
+            //this.CurrentPage = judgingPage;
+            this.Position = 0;
+            //Debug.WriteLine("DHB:MainPageSwipeUI:gotoJudgingPage: Position:" + Position);
+            //Debug.WriteLine("DHB:MainPageSwipeUI:gotoJudgingPage: Content:" + this.Item.ToString());
         }
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {
             playerPage.goHome();
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.Position = 1;
         }
         public void gotoInstructionsPage() {
             playerPage.Content = playerPage.CenterConsole.InstructionsPage;
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.Position = 1;
         }
         public void gotoLeaderboardPage() {
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage");
             playerPage.Content = playerPage.CenterConsole.LeaderboardPage;
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.Position = 1;
         }
         public void gotoSettingsPage() {
             playerPage.Content = playerPage.CenterConsole.SettingsPage;
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.Position = 1;
         }
 
         public void gotoMySubmissionsPage() {
             playerPage.Content = playerPage.CenterConsole.MySubmissionsPage;
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            this.Position = 1;
         }
 
         public void gotoCameraPage() {
-            this.CurrentPage = cameraPage;
+            //this.CurrentPage = cameraPage;
+            this.Position = 2;
             cameraPage.startCamera();
         }
 
         public void gotoHamburgerPage() {
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage");
-            foreach(ContentPage cp in Children) {
+            foreach(View cp in Children) {
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage child:" +cp.ToString());
             }
-            if ((this.CurrentPage == playerPage) && (playerPage.Content == playerPage.CenterConsole.HamburgerPage)) {
+            if ((Children[Position] == playerPage) && (playerPage.Content == playerPage.CenterConsole.HamburgerPage)) {
                 // always set the last view, as hamburger changes it.
                 playerPage.Content = lastView;
-                this.CurrentPage = lastPage;
+                //this.CurrentPage = lastPage;
+                Position = lastPage;
             } else {
-                lastPage = this.CurrentPage;
+                lastPage = Position;
                 // always set the last view, as hamburger changes it. (see following line!)
                 lastView = playerPage.Content;
-                playerPage.Content = playerPage.CenterConsole.HamburgerPage;
-                this.CurrentPage = playerPage;
+                // I'm crashing here alot.
+                //playerPage.Content = playerPage.CenterConsole.HamburgerPage;
+                // test invoking on ui thread.  Nope.
+                try { 
+                    playerPage.Content = playerPage.CenterConsole.HamburgerPage;
+                } catch (NullReferenceException e) {
+                    Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage wtf err: " + e.ToString());
+                }
+                Position = 1;
                 Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. becoming");
             }
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished TWEAK4");
@@ -117,7 +152,11 @@ namespace ImageImprov
         public virtual void TokenReceived(object sender, EventArgs e) {
             // ok, we're in. add pages.
             this.Children.Insert(0, judgingPage);
+            Debug.WriteLine("DHB:MainPageSwipeUI:TokenReceived post insert posn:" + this.Position);
             this.Children.Add(cameraPage);
+            Debug.WriteLine("DHB:MainPageSwipeUI:TokenReceived post add posn:" + this.Position);
+            // hmm... did the above lines adequately update _children?
+            //printChildren(); this looks good. so why am i selecting the wrong template?
             if (GlobalStatusSingleton.firstTimePlaying == true) {
                 // need to goto instructions page!
                 playerPage.Content = playerPage.CenterConsole.InstructionsPage;
@@ -127,8 +166,23 @@ namespace ImageImprov
             }
         }
 
+        protected void printChildren() {
+            foreach (View v in _children) {
+                Debug.WriteLine("DHB:MainPageSwipeUI:printChildren __" + v.ToString());
+            }
+
+            foreach (View v in Children) {
+                Debug.WriteLine("DHB:MainPageSwipeUI:printChildren " + v.ToString());
+            }
+
+            foreach (View v in ItemsSource) {
+                Debug.WriteLine("DHB:MainPageSwipeUI:printChildren s:" + v.ToString());
+            }
+        }
+
         public virtual void OnLogoutClicked(object sender, EventArgs e) {
-            this.CurrentPage = playerPage;
+            //this.CurrentPage = playerPage;
+            Position = 1;
             this.Children.Remove(judgingPage);
             this.Children.Remove(cameraPage);
         }
