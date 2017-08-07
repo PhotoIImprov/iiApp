@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,7 +32,8 @@ namespace ImageImprov {
 
         Grid portraitView = null;
         ListView myListView;
-        IList<LeaderboardElement> leaderboards = new List<LeaderboardElement>();
+        //IList<LeaderboardElement> leaderboards = new List<LeaderboardElement>();
+        ObservableCollection<LeaderboardElement> leaderboards = new ObservableCollection<LeaderboardElement>();
         DataTemplate myDataTemplate = new DataTemplate(typeof(LeaderboardCell));
 
 
@@ -177,7 +179,7 @@ namespace ImageImprov {
             // move every leaderboard into listOfLeaderboards
             // create selection buttons for every leaderboard
             // create images for the element at dict[0]
-            if (GlobalStatusSingleton.persistedLeaderboards.Count > 0) {
+            if ((GlobalStatusSingleton.persistedLeaderboards!=null)&&(GlobalStatusSingleton.persistedLeaderboards.Count > 0)) {
                 // clear everything in case this was a sleep...
                 listOfLeaderboards.Clear();
                 foreach (KeyValuePair<CategoryJSON, IList<LeaderboardJSON>> leaderboard in GlobalStatusSingleton.persistedLeaderboards) {

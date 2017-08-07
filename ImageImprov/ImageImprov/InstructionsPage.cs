@@ -9,10 +9,10 @@ using Xamarin.Forms;
 namespace ImageImprov {
     public class InstructionsPage : ContentView {
         Grid portraitView;
-        KeyPageNavigator defaultNavigationButtonsP = null;
+        //KeyPageNavigator defaultNavigationButtonsP = null;
 
         Image gotoVotingImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png") };
-        Image goHomeImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.home.png") };
+        //Image goHomeImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.home.png") };
         Image gotoCameraImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png") };
         Image gotoLeaderboardImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png") };
         Image gotoSettingsImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png") };
@@ -42,6 +42,7 @@ namespace ImageImprov {
             //FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
         };
 
+        /*
         Label homeLabelP = new Label
         {
             Text = "Goes to the home screen",
@@ -52,7 +53,7 @@ namespace ImageImprov {
             //BackgroundColor = GlobalStatusSingleton.ButtonColor,
             LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-        };
+        };*/
 
         Label cameraLabelP = new Label
         {
@@ -110,40 +111,33 @@ namespace ImageImprov {
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 3, BackgroundColor=GlobalStatusSingleton.backgroundColor };
 
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 16; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(4, GridUnitType.Star) });
             }
 
-            if (defaultNavigationButtonsP == null) {
-                defaultNavigationButtonsP = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-            }
-            
-            portraitView.Children.Add(gotoVotingImgButton, 0, 2);
+            portraitView.Children.Add(gotoVotingImgButton, 0, 1);
             //Grid.SetRowSpan(gotoVotingImgButton, 2);
-            portraitView.Children.Add(votingLabelP, 1, 1);
+            portraitView.Children.Add(votingLabelP, 1, 0);
             Grid.SetRowSpan(votingLabelP, 3);
-            portraitView.Children.Add(generalVoting, 0, 4);
+            portraitView.Children.Add(generalVoting, 0, 3);
             Grid.SetColumnSpan(generalVoting, 2);
             Grid.SetRowSpan(generalVoting, 5);
-            portraitView.Children.Add(goHomeImgButton, 0, 9);
-            portraitView.Children.Add(homeLabelP, 1, 9);
-            Grid.SetRowSpan(homeLabelP, 3);
-            portraitView.Children.Add(gotoCameraImgButton, 0, 11);
+            //portraitView.Children.Add(goHomeImgButton, 0, 8);
+            //portraitView.Children.Add(homeLabelP, 1, 8);
+            //Grid.SetRowSpan(homeLabelP, 3);
+
+            portraitView.Children.Add(gotoCameraImgButton, 0, 8);
             //Grid.SetRowSpan(gotoCameraImgButton, 2);
-            portraitView.Children.Add(cameraLabelP, 1, 10);
+            portraitView.Children.Add(cameraLabelP, 1, 7);
             Grid.SetRowSpan(cameraLabelP, 3);
 
-            portraitView.Children.Add(gotoLeaderboardImgButton, 0, 13);
-            portraitView.Children.Add(leaderboardLabelP, 1, 13);
-            portraitView.Children.Add(gotoSettingsImgButton, 0, 14);
-            portraitView.Children.Add(settingsLabelP, 1, 14);
-
-            portraitView.Children.Add(defaultNavigationButtonsP, 0, 18);
-            Grid.SetColumnSpan(defaultNavigationButtonsP, 2);
-            Grid.SetRowSpan(defaultNavigationButtonsP, 2);
+            portraitView.Children.Add(gotoLeaderboardImgButton, 0, 11);
+            portraitView.Children.Add(leaderboardLabelP, 1, 11);
+            portraitView.Children.Add(gotoSettingsImgButton, 0, 13);
+            portraitView.Children.Add(settingsLabelP, 1, 13);
 
             portraitView.SizeChanged += OnPortraitViewSizeChanged;
             return result;

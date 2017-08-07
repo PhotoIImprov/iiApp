@@ -29,7 +29,6 @@ namespace ImageImprov {
         };
         ScrollView scroller = new ScrollView();
 
-        KeyPageNavigator defaultNavigationButtons;
         Grid portraitView;
 
         public MySubmissionsPage() {
@@ -90,7 +89,7 @@ namespace ImageImprov {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(15, GridUnitType.Star) });
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
                 */
-                for (int i=0; i<20; i++) {
+                for (int i=0; i<16; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -99,9 +98,6 @@ namespace ImageImprov {
             build3Across();
             Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post3across memory:" + PlatformSpecificCalls.GetMemoryStatus());
 
-            if (defaultNavigationButtons == null) {
-                defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-            }
             scroller.Content = submissionStack;
 
             Label titleBar = new Label {
@@ -112,14 +108,12 @@ namespace ImageImprov {
             };
             GlobalSingletonHelpers.fixLabelHeight(titleBar, Width, Height / 10.0, 20);
             Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post scroller set memory:" + PlatformSpecificCalls.GetMemoryStatus());
-            portraitView.Children.Add(titleBar, 0, 2);
+            portraitView.Children.Add(titleBar, 0, 0);
             //Grid.SetRowSpan(titleBar, 2);
 
-            portraitView.Children.Add(scroller, 0, 4);
+            portraitView.Children.Add(scroller, 0, 2);
             Grid.SetRowSpan(scroller, 14);  // switching order did not help...
             //portraitView.Children.Add(submissionStack, 0, 2); doing no scroller did not help
-            portraitView.Children.Add(defaultNavigationButtons, 0, 18);
-            Grid.SetRowSpan(defaultNavigationButtons, 2);
             Content = portraitView;
             Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post content set memory:" + PlatformSpecificCalls.GetMemoryStatus());
         }

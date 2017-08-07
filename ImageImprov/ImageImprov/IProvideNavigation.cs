@@ -10,6 +10,7 @@ namespace ImageImprov {
     /// </summary>
     public interface IProvideNavigation {
         void gotoJudgingPage();
+        void gotoJudgingPageHome();
         // This takes the user to the PlayerContentPage.
         void gotoHomePage();
         void gotoCameraPage();

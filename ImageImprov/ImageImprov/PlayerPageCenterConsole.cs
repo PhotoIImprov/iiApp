@@ -21,10 +21,10 @@ namespace ImageImprov {
         PlayerContentPage parent;
 
         // Non-main page pages.
-        LeaderboardPage leaderboardPage;
-        public LeaderboardPage LeaderboardPage {
-            get { return leaderboardPage;  }
-        }
+        //LeaderboardPage leaderboardPage;
+        //public LeaderboardPage LeaderboardPage {
+            //get { return leaderboardPage;  }
+        //}
         //PurchasesPage purchasesPage;
         
         // late build this so we get the correct username information.
@@ -57,7 +57,6 @@ namespace ImageImprov {
             Padding = 10;
 
             this.parent = parent;
-            leaderboardPage = new LeaderboardPage();
             // purchasesPage = new PurchasesPage();
             //settingsPage = new SettingsPage(); // be careful. Settings is null, but being built late so we have correct user info.
             instructionsPage = new InstructionsPage();
@@ -103,14 +102,15 @@ namespace ImageImprov {
             Children.Add(gotoHelpButton, 2, 0);
 
             // hide all the home page stuff and replace with leaderboard page
-            parent.Content = leaderboardPage;
+            parent.Content = instructionsPage;
         }
 
         public void OnClicked(object sender, EventArgs e) {
             // I need to know which image.  
-            if (sender == gotoLeaderboardButton) {
-                parent.Content = leaderboardPage;
-            } else if (sender == gotoPurchasesButton) {
+            //if (sender == gotoLeaderboardButton) {
+            //    parent.Content = leaderboardPage;
+            //} else 
+            if (sender == gotoPurchasesButton) {
                 //parent.Content = purchasesPage;
             } else if (sender == gotoSettingsButton) {
                 if (settingsPage == null) {

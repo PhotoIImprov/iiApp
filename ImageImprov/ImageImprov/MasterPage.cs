@@ -16,13 +16,24 @@ namespace ImageImprov {
         // Q: Do I need IProvideNavigation???  Yes. Drilling down from root is how the system is setup.
         Grid portraitView = new Grid();
         PageHeader header = new PageHeader();
-        MainPageSwipeUI thePages = new MainPageSwipeUI();
-        KeyPageNavigator defaultNavigation = new KeyPageNavigator();
+        MainPageSwipeUI thePages;
+        KeyPageNavigator defaultNavigation; // = new KeyPageNavigator { HighlightedButtonIndex = 0, }; must be created after thepages
+        LoginPage loginPage = new LoginPage();
 
         public MasterPage() {
             BackgroundColor = GlobalStatusSingleton.backgroundColor;
-            buildUI();
-            // for now, keep the construction of the pages in the carousel...
+
+            thePages = new MainPageSwipeUI(loginPage);
+            defaultNavigation = new KeyPageNavigator { HighlightedButtonIndex = 0, };
+
+            buildUI();  // so it is reader to go!
+                        // for now, keep the construction of the pages in the carousel...
+
+            // bind the footer to the current position on the list view
+            Binding binding = new Binding { Source = thePages, Path = "Position" };
+            defaultNavigation.SetBinding(KeyPageNavigator.HighlightedButton, binding);
+
+            Content = loginPage;
             Debug.WriteLine("DHB:MasterPage ctor complete");
         }
 
@@ -36,7 +47,28 @@ namespace ImageImprov {
             portraitView.Children.Add(thePages, 0, 1);
             portraitView.Children.Add(defaultNavigation, 0, 2);
 
+            //Content = portraitView;
+        }
+
+        public void leaveLogin() {
             Content = portraitView;
+
+            /* grrr.... what a mess.  how am i navigating to, from, pages that aren't on the carousel?
+            if (GlobalSingletonHelpers.isEmailAddress(GlobalStatusSingleton.username)) {
+                // already configured for voting page.
+            } else {
+                // anonymous user
+                if (GlobalStatusSingleton.firstTimePlaying == true) {
+                    Content = CenterConsole.InstructionsPage;
+                    GlobalStatusSingleton.firstTimePlaying = false;
+                } else if (Content == CenterConsole.InstructionsPage) {
+                    // do nothing - this means that I logged in and the token setting occurred already.
+                    // it's a time issue between multiple async event handlers.
+                } else {
+                    Content = createAnonLoggedInLayout();
+                }
+            }
+            */
         }
 
         public ICamera getCamera() {
@@ -62,6 +94,9 @@ namespace ImageImprov {
         /// IProvideNavigation
         public void gotoJudgingPage() {
             thePages.gotoJudgingPage();
+        }
+        public void gotoJudgingPageHome() {
+            thePages.gotoJudgingPageHome();
         }
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {

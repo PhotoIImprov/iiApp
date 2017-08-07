@@ -15,6 +15,7 @@ using Java.IO;
 using Java.Util;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
+using CarouselView.FormsPlugin.Android;
 
 using System.Diagnostics;
 
@@ -61,8 +62,9 @@ namespace ImageImprov.Droid {
             GlobalStatusSingleton.imgsTakenTracker = fs.determineNumImagesTaken() + 1;
 
             Forms.Init(this, savedInstanceState);
-            var cv = typeof(Xamarin.Forms.CarouselView);
-            var assembly = Assembly.Load(cv.FullName);
+            CarouselViewRenderer.Init();
+            //var cv = typeof(Xamarin.Forms.CarouselView);
+            //var assembly = Assembly.Load(cv.FullName);
 
 
             // @todo find a device with no camera to test this with.
@@ -98,12 +100,13 @@ namespace ImageImprov.Droid {
                 file = new File(Android.OS.Environment.GetExternalStoragePublicDirectory(
                     Android.OS.Environment.DirectoryPictures), nextFileName);
 
+                /*
                 var intent = new Intent(MediaStore.ActionImageCapture);
                 intent.PutExtra("android.intent.extra.quickCapture", true);
                 intent.PutExtra(MediaStore.ExtraOutput, Android.Net.Uri.FromFile(file));
-                //StartActivityForResult(intent, 0);
-                StartActivityForResult(intent, 1);
-                
+                //StartActivityForResult(intent, 0);  */
+                StartActivityForResult(typeof(CameraServices_Droid), 1);
+                //StartActivity(typeof(CameraServices_Droid));
             };
             //> OnCreate
             bool fakeBool = false;
@@ -112,19 +115,24 @@ namespace ImageImprov.Droid {
         protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)
         {
             base.OnActivityResult(requestCode, resultCode, data);
-
-            // non-original code added so we have the bytes.
-            var bytes = default(byte[]);
-            using (var streamReader = new System.IO.StreamReader(file.Path)) {
-                using (System.IO.MemoryStream memStream = new System.IO.MemoryStream()) {
-                    streamReader.BaseStream.CopyTo(memStream);
-                    bytes = memStream.ToArray();
-                }
-            }
-            // end non-original code
-            
+            System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult");
             //< OnActivityResult
-            ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, bytes);
+            // Activity no longer saves the file so I have to do it.
+            try {
+                /* nope.
+                FileWriter fw = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fw);
+                char[] asChar = System.Text.Encoding.Unicode.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
+                //.UTF8.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
+                bw.Write(asChar);
+                bw.Close(); */
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.Write(GlobalStatusSingleton.mostRecentImgBytes);
+                System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult should have written to: " +file.Path);
+            } catch (Exception e) {
+                System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult exception:" + e.ToString());
+            }
+            ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, null);
 
             GlobalStatusSingleton.imgsTakenTracker++;
             //> OnActivityResult

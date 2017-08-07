@@ -123,10 +123,12 @@ namespace ImageImprov
         public static Queue<string> persistedPreloadedBallots;
         // static ip completely off right now.
 //#if DEBUG
-//        public static string activeURL = "http://35.190.162.96:8080/";
+//        public static string activeURL = "http://35.196.109.228:8080/";
 //#else
-        public static string activeURL = "https://api.imageimprov.com/";
+        public static string startingURL = "https://api.imageimprov.com/";
         //#endif
+        public static string activeURL = "https://api.imageimprov.com/";
+
         public static string TERMS_OF_SERVICE_URL = "https://www.imageimprov.com/en-US/landing/terms-of-service.html";
         public static string PRIVACY_POLICY_URL = "https://www.imageimprov.com/en-US/landing/privacy-policy.html";
 
@@ -156,6 +158,12 @@ namespace ImageImprov
         /// Set to true on play anon click or register click from the starting page.
         /// </summary>
         public static bool firstTimePlaying = false;
+
+        /// <summary>
+        /// Used by the camera.
+        /// </summary>
+        public static byte[] mostRecentImgBytes;
+        public static SkiaSharp.SKBitmap latestImg;
     }
 }
 

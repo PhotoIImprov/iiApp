@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 using Xamarin.Forms;
+using System.Reflection;
 
 namespace ImageImprov {
     /// <summary>
@@ -14,12 +16,74 @@ namespace ImageImprov {
     /// </summary>
     class KeyPageNavigator : Grid {
         TapGestureRecognizer tapGesture;
-        Image gotoVotingImgButton;
-        //Image goHomeImgButton;
-        Image gotoLeaderboardImgButton;
-        Image gotoCameraImgButton;
-        Image gotoHamburgerImgButton;
+        iiBitmapView gotoVotingImgButtonOff;
+        iiBitmapView gotoVotingImgButtonOn;
+        iiBitmapView gotoLeaderboardImgButtonOff;
+        iiBitmapView gotoLeaderboardImgButtonOn;
+        iiBitmapView gotoCameraImgButtonOff;
+        iiBitmapView gotoCameraImgButtonOn;
+        iiBitmapView gotoHamburgerImgButtonOff;
+        iiBitmapView gotoHamburgerImgButtonOn;
         Label categoryLabel;
+
+        //private int _highlightedButtonIndex = 0;
+        public int HighlightedButtonIndex {
+            get { return (int)GetValue(HighlightedButton); }
+            set {
+                SetValue(HighlightedButton, value);
+            }
+        }
+
+        private static void OnHighlightedButtonChanged(BindableObject bindable, object oldValue, object newValue) {
+            var myObj = bindable as KeyPageNavigator;
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                if (myObj.HighlightedButtonIndex == 0) {
+                    myObj.gotoVotingImgButtonOff.IsVisible = false;
+                    myObj.gotoVotingImgButtonOn.IsVisible = true;
+                    myObj.gotoLeaderboardImgButtonOff.IsVisible = true;
+                    myObj.gotoLeaderboardImgButtonOn.IsVisible = false;
+                    myObj.gotoCameraImgButtonOff.IsVisible = true;
+                    myObj.gotoCameraImgButtonOn.IsVisible = false;
+                    myObj.gotoHamburgerImgButtonOff.IsVisible = true;
+                    myObj.gotoHamburgerImgButtonOn.IsVisible = false;
+                } else if (myObj.HighlightedButtonIndex == 1) {
+                    myObj.gotoVotingImgButtonOff.IsVisible = true;
+                    myObj.gotoVotingImgButtonOn.IsVisible = false;
+                    myObj.gotoLeaderboardImgButtonOff.IsVisible = false;
+                    myObj.gotoLeaderboardImgButtonOn.IsVisible = true;
+                    myObj.gotoCameraImgButtonOff.IsVisible = true;
+                    myObj.gotoCameraImgButtonOn.IsVisible = false;
+                    myObj.gotoHamburgerImgButtonOff.IsVisible = true;
+                    myObj.gotoHamburgerImgButtonOn.IsVisible = false;
+                } else if (myObj.HighlightedButtonIndex == 2) {
+                    myObj.gotoVotingImgButtonOff.IsVisible = true;
+                    myObj.gotoVotingImgButtonOn.IsVisible = false;
+                    myObj.gotoLeaderboardImgButtonOff.IsVisible = true;
+                    myObj.gotoLeaderboardImgButtonOn.IsVisible = false;
+                    myObj.gotoCameraImgButtonOff.IsVisible = false;
+                    myObj.gotoCameraImgButtonOn.IsVisible = true;
+                    myObj.gotoHamburgerImgButtonOff.IsVisible = true;
+                    myObj.gotoHamburgerImgButtonOn.IsVisible = false;
+                } else if (myObj.HighlightedButtonIndex == 3) {
+                    myObj.gotoVotingImgButtonOff.IsVisible = true;
+                    myObj.gotoVotingImgButtonOn.IsVisible = false;
+                    myObj.gotoLeaderboardImgButtonOff.IsVisible = true;
+                    myObj.gotoLeaderboardImgButtonOn.IsVisible = false;
+                    myObj.gotoCameraImgButtonOff.IsVisible = true;
+                    myObj.gotoCameraImgButtonOn.IsVisible = false;
+                    myObj.gotoHamburgerImgButtonOff.IsVisible = false;
+                    myObj.gotoHamburgerImgButtonOn.IsVisible = true;
+                } else {
+                    // invalid range!!!
+                    Debug.WriteLine("DHB:KeyPageNavigator:OnHighlightedButtonChanged invalid setting!");
+                }
+            });
+        }
+
+        public static readonly BindableProperty HighlightedButton
+            = BindableProperty.Create("HighlightedButtonIndex", typeof(int), typeof(KeyPageNavigator), 0, BindingMode.Default, null, OnHighlightedButtonChanged);
+
 
         //StackLayout defaultNavigationButtons;
         //Grid defaultNavigationButtons;
@@ -27,32 +91,30 @@ namespace ImageImprov {
         BoxView horizLine;
 
         public KeyPageNavigator(string categoryDesc = "") {
+            RowSpacing = 0;
+            ColumnSpacing = 0;
+
             BackgroundColor = GlobalStatusSingleton.backgroundColor;
             //Padding = 10;
 
-            gotoVotingImgButton = new Image
-            {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png")
-            };
-            /*
-            goHomeImgButton = new Image
-            {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.home.png")
-            };   */
-            gotoLeaderboardImgButton = new Image
-            {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png")
-            };
-            gotoCameraImgButton = new Image
-            {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png"),
-            };
-            gotoHamburgerImgButton = new Image
-            {
-                Source = ImageSource.FromResource("ImageImprov.IconImages.Hamburger.png"),
-            };
-            categoryLabel = new Label
-            {
+            Assembly assembly = this.GetType().GetTypeInfo().Assembly;
+            gotoVotingImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.vote_inactive.png", assembly));
+            gotoVotingImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.vote.png", assembly));
+            gotoVotingImgButtonOff.IsVisible = false;
+
+            gotoLeaderboardImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.leaderboard_inactive.png", assembly));
+            gotoLeaderboardImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.leaderboard.png", assembly));
+            gotoLeaderboardImgButtonOn.IsVisible = false;
+
+            gotoCameraImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.camera_inactive.png", assembly));
+            gotoCameraImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.camera.png", assembly));
+            gotoCameraImgButtonOn.IsVisible = false;
+
+            gotoHamburgerImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Hamburger_inactive.png", assembly));
+            gotoHamburgerImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Hamburger.png", assembly));
+            gotoHamburgerImgButtonOn.IsVisible = false;
+
+            categoryLabel = new Label {
                 Text = categoryDesc,
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
@@ -65,11 +127,19 @@ namespace ImageImprov {
 
             tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += OnClicked;
-            gotoVotingImgButton.GestureRecognizers.Add(tapGesture);
+            gotoVotingImgButtonOff.GestureRecognizers.Add(tapGesture);
             //goHomeImgButton.GestureRecognizers.Add(tapGesture);
-            gotoLeaderboardImgButton.GestureRecognizers.Add(tapGesture);
-            gotoCameraImgButton.GestureRecognizers.Add(tapGesture);
-            gotoHamburgerImgButton.GestureRecognizers.Add(tapGesture);
+            gotoLeaderboardImgButtonOff.GestureRecognizers.Add(tapGesture);
+            gotoCameraImgButtonOff.GestureRecognizers.Add(tapGesture);
+            gotoHamburgerImgButtonOff.GestureRecognizers.Add(tapGesture);
+
+            // on buttons behave differently...
+            TapGestureRecognizer tapGestureOn = new TapGestureRecognizer();
+            tapGestureOn.Tapped += OnClickedWhenOn;
+            gotoVotingImgButtonOn.GestureRecognizers.Add(tapGestureOn);
+            gotoLeaderboardImgButtonOn.GestureRecognizers.Add(tapGestureOn);
+            gotoCameraImgButtonOn.GestureRecognizers.Add(tapGestureOn);
+            gotoHamburgerImgButtonOn.GestureRecognizers.Add(tapGestureOn);
 
             horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
             // ColumnSpacing = 1; RowSpacing = 1;
@@ -84,12 +154,16 @@ namespace ImageImprov {
             RowDefinitions.Add(new RowDefinition { Height = new GridLength(5, GridUnitType.Star) });
             Children.Add(horizLine, 0, 0);
             Grid.SetColumnSpan(horizLine, 4);
-            Children.Add(gotoVotingImgButton, 0, 2);
+            Children.Add(gotoVotingImgButtonOff, 0, 2);
+            Children.Add(gotoVotingImgButtonOn, 0, 2);
             //Children.Add(goHomeImgButton, 1, 1);
-            Children.Add(gotoLeaderboardImgButton, 1, 2);
-            Children.Add(gotoCameraImgButton, 2, 2);
+            Children.Add(gotoLeaderboardImgButtonOff, 1, 2);
+            Children.Add(gotoLeaderboardImgButtonOn, 1, 2);
+            Children.Add(gotoCameraImgButtonOff, 2, 2);
+            Children.Add(gotoCameraImgButtonOn, 2, 2);
             Children.Add(categoryLabel, 2, 3);
-            Children.Add(gotoHamburgerImgButton, 3, 2);
+            Children.Add(gotoHamburgerImgButtonOff, 3, 2);
+            Children.Add(gotoHamburgerImgButtonOn, 3, 2);
 
             // This object should always be created AFTER the judging page, so this should exist...
             if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
@@ -100,19 +174,30 @@ namespace ImageImprov {
         public void OnClicked(object sender, EventArgs e) {
             // I need to know which image.  
             // From there I vote... (?)
-            if (sender == gotoVotingImgButton) {
+            if (sender == gotoVotingImgButtonOff) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
-            } else if (sender == gotoCameraImgButton) {
+            } else if (sender == gotoCameraImgButtonOff) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
                 // want to go instantly to this...
                 //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
-            } else if (sender == gotoHamburgerImgButton) {
+            } else if (sender == gotoHamburgerImgButtonOff) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
-            } else if (sender == gotoLeaderboardImgButton) {
+            } else if (sender == gotoLeaderboardImgButtonOff) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
             } else {
                 // go home for default.
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();
+                //((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
+            }
+        }
+
+        public void OnClickedWhenOn(object sender, EventArgs e) {
+            if (sender == gotoVotingImgButtonOn) {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPageHome();
+            } else if (sender == gotoCameraImgButtonOn) {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
+            } else if (sender == gotoHamburgerImgButtonOn) {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
             }
         }
 

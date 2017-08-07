@@ -33,14 +33,21 @@ namespace ImageImprov {
         //< challengeLabel
         Label challengeLabelP = new Label
         {
+            BackgroundColor = GlobalStatusSingleton.ButtonColor,
             Text = "Loading...",
             HorizontalOptions = LayoutOptions.FillAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Center,
-            TextColor = Color.Black,
+            VerticalTextAlignment = TextAlignment.Center,
+            TextColor = Color.White,
             //BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            LineBreakMode=LineBreakMode.WordWrap,
+            LineBreakMode = LineBreakMode.WordWrap,
             FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+            FontAttributes = FontAttributes.Bold,
+            //WidthRequest = Width,
+            //MinimumHeightRequest = Height / 15.0,
+            //FontSize = 30, // program later
+
         };
         
         //> challengeLabel
@@ -60,7 +67,7 @@ namespace ImageImprov {
         // @todo ideally, the images would be built in BallotJSON. Get this working, then think about that.
         // @todo imgs currently only respond to taps.  Would like to be able to longtap a fast vote.
         // Need to instances to accomodate the way GridLayout handles spans.
-        IList<Image> ballotImgsP = null;
+        IList<iiBitmapView> ballotImgsP = null;
 
         /// <summary>
         /// ballot, ballotImgsP, and ballotImgsL hold the active Ballot.
@@ -77,7 +84,7 @@ namespace ImageImprov {
         /// <summary>
         /// Needed because iOS fires both clicked and double clicked events when a double click occurs.
         /// </summary>
-        private Image lastClicked = null;
+        private iiBitmapView lastClicked = null;
         /// <summary>
         /// If the image had been unchecked, nothing doing.
         /// However, if the image was checked, we need to make sure it is reselected in the correct order.
@@ -108,7 +115,7 @@ namespace ImageImprov {
         //   BEGIN Variables related/needed for images to place image rankings and backgrounds on screen.
         //
         AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
-        List<SKBitmap> rankImages = new List<SKBitmap>();
+        List<iiBitmapView> rankImages = new List<iiBitmapView>();
         Assembly assembly = null;
         Image backgroundImgP = null;
         string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
@@ -126,10 +133,10 @@ namespace ImageImprov {
         /// Tracks whether to display a ballot or the meta data for an image.
         /// </summary>
         Grid zoomView;
-        Image unlikedImg;
-        Image unflaggedImg;
-        Image likedImg;
-        Image flaggedImg;
+        iiBitmapView unlikedImg;
+        iiBitmapView unflaggedImg;
+        iiBitmapView likedImg;
+        iiBitmapView flaggedImg;
         Button backButton = null;
         BallotCandidateJSON activeMetaBallot;
         //
@@ -145,7 +152,7 @@ namespace ImageImprov {
 
             preloadedBallots = new Queue<string>();
 
-            ballotImgsP = new List<Image>();
+            ballotImgsP = new List<iiBitmapView>();
             //buildPortraitView();
             //buildLandscapeView();
 
@@ -177,7 +184,14 @@ namespace ImageImprov {
 
         protected void buildRankImages() {
             foreach (string filename in rankFilenames) {
-                rankImages.Add(GlobalSingletonHelpers.loadSKBitmapFromResourceName(filename, assembly));
+                iiBitmapView img = new iiBitmapView {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(filename, assembly),
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                    MinimumWidthRequest = 60,
+                };
+                //Grid.SetRowSpan(img, 2); sadly, this HAS to happen after inserting onto grid.
+                rankImages.Add(img);
             }
         }
 
@@ -250,7 +264,7 @@ namespace ImageImprov {
 
         // Turn of all images. voting is done.  Leave the selected image visible.
         // Hide all the others.
-        private void highlightCorrectImg(IList<Image> ballotImgs, int index) {
+        private void highlightCorrectImg(IList<iiBitmapView> ballotImgs, int index) {
             for (int i = 0; i < ballotImgs.Count; i++) {
                 if (i != index) {
                     ballotImgs[i].IsEnabled = false;
@@ -299,7 +313,7 @@ namespace ImageImprov {
             try {
                 // all my elements are already members...
                 if (portraitView == null) {
-                    portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                    portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
                     portraitView.SizeChanged += OnPortraitViewSizeChanged;
                 } else {
                     // flush the old children.
@@ -321,8 +335,10 @@ namespace ImageImprov {
                     for (int i = 0; i < 16; i++) {
                         portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                     }
-                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    for (int j = 0; j < 6; j++) {
+                        portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        //portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    }
 
                     // want to show the instruction!
                     loadInstructions();
@@ -330,21 +346,25 @@ namespace ImageImprov {
                     if (ballotImgsP.Count > 0) {
                         portraitView.Children.Add(ballotImgsP[0], 0, 2);
                         Grid.SetRowSpan(ballotImgsP[0], 6);
+                        Grid.SetColumnSpan(ballotImgsP[0], 3);
                     }
 
                     if (ballotImgsP.Count > 1) {
-                        portraitView.Children.Add(ballotImgsP[1], 1, 2);  // col, row format
+                        portraitView.Children.Add(ballotImgsP[1], 3, 2);  // col, row format
                         Grid.SetRowSpan(ballotImgsP[1], 6);
+                        Grid.SetColumnSpan(ballotImgsP[1], 3);
                     }
 
                     if (ballotImgsP.Count > 2) {
                         portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
                         Grid.SetRowSpan(ballotImgsP[2], 6);
+                        Grid.SetColumnSpan(ballotImgsP[2], 3);
                     }
 
                     if (ballotImgsP.Count > 3) {
-                        portraitView.Children.Add(ballotImgsP[3], 1, 8);  // col, row format
+                        portraitView.Children.Add(ballotImgsP[3], 3, 8);  // col, row format
                         Grid.SetRowSpan(ballotImgsP[3], 6);
+                        Grid.SetColumnSpan(ballotImgsP[3], 3);
                     }
 
                     challengeLabelP.Text = "Loading images...";
@@ -361,7 +381,7 @@ namespace ImageImprov {
                     //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                     //#endif
                     portraitView.Children.Add(challengeLabelP, 0, 15);
-                    Grid.SetColumnSpan(challengeLabelP, 2);
+                    Grid.SetColumnSpan(challengeLabelP, 6);
                     Grid.SetRowSpan(challengeLabelP, 2);
                 }
             } catch (Exception e) {
@@ -374,10 +394,16 @@ namespace ImageImprov {
         }
 
         private void buildMetaButtons() {
-            unlikedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.unliked.png"), IsVisible = true };
-            unflaggedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.unflagged.png"), IsVisible=true };
-            likedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.liked.png"), IsVisible = false };
-            flaggedImg = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.ImageMetaIcons.flagged.png"), IsVisible = false };
+            unlikedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unliked.png", assembly));
+            unflaggedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unflagged.png", assembly));
+            likedImg = new iiBitmapView {
+                Bitmap = (GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.liked.png", assembly)),
+                IsVisible = false
+            };
+            flaggedImg = new iiBitmapView {
+                Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.flagged.png", assembly),
+                IsVisible = false
+            };
 
             TapGestureRecognizer ulTap = new TapGestureRecognizer();
             ulTap.Tapped += (sender, args) => {
@@ -426,7 +452,7 @@ namespace ImageImprov {
             };
         }
 
-        private int buildZoomView(Image mainImage, BallotCandidateJSON ballot) {
+        private int buildZoomView(iiBitmapView mainImage, BallotCandidateJSON ballot) {
             int result = 1;
             if (zoomView == null) {
                 zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
@@ -444,7 +470,7 @@ namespace ImageImprov {
             }
             activeMetaBallot = ballot;
             mainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
-            mainImage.Aspect = Aspect.AspectFill;
+            //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
 
             zoomView.Children.Clear();
             zoomView.Children.Add(mainImage,0,0);
@@ -471,31 +497,37 @@ namespace ImageImprov {
             for (int i = 0; i < 16; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
-            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            // I can add none, but if i add one, then i just have 1. So here's 2. :)
-            portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (int j = 0; j < 6; j++) {
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                // I can add none, but if i add one, then i just have 1. So here's 2. :)
+                //portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
 
-            portraitView.Children.Add(ballotImgsP[0], 0, 0);
+            portraitView.Children.Add(ballotImgsP[0], 0, 2);
             Grid.SetRowSpan(ballotImgsP[0], 6);
+            Grid.SetColumnSpan(ballotImgsP[0], 3);
 
-            portraitView.Children.Add(ballotImgsP[1], 1, 0);  // col, row format
+            portraitView.Children.Add(ballotImgsP[1], 3, 2);  // col, row format
             Grid.SetRowSpan(ballotImgsP[1], 6);
+            Grid.SetColumnSpan(ballotImgsP[1], 3);
 
-            portraitView.Children.Add(ballotImgsP[2], 0, 6);  // col, row format
+            portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
             Grid.SetRowSpan(ballotImgsP[2], 6);
+            Grid.SetColumnSpan(ballotImgsP[2], 3);
 
-            portraitView.Children.Add(ballotImgsP[3], 1, 6);  // col, row format
+            portraitView.Children.Add(ballotImgsP[3], 3, 8);  // col, row format
             Grid.SetRowSpan(ballotImgsP[3], 6);
+            Grid.SetColumnSpan(ballotImgsP[3], 3);
 
-//#if DEBUG
+            //#if DEBUG
             //challengeLabelP.Text += " 4P_P case";
             //@todo Periodically check to see if my xamarin forums query solved this.
             //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
             // Calling this here is calling from an invalid height state that seems to fubar everything...
             //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
-//#endif
-            portraitView.Children.Add(challengeLabelP, 0, 13);
-            Grid.SetColumnSpan(challengeLabelP, 2);
+            //#endif
+            portraitView.Children.Add(challengeLabelP, 0, 0);
+            Grid.SetColumnSpan(challengeLabelP, 6);
             Grid.SetRowSpan(challengeLabelP, 2);
 
             if (lightbulbRow == null) {
@@ -506,7 +538,8 @@ namespace ImageImprov {
             //Grid.LayoutChildIntoBoundingRegion(lightbulbRow, new Xamarin.Forms.Rectangle(0.0, 17.0, 2.0, 1.0) );
             //Grid.SetColumnSpan(lightbulbRow, 2);  // Wanted this to hold the width stable, which it does, but sadly at half width.
             portraitView.Children.Add(lightbulbRow, 0, 15);
-            Grid.SetColumnSpan(lightbulbRow, 2);  // this this line has to be after adding.
+            Grid.SetColumnSpan(lightbulbRow, 6);  // this this line has to be after adding.
+            Grid.SetRowSpan(lightbulbRow, 2);
 
             return 1;
         }
@@ -547,7 +580,7 @@ namespace ImageImprov {
             //    a flag button
             //    an entry for custom tags
             Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick start");
-            Image taggedImg = sender as Image;
+            iiBitmapView taggedImg = sender as iiBitmapView;
             if (taggedImg == null) { return; }
 
             // sadly I can't use taggedImg in zoomView as it causes a crash. 
@@ -557,7 +590,10 @@ namespace ImageImprov {
             BallotCandidateJSON votedOnCandidate = null;
             bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate);
             if (found) {
-                taggedImg = GlobalSingletonHelpers.buildFixedRotationImage(votedOnCandidate);
+                //taggedImg = GlobalSingletonHelpers.buildFixedRotationImage(votedOnCandidate);
+                taggedImg = new iiBitmapView {
+                    Bitmap = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(votedOnCandidate.imgStr, (ExifOrientation)votedOnCandidate.orientation)
+                };
             }
             buildZoomView(taggedImg, votedOnCandidate);
             Device.BeginInvokeOnMainThread(() => {
@@ -887,8 +923,8 @@ namespace ImageImprov {
             // now handle ballot
             Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
             for (int i=1;i<5; i++) { 
-                Image imgP = new Image {
-                    Source = ImageSource.FromResource("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png"),
+                iiBitmapView imgP = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png", assembly)
                 };
                 ballotImgsP.Add(imgP);
             }
@@ -981,7 +1017,7 @@ namespace ImageImprov {
                 BallotCandidateJSON moving = ballot.ballots[swap];
                 ballot.ballots.RemoveAt(swap);
                 ballot.ballots.Insert(1, moving);
-                Image pImg = ballotImgsP[swap];
+                iiBitmapView pImg = ballotImgsP[swap];
                 ballotImgsP.RemoveAt(swap);
                 ballotImgsP.Insert(1, pImg);
             }
@@ -992,11 +1028,10 @@ namespace ImageImprov {
         /// <summary>
         /// Currently, this also manages orientation Count.
         /// This is what is called during the initial image setup.
-        /// Use setupImgsFromBallotCandidate if we switch back to landscape&&portrait..
         /// </summary>
         /// <param name="candidate"></param>
         /// <returns></returns>
-        protected Image setupImgFromBallotCandidate(BallotCandidateJSON candidate) {
+        protected iiBitmapView setupImgFromBallotCandidate(BallotCandidateJSON candidate) {
             // TEST
             // TEST
             // TEST
@@ -1008,10 +1043,13 @@ namespace ImageImprov {
 
             //Image image = new Image();
             //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
-            Image image = GlobalSingletonHelpers.buildFixedRotationImage(candidate);
+            //Image image = GlobalSingletonHelpers.buildFixedRotationImage(candidate);
+            iiBitmapView image = new iiBitmapView {
+                Bitmap = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation)
+            };
             //image.Aspect = Aspect.AspectFill;
             //image.Aspect = Aspect.AspectFit;
-            image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
+            //image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
 
 
             // This works. looks like a long press will be a pain in the ass.
@@ -1033,94 +1071,6 @@ namespace ImageImprov {
             return image;
         }
 
-        /// <summary>
-        /// Deprecated. Use setupImgFromBallotCandidate.
-        /// </summary>
-        /// <param name="candidate"></param>
-        /// <returns></returns>
-        protected IList<Image> setupImgsFromBallotCandidate(BallotCandidateJSON candidate) {
-            // TEST
-            // TEST
-            // TEST
-            // Do this so I can confirm bad bids for harry
-            //SKBitmap testBitmap = GlobalSingletonHelpers.SKBitmapFromString(candidate.imgStr);
-            // TEST
-            // TEST
-            // TEST
-
-            // NOTE SHOULD NOT REACH THE BREAK POINT BELOW!!!
-
-            //Image image = new Image();
-            //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
-            //IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromCandidate(candidate);
-            IList<Image> images = GlobalSingletonHelpers.buildTwoFixedRotationImageFromCandidate(candidate);
-            images[0].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
-            images[1].Aspect = GlobalStatusSingleton.aspectOrFillImgs;
-
-            // This works. looks like a long press will be a pain in the ass.
-            TapGestureRecognizer tapGesture = new TapGestureRecognizer();
-            if (tapGesture == null) {
-                tapGesture = new TapGestureRecognizer();
-            }
-            tapGesture.Tapped += OnClicked;  
-            images[0].GestureRecognizers.Add(tapGesture);
-            images[1].GestureRecognizers.Add(tapGesture);
-
-            TapGestureRecognizer doubleTap = new TapGestureRecognizer();
-            doubleTap.NumberOfTapsRequired = 2;
-            doubleTap.Tapped += OnDoubleClick;
-            images[0].GestureRecognizers.Add(doubleTap);
-            images[1].GestureRecognizers.Add(doubleTap);
-
-            // orientation info is based on the relative w/h of the image.
-            // square images are all considered "landscape"
-            //candidate.orientation = isPortraitOrientation(candidate.imgStr);
-            orientationCount += candidate.isPortrait;
-            return images;
-        }
-        protected Image setupImgFromStream(MemoryStream imgStream) {
-            Image image = new Image();
-            //
-            //
-            // The line below is the line of death.
-            // The line below is the line of death.
-            // The line below is the line of death.
-            //
-            //  What happens is the imgStream will go out of scope, be collected, then unhandled excpetion ensues.
-            image.Source = ImageSource.FromStream(() => imgStream);
-            //image.Aspect = Aspect.AspectFill;
-            //image.Aspect = Aspect.AspectFit;
-            image.Aspect = GlobalStatusSingleton.aspectOrFillImgs;
-
-            // This works. looks like a long press will be a pain in the ass.
-            TapGestureRecognizer tapGesture = new TapGestureRecognizer();
-            if (tapGesture == null) {
-                tapGesture = new TapGestureRecognizer();
-            }
-            tapGesture.Tapped += OnClicked;
-            image.GestureRecognizers.Add(tapGesture);
-            return image;
-        }
-
-        /// <summary>
-        /// Adds the passed in rank image to the raw ballot, and then produces an image.
-        /// This is what is called when we add our ranking to the image.
-        /// 
-        /// NOT EVEN CLOSED TO FINISHED OR USABLE FUNCTION!!!
-        /// </summary>
-        /// <param name="candidate"></param>
-        /// <returns></returns>
-        protected Image setupImgWithRanking(byte[] rawImg, SKImage rankingImg) {
-            // build and merge rawImg and rankingImg.
-            // get stream
-            var res = new MemoryStream(rawImg);
-            // not impacting orientation count at this point in time.
-            Image image = setupImgFromStream(res);
-            //Image image = new Image();
-            //image.Source = ImageSource.FromStream(() => new MemoryStream(candidate.imgStr));
-
-            return image;
-        }
         /// <summary>
         /// implmented as a function so it can be reused by the vote message response.
         /// Note: This function does NOT deal with the ballot queue.  It is assumed that whatever
@@ -1146,19 +1096,8 @@ namespace ImageImprov {
                 // now handle ballot
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
-                    /*
-                    // this method does a double load. loading is one of the slowest things, so change.
-                    // also double counted orientation!
-                    Image imgP = setupImgFromBallotCandidate(candidate);
-                    ballotImgsP.Add(imgP);
-
-                    Image imgL = setupImgFromBallotCandidate(candidate);
-                    ballotImgsL.Add(imgL);
-                    */
-                    //IList<Image> img = setupImgsFromBallotCandidate(candidate);
-                    Image img = setupImgFromBallotCandidate(candidate);
+                    iiBitmapView img = setupImgFromBallotCandidate(candidate);
                     ballotImgsP.Add(img);
-                    //ballotImgsL.Add(img[1]);
                 }
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString image generation done");
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString orientationCount: " +orientationCount);
@@ -1254,7 +1193,58 @@ namespace ImageImprov {
             return 1;
         }
 
+        protected void determineColAndRowFromIndex(int index, ref int col, ref int row) {
+            if (index == 0) {
+                col = 2;
+                row = 6;
+            } else if (index == 1) {
+                col = 5;
+                row = 6;
+            } else if (index == 2) {
+                col = 2;
+                row = 12;
+            } else if (index == 3) {
+                col = 5;
+                row = 12;
+            }
+        }
+
+        /// <summary>
+        /// This function adds the 3 and 4 to the images.
+        /// </summary>
+        /// <param name="votes"></param>
+        /// <param name="penultimateSelectedIndex"></param>
+        /// <param name="ultimateSelectedIndex"></param>
         protected void UpdateUIForFinalVote(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
+            /*
+            SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
+                    ballot.ballots[penultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[penultimateSelectedIndex].orientation);
+            SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 2]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[penultimateSelectedIndex], mergedImage);
+            // see if a new object eliminates flicker.
+
+            baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
+                ballot.ballots[ultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[ultimateSelectedIndex].orientation);
+            mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[rankImages.Count - 1]);
+            GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ultimateSelectedIndex], mergedImage);
+            */
+            int col =0;
+            int row =0;
+            determineColAndRowFromIndex(penultimateSelectedIndex, ref col, ref row);
+            portraitView.Children.Add(rankImages[rankImages.Count - 2], col, row);
+            Grid.SetRowSpan(rankImages[rankImages.Count - 2], 2);
+            determineColAndRowFromIndex(ultimateSelectedIndex, ref col, ref row);
+            portraitView.Children.Add(rankImages[rankImages.Count - 1], col, row);
+            Grid.SetRowSpan(rankImages[rankImages.Count - 1], 2);
+
+            foreach (iiBitmapView img in ballotImgsP) {
+                img.IsEnabled = false;
+            }
+            Debug.WriteLine("DHB:JudgingContentPage:UpdateUIForFinalVote done");
+        }
+
+        /*
+        protected void UpdateUIForFinalVoteOld(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
             // not sure how I do indexing...
             //ClearContent(firstSelectedIndex);
             //Device.BeginInvokeOnMainThread(() => {
@@ -1288,7 +1278,7 @@ namespace ImageImprov {
             //});
             Debug.WriteLine("DHB:JudgingContentPage:UpdateUIForFinalVote done");
         }
-
+        */
         protected async virtual void SingleVoteGeneratesBallot(object sender, EventArgs e) {
             if (votes == null) {
                 votes = new VotesJSON();
@@ -1307,7 +1297,7 @@ namespace ImageImprov {
             // ballotImgsP and L have same meta info, so only need this once.
             // but I do need to search the correct one to id the sender.
             var searchImgs = ballotImgsP;
-            foreach (Image img in searchImgs) {
+            foreach (iiBitmapView img in searchImgs) {
                 if (img == sender) {
                     found = true;
                     bid = ballot.ballots[index].bidId;
@@ -1365,7 +1355,7 @@ namespace ImageImprov {
             // ballotImgsP and L have same meta info, so only need this once.
             // but I do need to search the correct one to id the sender.
             var searchImgs = ballotImgsP;
-            foreach (Image img in searchImgs) {
+            foreach (iiBitmapView img in searchImgs) {
                 if (img == sender) {
                     found = true;
                     votedOnCandidate = ballot.ballots[index];
@@ -1395,7 +1385,37 @@ namespace ImageImprov {
             return res;
         }
 
+
         private void rebuildAllImagesWithVotes() {
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                // clear off all the old rank images
+                for (int rankImgI = 0; rankImgI < rankImages.Count; rankImgI++) {
+                    portraitView.Children.Remove(rankImages[rankImgI]);
+                }
+
+                int ballotIndex = 0;
+                int voteNum = -1;
+                int col = 0;
+                int row = 0;
+
+                // now add them back in.
+                foreach (BallotCandidateJSON candidate in ballot.ballots) {
+                    if (votedOn(candidate.bidId, ref voteNum)) {
+                        determineColAndRowFromIndex(ballotIndex, ref col, ref row);
+                        portraitView.Children.Add(rankImages[voteNum], col, row);
+                        Grid.SetRowSpan(rankImages[voteNum],2);
+                    } else {
+                        // I should already have the image loaded, right?
+                        //SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation));
+                        //GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
+                    }
+                    ballotIndex++;
+                }
+            });
+        }
+        /*
+        private void rebuildAllImagesWithVotesOld() {
             Device.BeginInvokeOnMainThread(() =>
             {
                 int ballotIndex = 0;
@@ -1414,6 +1434,7 @@ namespace ImageImprov {
                 }
             });
         }
+        */
 
         /// <summary>
         /// Check for 4 votes already, as Enabled=false seems to fail... (maybe I need to turn of the gestures?)
@@ -1462,7 +1483,7 @@ namespace ImageImprov {
 
             // only needed for iOS.
             if (Device.OS == TargetPlatform.iOS) {
-                lastClicked = (Image)sender;
+                lastClicked = (iiBitmapView)sender;
             }
 
             // ballots may have been cleared and this can be a dbl tap registration.
@@ -1570,34 +1591,11 @@ namespace ImageImprov {
                         }
                     }
                 } else {
-                    // turn this image off and wait till all are selected.
-                    //ballotImgsP[selectionId].IsEnabled = false;
-                    //ballotImgsP[selectionId].IsVisible = false;
-                    //ballotImgsL[selectionId].IsEnabled = false;
-                    //ballotImgsL[selectionId].IsVisible = false;
-                    // New behavior: Leave the images on, but put ranking numbers on them.
-                    // @todo Leave enabled so I can uncheck.
-                    // bleh. do I have the imgStr still? Yes, it lives in Ballot.
-                    // hmm... 
-                    // vote.vote is indexed from 1. rankimages from 0.
-                    //SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
-                        //ballot.ballots[selectionId].imgStr, (ExifOrientation)ballot.ballots[selectionId].orientation);
-                    SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(ballot.ballots[selectionId].imgStr, (ExifLib.ExifOrientation)ballot.ballots[selectionId].orientation);
-
-                    SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[vote.vote - 1]);
-
-                    // this method triggers the UI change.
-                    GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[selectionId], mergedImage);
-
-                    // this, on it's own, does not...
-                    //ballotImgsP[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
-                    //ballotImgsL[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
-                    // writing it in the UI thread does not solve the problem... need to tell content there's a change.
-                    //Device.BeginInvokeOnMainThread(() => {
-                    //    ballotImgsP[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
-                    //    ballotImgsL[selectionId] = GlobalSingletonHelpers.SKImageToXamarinImage(mergedImage);
-                    //});
-
+                    int col = 0;
+                    int row = 0;
+                    determineColAndRowFromIndex(selectionId, ref col, ref row);
+                    portraitView.Children.Add(rankImages[vote.vote - 1], col, row);
+                    Grid.SetRowSpan(rankImages[vote.vote - 1], 2);
                 }
             }
         }
@@ -1761,6 +1759,13 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:JudgingContentPage:postCategoryNotificaiton posted for category " + futureCat.description);
             }
         }
+
+        // used by keypagenavigator.
+        // returns to the voting page.
+        public void goHome() {
+            Content = portraitView;
+        }
+
     } // class
 } // namespace
 

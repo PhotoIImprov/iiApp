@@ -18,7 +18,7 @@ namespace ImageImprov {
     public class ThirdPartyAuthenticator { //: ContentView {
         private const string OAUTH_API_CALL = "auth";
 
-        private PlayerContentPage parent = null;
+        private LoginPage parent = null;
 
         public static OAuth2Authenticator authenticator;
 
@@ -63,7 +63,7 @@ namespace ImageImprov {
 
         INavigation navigation;
 
-        public ThirdPartyAuthenticator(PlayerContentPage parent) {
+        public ThirdPartyAuthenticator(LoginPage parent) {
             this.parent = parent;
         }
 
@@ -116,6 +116,7 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="navigation"></param>
         public void startAuthentication(INavigation navigation) {
+            Debug.WriteLine("DHB:ThirdPartyAuthentiator:startAuthentication start");
             this.navigation = navigation;
 
             if (authorizeUrl == null) {
@@ -123,10 +124,19 @@ namespace ImageImprov {
                 configForGoogle();
             }
             
+            /*
             if (Device.OS == TargetPlatform.iOS) {
-                authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
+                authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
             } else if (Device.OS == TargetPlatform.Android) {
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
+            } else {
+                return;  // no oauth available.
+            }
+            */
+            if (method == METHOD_FACEBOOK) {
+                authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
+            } else if (method == METHOD_GOOGLE) {
+                authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
             } else {
                 return;  // no oauth available.
             }
@@ -149,6 +159,7 @@ namespace ImageImprov {
                     //PlatformSpecificCalls.authInit();
                 }
             );
+            Debug.WriteLine("DHB:ThirdPartyAuthentiator:startAuthentication end");
         }
 
         /// <summary>
@@ -247,7 +258,9 @@ namespace ImageImprov {
         /// <param name="sender"></param>
         /// <param name="args"></param>
         public async void OnAuthCompleted(object sender, EventArgs args) {
-            Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed...
+            Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted");
+            Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
+            //await navigation.PopModalAsync();
 
             if (((AuthenticatorCompletedEventArgs)args).Account == null) {
                 Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted User backed out of oauth. Exit and return to regular login ui.");

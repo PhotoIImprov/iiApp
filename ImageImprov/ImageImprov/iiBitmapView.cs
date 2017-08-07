@@ -43,6 +43,11 @@ namespace ImageImprov {
             this.PaintSurface += OnCanvasViewPaintSurface;
         }
 
+        public iiBitmapView(SKBitmap bitmap) {
+            Bitmap = bitmap;
+            this.PaintSurface += OnCanvasViewPaintSurface;
+        }
+
         public void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e) {
             SKSurface vSurface = e.Surface;
             var surfaceWidth = e.Info.Width;
@@ -69,9 +74,11 @@ namespace ImageImprov {
                     startY = (int)((surfaceHeight - drawHeight) / 2);
                 }
                 SKBitmap bitmap = new SKBitmap(new SKImageInfo(drawWidth, drawHeight));
-                Bitmap.Resize(bitmap, SKBitmapResizeMethod.Box);
-                SKRect drawArea = new SKRect(startX, startY, startX + drawWidth, startY + drawHeight);
-                vCanvas.DrawBitmap(bitmap, drawArea);
+                if ((bitmap != null) && (Bitmap != null)) {
+                    Bitmap.Resize(bitmap, SKBitmapResizeMethod.Box);
+                    SKRect drawArea = new SKRect(startX, startY, startX + drawWidth, startY + drawHeight);
+                    vCanvas.DrawBitmap(bitmap, drawArea);
+                }
             } else {
                 SKRect drawArea = new SKRect(0, 0, Bitmap.Width, Bitmap.Height);
                 vCanvas.DrawBitmap(Bitmap, drawArea);

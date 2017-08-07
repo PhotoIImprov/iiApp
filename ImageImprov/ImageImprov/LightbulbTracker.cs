@@ -50,7 +50,7 @@ namespace ImageImprov {
         }
 
         private Image newStarImage(string resourceName) {
-            return new Image { Source = ImageSource.FromResource(resourceName), };
+            return new Image { Source = ImageSource.FromResource(resourceName), Margin = 2, };
         }
 
         private void changeLighting() {

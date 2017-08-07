@@ -28,7 +28,8 @@ namespace ImageImprov {
 
         //Image currentSubmissionImgP = new Image();
         //Image currentSubmissionImgL = new Image();
-        Image latestTakenImgP = null;
+        //Image latestTakenImgP = null;
+        iiBitmapView latestTakenImgP = null;
         //Image latestTakenImgL = null;
 
         // filepath to the latest taken img
@@ -83,7 +84,7 @@ namespace ImageImprov {
             assembly = this.GetType().GetTypeInfo().Assembly;
 
             submitCurrentPictureP = new Button {
-                Text = "Submit picture",
+                Text = "Enter this photo!",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 TextColor = Color.White,
@@ -92,6 +93,7 @@ namespace ImageImprov {
                 IsVisible = false
             };
             submitCurrentPictureP.Clicked += this.OnSubmitCurrentPicture;
+            latestTakenImgP = new iiBitmapView();
 
             buildUI();
             //setView();
@@ -372,7 +374,8 @@ namespace ImageImprov {
             //submitCurrentPictureL.Text = "Uploading image to server(may take a while)...";
 
             Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture pre async call");
-            string result = await sendSubmitAsync(latestTakenImgBytes);
+            //string result = await sendSubmitAsync(latestTakenImgBytes);
+            string result = await sendSubmitAsync(GlobalStatusSingleton.mostRecentImgBytes);
             Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post async call");
             try {
                 BallotJSON response = JsonConvert.DeserializeObject<BallotJSON>(result);
@@ -402,7 +405,7 @@ namespace ImageImprov {
             } catch (Exception err) {
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture invalid response json: "+result);
                 Debug.WriteLine(err.ToString());
-                submitCurrentPictureP.Text = "Submit failed - try again";
+                submitCurrentPictureP.Text = "Entry failed - try again";
                 //submitCurrentPictureL.Text = "Submit failed";
                 submitCurrentPictureP.IsEnabled = true;
                 buildUI();
@@ -453,6 +456,7 @@ namespace ImageImprov {
                 HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                
 
                 Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync pre send");
                 HttpResponseMessage submitResult = await client.SendAsync(request);
@@ -503,12 +507,13 @@ namespace ImageImprov {
 
             // This works... but is not neccessarily a square image.
             //latestTakenImgBytes = imgBytes;
-            latestTakenImgBytes = GlobalSingletonHelpers.SquareImage(imgBytes);
+            //latestTakenImgBytes = GlobalSingletonHelpers.SquareImage(imgBytes);
 
-            latestTakenImgP = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(latestTakenImgBytes);
+            //latestTakenImgP = //GlobalSingletonHelpers.buildFixedRotationImageFromBytes(latestTakenImgBytes);
+            latestTakenImgP.Bitmap = GlobalStatusSingleton.latestImg;
             //latestTakenImgL = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(imgBytes);
             //submitCurrentPictureP.Text = "Submit picture";
-            submitCurrentPictureP.Text = "Submit to: " + GlobalSingletonHelpers.getUploadingCategoryDesc();
+            submitCurrentPictureP.Text = "Enter photo to: " + GlobalSingletonHelpers.getUploadingCategoryDesc();
             submitCurrentPictureP.IsEnabled = true;
             //submitCurrentPictureL.Text = "Submit picture";
             //submitCurrentPictureL.IsEnabled = true;

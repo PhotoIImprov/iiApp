@@ -139,6 +139,11 @@ namespace ImageImprov {
             return outImage;
         }
 
+        /// <summary>
+        /// Alters the passed in existing Image to have the data of newImg.
+        /// </summary>
+        /// <param name="existing"></param>
+        /// <param name="newImg"></param>
         public static void UpdateXamarinImageFromSKImage(Image existing, SKImage newImg) {
             // yes, there should be a way to do this without the multiple back and forth to bytes.
             // no, it's not worth my time to try and figure it out.
@@ -432,18 +437,23 @@ namespace ImageImprov {
         }
 
         public static Image buildFixedRotationImageFromBytes(byte[] inImg, ExifOrientation imgExifO = ExifOrientation.Undefined, int width = -1, int height = -1) {
+            if (inImg == null) { return null; }
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes");
             DateTime step0 = DateTime.Now;
             Image result = new Image();
             DateTime step1 = DateTime.Now;
             SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg, imgExifO);
-            if ((width>-1) && (height>1)) {
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes rotBmp done");
+            if ((width>-1) && (height>1) && (rotatedBmp != null)) {
                 SKImageInfo sizing = new SKImageInfo(width, height);
                 rotatedBmp = rotatedBmp.Resize(sizing, SKBitmapResizeMethod.Hamming);
             }
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes resize done");
             DateTime step2 = DateTime.Now;
             if (rotatedBmp != null) {
                 result = SKImageToXamarinImage(SKImage.FromBitmap((SKBitmap)rotatedBmp));
             }
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes resize done");
             DateTime step3 = DateTime.Now;
             //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step1:" + (step1 - step0));
             //Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes step2:" + (step2 - step1));
@@ -544,6 +554,28 @@ namespace ImageImprov {
             //return test;
 
         }
+
+        /// <summary>
+        /// iOS sends me an image I need to rotate and crop
+        /// </summary>
+        /// <param name="baseBmp"></param>
+        /// <returns></returns>
+        public static SKBitmap rotateAndCrop(SKBitmap baseBmp) {
+            SKBitmap rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+            using (var canvas = new SKCanvas(rotatedBmp)) {
+                canvas.Translate(rotatedBmp.Width, 0);
+                canvas.RotateDegrees(90);
+                canvas.DrawBitmap(baseBmp, 0, 0);
+            }
+            int y = (rotatedBmp.Height - rotatedBmp.Width) / 2;
+            SKRectI square = SKRectI.Create(0, y, rotatedBmp.Width, rotatedBmp.Width);
+            SKBitmap finalBmp = new SKBitmap(rotatedBmp.Width, rotatedBmp.Width);
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop pre extract");
+            rotatedBmp.ExtractSubset(finalBmp, square);
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop post extract");
+            return finalBmp;
+        }
+
         //
         //
         //   END IMAGE PROCESSING HELPERS
