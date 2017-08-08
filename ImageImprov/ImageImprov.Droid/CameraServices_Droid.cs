@@ -14,6 +14,8 @@ using Android.Views;
 using Android.Widget;
 using Android.Hardware;
 
+using SkiaSharp;
+
 namespace ImageImprov.Droid {
     [Activity]
     class CameraServices_Droid : Activity { //, TextureView.ISurfaceTextureListener {
@@ -176,8 +178,10 @@ namespace ImageImprov.Droid {
             public void OnPictureTaken(byte[] data, Camera camera) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken here!");
                 GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data));
-                GlobalStatusSingleton.mostRecentImgBytes = data;  // this is the un modified data as jpg.  bytes will give me a byte array (i think)
+                //GlobalStatusSingleton.mostRecentImgBytes = data;  // this is the un modified data as jpg.  bytes will give me a byte array (i think)
                 //GlobalStatusSingleton.mostRecentImgBytes = GlobalStatusSingleton.latestImg.Bytes;  this is 34mb.! :)
+                SKImage outImg = SKImage.FromBitmap(GlobalStatusSingleton.latestImg);
+                GlobalStatusSingleton.mostRecentImgBytes = outImg.Encode(SKEncodedImageFormat.Jpeg, 90).ToArray();
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken here!");
                 timeToExit(this, null);
             }

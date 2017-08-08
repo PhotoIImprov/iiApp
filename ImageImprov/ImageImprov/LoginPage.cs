@@ -824,12 +824,12 @@ namespace ImageImprov {
             try {
                 HttpClient client = new HttpClient();
 
-                client.BaseAddress = new Uri(GlobalStatusSingleton.startingURL);
+                //client.BaseAddress = new Uri(GlobalStatusSingleton.startingURL);
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
                 //string jsonQuery = JsonConvert.SerializeObject(loginInfo);
                 Debug.WriteLine("DHB:LoginPage:requestBaseURLAsync queryJson:");
-                HttpRequestMessage baseRequest = new HttpRequestMessage(HttpMethod.Post, BASE);
+                HttpRequestMessage baseRequest = new HttpRequestMessage(HttpMethod.Get, GlobalStatusSingleton.startingURL+BASE);
                 baseRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
                 //tokenRequest.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
                 HttpResponseMessage baseResult = await client.SendAsync(baseRequest);

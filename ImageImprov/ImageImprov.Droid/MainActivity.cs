@@ -128,6 +128,7 @@ namespace ImageImprov.Droid {
                 bw.Close(); */
                 FileOutputStream fos = new FileOutputStream(file);
                 fos.Write(GlobalStatusSingleton.mostRecentImgBytes);
+                fos.Close();
                 System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult should have written to: " +file.Path);
             } catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult exception:" + e.ToString());
