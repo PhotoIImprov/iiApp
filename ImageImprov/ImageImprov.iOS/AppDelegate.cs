@@ -109,7 +109,9 @@ namespace ImageImprov.iOS
 
                     SKBitmap bitmap = GlobalSingletonHelpers.SKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
                     if (bitmap != null) {
-                        SKBitmap finalBmp = GlobalSingletonHelpers.rotateAndCrop(bitmap);
+                        int degreesToRotate = CameraServices_iOS.calculateRotationDegrees();
+                        Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon time to rotate and crop; degrees:" +degreesToRotate);
+                        SKBitmap finalBmp = GlobalSingletonHelpers.rotateAndCrop(bitmap, degreesToRotate);
                         //((MainPage)((Xamarin.Forms.Application.Current as App).MainPage)).img.Bitmap = finalBmp;
                         NSData finalBytes = NSData.FromArray(finalBmp.Bytes);
                         AppDelegate.snappedImgData = finalBytes;

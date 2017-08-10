@@ -55,7 +55,7 @@ namespace ImageImprov {
 
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public static long GetMillisecondsSinceUnixEpoch(DateTime forThisTime) {
-            return  (long)((forThisTime.ToUniversalTime() - UnixEpoch).TotalMilliseconds);
+            return (long)((forThisTime.ToUniversalTime() - UnixEpoch).TotalMilliseconds);
         }
 
         public static PropertyInfo GetProperty(object source, string propertyName) {
@@ -444,7 +444,7 @@ namespace ImageImprov {
             DateTime step1 = DateTime.Now;
             SKBitmap rotatedBmp = buildFixedRotationSKBitmapFromBytes(inImg, imgExifO);
             Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationImageFromBytes rotBmp done");
-            if ((width>-1) && (height>1) && (rotatedBmp != null)) {
+            if ((width > -1) && (height > 1) && (rotatedBmp != null)) {
                 SKImageInfo sizing = new SKImageInfo(width, height);
                 rotatedBmp = rotatedBmp.Resize(sizing, SKBitmapResizeMethod.Hamming);
             }
@@ -541,6 +541,31 @@ namespace ImageImprov {
             return subset;
         }
 
+        public static SKBitmap CropImageAtMidPoint(SKBitmap inImg) {
+            int w = inImg.Width;
+            int h = inImg.Height;
+            int shortestLen = 0;
+            int longestLen = 0;
+            int x = 0;
+            int y = 0;
+            if (w < h) {
+                shortestLen = w;
+                longestLen = h;
+                x = 0;
+                y = (h - w) / 2;
+            } else {
+                shortestLen = h;
+                longestLen = w;
+                y = 0;
+                x = (w - h) / 2;
+            }
+            SKRectI square = SKRectI.Create(x, y, shortestLen, shortestLen);
+            SKBitmap finalBmp = new SKBitmap(shortestLen, shortestLen);
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop pre extract");
+            inImg.ExtractSubset(finalBmp, square);
+            return finalBmp;
+        }
+
         public static byte[] SquareImage(byte[] imgBytes) {
             // my passed in imgBytes are a jpg, not a bmp.
             //SKBitmap bmp = GlobalSingletonHelpers.SKBitmapFromBytes(imgBytes);
@@ -560,22 +585,90 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="baseBmp"></param>
         /// <returns></returns>
-        public static SKBitmap rotateAndCrop(SKBitmap baseBmp) {
-            SKBitmap rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
-            using (var canvas = new SKCanvas(rotatedBmp)) {
-                canvas.Translate(rotatedBmp.Width, 0);
-                canvas.RotateDegrees(90);
-                canvas.DrawBitmap(baseBmp, 0, 0);
+        public static SKBitmap rotateAndCrop(SKBitmap baseBmp, int rotateDegrees = 90) {
+            SKBitmap rotatedBmp = null;
+
+            if (rotateDegrees == 90) {
+                rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop if have a rotated bmp...");
+                using (var canvas = new SKCanvas(rotatedBmp)) {
+                    canvas.Translate(rotatedBmp.Width, 0);
+                    canvas.RotateDegrees(rotateDegrees);
+                    canvas.DrawBitmap(baseBmp, 0, 0);
+                }
+            } else if (rotateDegrees == 180) {
+                rotatedBmp = new SKBitmap(baseBmp.Width, baseBmp.Height);
+                using (var canvas = new SKCanvas(rotatedBmp)) {
+                    canvas.Translate(rotatedBmp.Width, rotatedBmp.Height);
+                    canvas.RotateDegrees(180);
+                    canvas.DrawBitmap(baseBmp, 0, 0);
+                }
+            } else if (rotateDegrees == 270) {
+                rotatedBmp = new SKBitmap(baseBmp.Height, baseBmp.Width);
+                using (var canvas = new SKCanvas(rotatedBmp)) {
+                    // currently upside down. with w, 90.
+                    // failures:   -W, 270    w,-90    -W,90     0,90  0,270
+                    //   h, 270  -> soln is to think about the corner I'm told is important...
+                    //canvas.Translate(-rotatedBmp.Width, 0);
+                    canvas.Translate(0, rotatedBmp.Height);
+                    canvas.RotateDegrees(270);
+                    canvas.DrawBitmap(baseBmp, 0, 0);
+                }
+            } else {
+                // do anything?
+                rotatedBmp = baseBmp;
             }
+
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop through rotation");
+            // with new image rotation stuff, y may no be longest side. work on that next.
+            /*
             int y = (rotatedBmp.Height - rotatedBmp.Width) / 2;
             SKRectI square = SKRectI.Create(0, y, rotatedBmp.Width, rotatedBmp.Width);
             SKBitmap finalBmp = new SKBitmap(rotatedBmp.Width, rotatedBmp.Width);
             Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop pre extract");
             rotatedBmp.ExtractSubset(finalBmp, square);
             Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop post extract");
+            */
+            SKBitmap finalBmp = CropImageAtMidPoint(rotatedBmp);
             return finalBmp;
         }
 
+        /// <summary>
+        /// Returning an int so I dont need to link exif into the native apps.
+        /// </summary>
+        /// <param name="imgBits"></param>
+        /// <returns></returns>
+        public static int readExifOrientation(byte[] imgBits) {
+            ExifOrientation result = ExifOrientation.Undefined;
+            if (imgBits != null) {
+                using (var resource = new MemoryStream(imgBits)) {
+                    try {
+                        JpegInfo jpegInfo = ExifReader.ReadJpeg(resource);
+                        // What exif lib associates each orientation with num in spec:
+                        // ExifLib.ExifOrientation.TopRight == 6;   // i need to rotate clockwise 90
+                        // ExifLib.ExifOrientation.BottomLeft == 8;  // i need to rotate ccw 90
+                        // ExifLib.ExifOrientation.BottomRight == 3; // i need to rotate 180
+                        // ExifLib.ExifOrientation.TopLeft ==1;  // do nada.
+
+                        // What each image I set the exif on resulted in:
+                        // (note: what I set should be correct as it displays right in programs that adjust for exif)
+                        // Unchd: 1
+                        // ImgRotLeft: 6
+                        // ImgRotRight: 8
+                        // ImgRot180: 3
+                        // Cool. These all tie out with images in Dave Perret article.
+                        result = jpegInfo.Orientation;
+                        //int imgExifWidth = jpegInfo.Width;
+                        //int imgExifHeight = jpegInfo.Height;
+                        Debug.WriteLine("DHB:GlobalSingletonHelpers:readExifOrientation orientation:" + result);
+                    } catch (Exception e) {
+                        Debug.WriteLine("DHB:GlobalSingletonHelpers:readExifOrientation  bad exif read");
+                        Debug.WriteLine(e.ToString());
+                    }
+                }
+            }
+            return (int)result;
+        }
         //
         //
         //   END IMAGE PROCESSING HELPERS
@@ -584,29 +677,29 @@ namespace ImageImprov {
         //
         //
 
-        /*
-    public static void fixLabelHeight(Label label, View view, double containerWidth) {
-        // Calculate the height of the rendered text. 
-        FontCalc lowerFontCalc = new FontCalc(label, 10, view.Width);
-        FontCalc upperFontCalc = new FontCalc(label, 100, view.Width);
-        while (upperFontCalc.FontSize - lowerFontCalc.FontSize > 1) {
-            // Get the average font size of the upper and lower bounds. 
-            double fontSize = (lowerFontCalc.FontSize + upperFontCalc.FontSize) / 2;
-            // Check the new text height against the container height. 
-            // @NOTE: And again, I'm cheating on the width used.  This won't work if I have multiple columns!!!!
-            FontCalc newFontCalc = new FontCalc(label, fontSize, view.Width);
-            // @NOTE: This is the worst cheat as it's the one most likely to be changed!
-            if ((newFontCalc.TextHeight > (view.Height)) || (newFontCalc.TextHeight == -1)) {
-                upperFontCalc = newFontCalc;
-            } else {
-                lowerFontCalc = newFontCalc;
-            }
-        }
-        // Set the final font size and the text with the embedded value. 
-        label.FontSize = lowerFontCalc.FontSize;
-        label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
-    }
-    */
+                    /*
+                public static void fixLabelHeight(Label label, View view, double containerWidth) {
+                    // Calculate the height of the rendered text. 
+                    FontCalc lowerFontCalc = new FontCalc(label, 10, view.Width);
+                    FontCalc upperFontCalc = new FontCalc(label, 100, view.Width);
+                    while (upperFontCalc.FontSize - lowerFontCalc.FontSize > 1) {
+                        // Get the average font size of the upper and lower bounds. 
+                        double fontSize = (lowerFontCalc.FontSize + upperFontCalc.FontSize) / 2;
+                        // Check the new text height against the container height. 
+                        // @NOTE: And again, I'm cheating on the width used.  This won't work if I have multiple columns!!!!
+                        FontCalc newFontCalc = new FontCalc(label, fontSize, view.Width);
+                        // @NOTE: This is the worst cheat as it's the one most likely to be changed!
+                        if ((newFontCalc.TextHeight > (view.Height)) || (newFontCalc.TextHeight == -1)) {
+                            upperFontCalc = newFontCalc;
+                        } else {
+                            lowerFontCalc = newFontCalc;
+                        }
+                    }
+                    // Set the final font size and the text with the embedded value. 
+                    label.FontSize = lowerFontCalc.FontSize;
+                    label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
+                }
+                */
         public static void fixLabelHeight(Label label, double containerWidth, double containerHeight, 
             int minFontSize = GlobalStatusSingleton.MIN_FONT_SIZE, int maxFontSize=GlobalStatusSingleton.MAX_FONT_SIZE) 
         {

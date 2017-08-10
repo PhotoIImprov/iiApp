@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace ImageImprov {
     [JsonObject]
     public class URLRequestJSON {
-        [JsonProperty("baseurl")]
+        [JsonProperty("base")]
         public string baseurl;
     }
 }

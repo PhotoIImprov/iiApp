@@ -17,7 +17,7 @@ using Android.Hardware;
 using SkiaSharp;
 
 namespace ImageImprov.Droid {
-    [Activity]
+    [Activity (ScreenOrientation =ScreenOrientation.Portrait)]
     class CameraServices_Droid : Activity { //, TextureView.ISurfaceTextureListener {
         //private TextureView textureView;
         //private SurfaceView surfaceView;
@@ -32,6 +32,9 @@ namespace ImageImprov.Droid {
         // other camera button
 
         private Context context;
+        // there's probably a proper way for inner classes to see this.
+        private static MyOrientationListener orienter;
+        private static int degreesToRotateCameraToNatural;
 
         const int TAKE_PICTURE_BUTTON_ID = 2002;
         const int CATEGORY_HEADER_ID = 2001;
@@ -46,6 +49,7 @@ namespace ImageImprov.Droid {
 
         protected override void OnCreate(Bundle savedInstanceState) {
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnCreate made it here!");
+            orienter = new MyOrientationListener(this);
             RequestWindowFeature(WindowFeatures.NoTitle);
             // I want the status bars.
             //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -138,6 +142,7 @@ namespace ImageImprov.Droid {
             if (camera == null) {
                 camera = getCameraInstance();
             }
+            orienter.Enable();
         }
 
         protected override void OnPause() {
@@ -146,6 +151,7 @@ namespace ImageImprov.Droid {
                 camera.Release();
                 camera = null;
             }
+            orienter.Disable();
         }
 
         protected override void OnDestroy() {
@@ -177,11 +183,21 @@ namespace ImageImprov.Droid {
             public EventHandler timeToExit;
             public void OnPictureTaken(byte[] data, Camera camera) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken here!");
-                GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data));
+
+
+
+                GlobalSingletonHelpers.readExifOrientation(data);
+                //var windowManager = Android.App.Application.Context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+                //System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken device orientation:" + windowManager.DefaultDisplay.Rotation);
+                System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken device orientation:" + orienter.currentOrientation);
+                System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken camera orientation:" + degreesToRotateCameraToNatural);
+
+                int rotateDegrees = degreesToRotateCameraToNatural + orienter.currentOrientation;
+                GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data), rotateDegrees);
                 //GlobalStatusSingleton.mostRecentImgBytes = data;  // this is the un modified data as jpg.  bytes will give me a byte array (i think)
                 //GlobalStatusSingleton.mostRecentImgBytes = GlobalStatusSingleton.latestImg.Bytes;  this is 34mb.! :)
                 SKImage outImg = SKImage.FromBitmap(GlobalStatusSingleton.latestImg);
-                GlobalStatusSingleton.mostRecentImgBytes = outImg.Encode(SKEncodedImageFormat.Jpeg, 90).ToArray();
+                GlobalStatusSingleton.mostRecentImgBytes = outImg.Encode(SKEncodedImageFormat.Jpeg, 100).ToArray();
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken here!");
                 timeToExit(this, null);
             }
@@ -194,6 +210,10 @@ namespace ImageImprov.Droid {
                 if (c != null) {
                     //toLargestSquare(c);
                     toLargestImage(c);
+                    Camera.CameraInfo info = new Camera.CameraInfo();
+                    Camera.GetCameraInfo(0, info);
+                    System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:getCameraInstance info.Orientation:" + info.Orientation);
+                    degreesToRotateCameraToNatural = info.Orientation;
                 }
             } catch (Exception e) {
 
@@ -251,6 +271,7 @@ namespace ImageImprov.Droid {
                 } else {
                     System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestSquare image and preview size aspect ratios match");
                 }
+                
             } catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestSquare exception: " + e.ToString());
             }
@@ -299,6 +320,38 @@ namespace ImageImprov.Droid {
                 }
             } catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestImage exception: " + e.ToString());
+            }
+        }
+        //
+        // Begin Orientation Code
+        //
+        internal class MyOrientationListener : OrientationListener {
+            public const int ROTATE_0 = 0;
+            public const int ROTATE_270 = 270;
+            public const int ROTATE_90 = 90;
+            public const int ROTATE_180 = 180;
+
+            public int currentOrientation {get;set;}
+
+            public MyOrientationListener(Context context) : base(context) {
+                
+            }
+
+            public override void OnOrientationChanged(int orientation) {
+                // I need to know the default 0...
+                if (orientation > 305 || orientation <= 45) {
+                    currentOrientation = ROTATE_0;
+                } else if (orientation > 45 && orientation <= 135) {
+                    currentOrientation = ROTATE_90;
+                } else if (orientation > 135 && orientation <= 225) {
+                    currentOrientation = ROTATE_180;
+                } else if (orientation > 225 && orientation <= 305) {
+                    currentOrientation = ROTATE_270;
+                } else {
+                    // actually, the way i wrote this, it is unreachable. Ha.
+                    System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnOrientationChanged orientation extents out of bounds!!");
+                    throw new IndexOutOfRangeException("Orientation range should be between 0 and 360. Received: " + orientation);
+                }
             }
         }
     }

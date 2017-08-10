@@ -76,6 +76,7 @@ namespace ImageImprov.iOS {
         }
 
         AVCaptureSession captureSession;
+        AVCaptureDevice captureDevice;
         AVCaptureDeviceInput captureDeviceInput;
         AVCaptureStillImageOutput stillImageOutput;
         AVCaptureVideoPreviewLayer videoPreviewLayer;
@@ -113,9 +114,12 @@ namespace ImageImprov.iOS {
             //videoPreviewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
 
             liveCameraStream.Layer.AddSublayer(videoPreviewLayer);
+            UITapGestureRecognizer tapRecognizer = new UITapGestureRecognizer(PreviewAreaTappedToChangeFocus);
+
+            liveCameraStream.AddGestureRecognizer(tapRecognizer);
 
             //var captureDevice = AVCaptureDevice.DefaultDeviceWithMediaType(AVMediaType.Video);
-            AVCaptureDevice captureDevice = AVCaptureDevice.GetDefaultDevice(AVMediaType.Video);
+            captureDevice = AVCaptureDevice.GetDefaultDevice(AVMediaType.Video);
             ConfigureCameraForDevice(captureDevice);
             captureDeviceInput = AVCaptureDeviceInput.FromDevice(captureDevice);
             captureSession.AddInput(captureDeviceInput);
@@ -130,6 +134,8 @@ namespace ImageImprov.iOS {
             Debug.WriteLine("SetupLiveCameraStream pre running");
             captureSession.StartRunning();
             Debug.WriteLine("SetupLiveCameraStream end");
+
+            
         }
 
         void ConfigureCameraForDevice(AVCaptureDevice device) {
@@ -160,7 +166,8 @@ namespace ImageImprov.iOS {
 
                 NSData jpegImageAsNsData = AVCaptureStillImageOutput.JpegStillToNSData(sampleBuffer);
                 byte[] jpegAsByteArray = jpegImageAsNsData.ToArray();
-
+                //GlobalSingletonHelpers.readExifOrientation(jpegAsByteArray);
+                //Debug.WriteLine("DHB:CameraServices_iOS:TakePhotoButton:TakePhotoButtonTapped orientation:" + UIDevice.CurrentDevice.Orientation);
                 GlobalStatusSingleton.mostRecentImgBytes = jpegAsByteArray;
                 if (FinishedPickingMedia != null) {
                     FinishedPickingMedia(this, e);
@@ -168,6 +175,31 @@ namespace ImageImprov.iOS {
             } catch (Exception err) {
                 Debug.WriteLine("DHB:Exception " + err.ToString());
             }
+        }
+
+        async void PreviewAreaTappedToChangeFocus(UIGestureRecognizer tap) {
+            try {
+                Debug.WriteLine("DHB:CameraServices_iOS:PreviewAreaTappedToChangeFocus tap");
+                captureDevice.FocusPointOfInterest = tap.LocationOfTouch(0, tap.View);
+            } catch (Exception err) {
+                Debug.WriteLine("DHB:Exception " + err.ToString());
+            }
+        }
+
+        public static int calculateRotationDegrees() {
+            int rotation = 0;
+            if (UIDevice.CurrentDevice.Orientation == UIDeviceOrientation.LandscapeLeft) {
+                rotation = 0;
+            } else if (UIDevice.CurrentDevice.Orientation == UIDeviceOrientation.Portrait) {
+                rotation = 90;
+            } else if (UIDevice.CurrentDevice.Orientation == UIDeviceOrientation.LandscapeRight) {
+                rotation = 180;
+            } else if (UIDevice.CurrentDevice.Orientation == UIDeviceOrientation.PortraitUpsideDown) {
+                rotation = 270;
+            } else {
+                throw new IndexOutOfRangeException("Invalid orientation: " + UIDevice.CurrentDevice.Orientation.ToString());
+            }
+            return rotation;
         }
     }
 }
