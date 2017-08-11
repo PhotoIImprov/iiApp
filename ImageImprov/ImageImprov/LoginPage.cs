@@ -312,7 +312,7 @@ namespace ImageImprov {
                     //googleLogin,
                     blankRowLabel,
                     //anonymousPlayButton,
-                    new Label { Text = "Enter an email, password and click register to register", HorizontalTextAlignment = TextAlignment.Center, },
+                    new Label { Text = "Enter an email, password and click register to register", HorizontalTextAlignment = TextAlignment.Center, TextColor = Color.Black },
                     registerButton,
                     new Label { Text = " ", TextColor = Color.Black, },
                     new Label { Text = " ", TextColor = Color.Black, },

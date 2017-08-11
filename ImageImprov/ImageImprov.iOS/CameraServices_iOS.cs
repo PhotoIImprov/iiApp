@@ -29,11 +29,22 @@ namespace ImageImprov.iOS {
 
             Debug.WriteLine("CameraService:ViewDidLoad");
             base.ViewDidLoad();
+            
             await AuthorizeCameraUse();
             SetupLiveCameraStream();
             Debug.WriteLine("CameraService:ViewDidLoad end");
             // View = liveCameraStream;  works, but now we need to add more...
+
+            // doing f-all adding to liveCameraStream. Try adding to view...
+            UIPinchGestureRecognizer pinchRecognizer = new UIPinchGestureRecognizer(HandlePinchToZoomRecognizer);
+            //liveCameraStream.AddGestureRecognizer(pinchRecognizer);
+            View.AddGestureRecognizer(pinchRecognizer);
+            //UITapGestureRecognizer tapRecognizer = new UITapGestureRecognizer(PreviewAreaTappedToChangeFocus);
+            //liveCameraStream.AddGestureRecognizer(tapRecognizer);
+            //View.AddGestureRecognizer(tapRecognizer);
+
             View.AddSubview(liveCameraStream);
+            View.BackgroundColor = UIColor.White;
 
             // take picture button
             var takePicButton = UIButton.FromType(UIButtonType.RoundedRect);
@@ -49,13 +60,16 @@ namespace ImageImprov.iOS {
             View.AddSubview(takePicButton);
 
             var label = new UILabel();
+            //label.MinimumFontSize = 40;
             label.Text = GlobalStatusSingleton.uploadingCategories[0].description;
-            label.MinimumFontSize = 30;
             label.TextAlignment = UITextAlignment.Center;
             label.TextColor = UIColor.White;
-            //label.ToggleBoldface(null);
+            //label.ToggleBoldface(null);  hmm. this blows up.
+            //Debug.WriteLine("DHB:CameraServices_iOS:ViewDidLoad font name: " + label.Font.ToString());  //.SFUIText 17
+            label.Font = UIFont.FromName(".SFUIText-Bold", 30);
+            
             label.BackgroundColor = new UIColor(252.0f / 255.0f, 213.0f / 255.0f, 21.0f / 255.0f, 1.0f);
-            label.Frame = new CGRect(20, 30, 280, 40);
+            label.Frame = new CGRect(0, 30, View.Bounds.Width, 50);
             View.AddSubview(label);
         }
 
@@ -114,9 +128,8 @@ namespace ImageImprov.iOS {
             //videoPreviewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
 
             liveCameraStream.Layer.AddSublayer(videoPreviewLayer);
-            UITapGestureRecognizer tapRecognizer = new UITapGestureRecognizer(PreviewAreaTappedToChangeFocus);
-
-            liveCameraStream.AddGestureRecognizer(tapRecognizer);
+            //UITapGestureRecognizer tapRecognizer = new UITapGestureRecognizer(PreviewAreaTappedToChangeFocus);
+            //liveCameraStream.AddGestureRecognizer(tapRecognizer);
 
             //var captureDevice = AVCaptureDevice.DefaultDeviceWithMediaType(AVMediaType.Video);
             captureDevice = AVCaptureDevice.GetDefaultDevice(AVMediaType.Video);
@@ -177,12 +190,28 @@ namespace ImageImprov.iOS {
             }
         }
 
+        // this doesn't seem to work.
         async void PreviewAreaTappedToChangeFocus(UIGestureRecognizer tap) {
             try {
                 Debug.WriteLine("DHB:CameraServices_iOS:PreviewAreaTappedToChangeFocus tap");
                 captureDevice.FocusPointOfInterest = tap.LocationOfTouch(0, tap.View);
             } catch (Exception err) {
                 Debug.WriteLine("DHB:Exception " + err.ToString());
+            }
+        }
+
+        void HandlePinchToZoomRecognizer(UIPinchGestureRecognizer pinchRecognizer) {
+            Debug.WriteLine("DHB:CameraServices_iOS:HandlePinchToZoomRecognizer");
+            const float pinchVelocityDividerFactor = 5.0f;
+            if (pinchRecognizer.State == UIGestureRecognizerState.Changed) {
+                NSError error = null;
+                if (captureDevice.LockForConfiguration(out error)) {
+                    float desiredZoomFactor = (float)captureDevice.VideoZoomFactor + (float)Math.Atan2(pinchRecognizer.Velocity, pinchVelocityDividerFactor);
+                    captureDevice.VideoZoomFactor = (System.nfloat)Math.Max(1.0, Math.Min(desiredZoomFactor, captureDevice.ActiveFormat.VideoMaxZoomFactor));
+                    captureDevice.UnlockForConfiguration();
+                } else {
+                    Debug.WriteLine("DHB:CameraServices_iOS:HandlePinchToZoomRecognizer error on lock.");
+                }
             }
         }
 

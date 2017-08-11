@@ -14,7 +14,7 @@ namespace ImageImprov {
     /// all of our pages.
     /// This UI object provides the functionality to go between the pages of the carousel via buttons at the bottom of the page.
     /// </summary>
-    class KeyPageNavigator : Grid {
+    public class KeyPageNavigator : Grid {
         TapGestureRecognizer tapGesture;
         iiBitmapView gotoVotingImgButtonOff;
         iiBitmapView gotoVotingImgButtonOn;

@@ -36,8 +36,9 @@ namespace ImageImprov.Droid {
         private static MyOrientationListener orienter;
         private static int degreesToRotateCameraToNatural;
 
-        const int TAKE_PICTURE_BUTTON_ID = 2002;
         const int CATEGORY_HEADER_ID = 2001;
+        const int TAKE_PICTURE_BUTTON_ID = 2002;
+        const int DEFAULT_NAV_ID = 2003;
 
         private bool checkCameraHardware(Context context) {
             if (context.PackageManager.HasSystemFeature("android.hardware.camera")) {
