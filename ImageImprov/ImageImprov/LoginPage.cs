@@ -37,6 +37,7 @@ namespace ImageImprov {
 
         const string AUTH = "auth";
         const string BASE = "base";
+        const string FORGOT_PWD = "forgotpwd";
 
         const double BACKGROUND_VERTICAL_EXTENT = 0.8;
 
@@ -46,18 +47,19 @@ namespace ImageImprov {
 
         //< loggedInLabel
         public Label loggedInLabel = new Label {
-            Text = " ",
+            Text = "",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = GlobalStatusSingleton.backgroundColor,
-            TextColor = Color.Black,
+            BackgroundColor = GlobalStatusSingleton.SplashBackgroundColor,
+            TextColor = Color.White,
+            //IsVisible = false,
         };
         //> loggedInLabel
         Label versionLabel = new Label {
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            TextColor = Color.Black,
+            BackgroundColor = GlobalStatusSingleton.SplashBackgroundColor,
+            TextColor = Color.White,
         };
 
         readonly Label alreadyAMemberLabel = new Label {
@@ -76,24 +78,37 @@ namespace ImageImprov {
         Entry usernameEntry = new Entry
         {
             Placeholder = "email",
+            PlaceholderColor = Color.Gray,
             Text = GlobalStatusSingleton.username,
             TextColor = Color.Black,
+            FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
             BackgroundColor = Color.White,
-            HorizontalTextAlignment = TextAlignment.Start,
+            HorizontalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.FillAndExpand,
+            Margin = 1,
         };
         Entry passwordEntry = new Entry
         {
             Placeholder = "Password",
+            PlaceholderColor = Color.Gray,
             IsPassword = true,
             TextColor = Color.Black,
+            FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
             BackgroundColor = Color.White,
-            HorizontalTextAlignment = TextAlignment.Start,
+            HorizontalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.FillAndExpand,
+            Margin = 1,
         };
 
+        iiBitmapView signupBackground;
+        iiBitmapView forgotButton;
+        iiBitmapView backButton;
+
         // triggers a login event
-        Button connectButton;
+        //Button connectButton;
+        iiBitmapView connectButton;
+        string connectButtonImgStr = "ImageImprov.IconImages.signIn_inactive.png";
+
         // triggers anonymous registration
         Button anonymousPlayButton;
 
@@ -144,31 +159,40 @@ namespace ImageImprov {
         public event TokenReceivedEventHandler TokenReceived;
         public event LogoutClickedEventHandler LogoutClicked;
 
+        public EventHandler ForgotClicked;
+
         EventArgs eDummy = null;
 
         static int loginAttemptCounter = 0;
 
+        AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
+        Assembly assembly = null;
+        iiBitmapView backgroundImgP = null;
+        string backgroundFilename = "ImageImprov.IconImages.signin_background.png";
+
+
         public LoginPage() {
+            assembly = this.GetType().GetTypeInfo().Assembly;
+
             // set myself up to listen for the login events...
             this.MyLogin += new MyLoginEventHandler(OnMyLogin);
             this.AnonPlay += new AnonPlayEventHandler(OnAnonPlay);
             this.RegisterNow += new RegisterNowEventHandler(OnRegisterNow);
             this.RegisterSuccess += new RegisterSuccessEventHandler(OnRegisterSuccess);
             this.LogoutClicked += new LogoutClickedEventHandler(OnLogoutClicked);
+            ForgotClicked += new EventHandler(OnForgotPwdClicked);
             // Note: I fire token received events, but don't consume them.
 
             eDummy = new EventArgs();
 
             setVersionLabelText();
 
-            connectButton = new Button
-            {
-                Text = "Connect now",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
+            connectButton = new iiBitmapView {
+                Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(connectButtonImgStr, assembly),
+                EnsureSquare = false,
             };
-            connectButton.Clicked += (sender, args) =>
-            {
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += (sender, args) => {
                 GlobalStatusSingleton.username = usernameEntry.Text;
                 GlobalStatusSingleton.password = passwordEntry.Text;
                 // clear oauth data so we force(ensure) a regular password login.
@@ -177,6 +201,7 @@ namespace ImageImprov {
                     MyLogin(this, eDummy);
                 }
             };
+            connectButton.GestureRecognizers.Add(tap);
 
             anonymousPlayButton = new Button {
                 Text = "Play anonymously now",
@@ -242,21 +267,25 @@ namespace ImageImprov {
                 }
             };
 
-            StackLayout upperPortionOfGrid = new StackLayout {
-                VerticalOptions = LayoutOptions.Center,
-                BackgroundColor = GlobalStatusSingleton.backgroundColor,
-                Children =
-                {
-                    loggedInLabel,
-                    versionLabel,
-                    logoutButton,
-                }
-            };
-
             Grid controls = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
-            controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            controls.Children.Add(upperPortionOfGrid, 0, 0);
+            //controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(25, GridUnitType.Star) });
+            for (int i = 0; i < 10; i++) {
+                controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+
+            if (backgroundImgP == null) {
+                backgroundImgP = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(backgroundFilename, assembly),
+                    EnsureSquare = false,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                };
+            }
+
+            controls.Children.Add(backgroundImgP, 0, 0);
+            Grid.SetRowSpan(backgroundImgP, 10);
+            controls.Children.Add(loggedInLabel, 0, 4);
+            controls.Children.Add(versionLabel, 0, 6);
             controls.BackgroundColor = GlobalStatusSingleton.backgroundColor;
             return controls;
         }
@@ -264,6 +293,7 @@ namespace ImageImprov {
         // @todo Refactoring. Not sure how this fits in now?
         protected Layout<View> createAutoLoginLayout() {
             activeLayout = LAYOUT_CONNECTED_AUTO;
+            /*
             logoutButton = new Button
             {
                 Text = "Logout",
@@ -275,20 +305,34 @@ namespace ImageImprov {
                     LogoutClicked(this, eDummy);
                 }
             };
-
+            */
             Grid controls = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
             for (int i = 0; i < 10; i++) {
                 controls.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
-            controls.Children.Add(logoutButton, 0, 1);
-            controls.Children.Add(loggedInLabel, 0, 2);
-            controls.Children.Add(versionLabel, 0, 3);
+            if (backgroundImgP == null) {
+                backgroundImgP = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(backgroundFilename, assembly),
+                    EnsureSquare = false,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                };
+            }
+
+            controls.Children.Add(backgroundImgP, 0, 0);
+            Grid.SetRowSpan(backgroundImgP, 10);
+
+            //controls.Children.Add(logoutButton, 0, 1);
+            controls.Children.Add(loggedInLabel, 0, 4);
+            controls.Children.Add(versionLabel, 0, 5);
 
             controls.BackgroundColor = GlobalStatusSingleton.backgroundColor;
             return controls;
         }
 
         protected Layout<View> createNewDeviceLayout() {
+            return createCommonLayout();
+            /*
             Debug.WriteLine("DHB:LoginPage:createNewDevideLayout");
             activeLayout = LAYOUT_NEW_DEVICE;
 
@@ -325,10 +369,13 @@ namespace ImageImprov {
                 newDeviceLayout.Children.Insert(7, googleLogin);
             }
             return newDeviceLayout;
+            */
         }
 
         protected Layout<View> createForceLoginLayout() {
             activeLayout = LAYOUT_PRE_CONNECT_FORCE_LOGIN;
+            return createCommonLayout();
+            /*
             if (registerButton == null) {
                 createRegisterButton();
             }
@@ -366,6 +413,91 @@ namespace ImageImprov {
             }
             
             return forceLoginLayout;
+            */
+        }
+
+        protected Layout<View> createCommonLayout() {
+            if (backgroundImgP == null) {
+                backgroundImgP = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(backgroundFilename, assembly),
+                    EnsureSquare = false,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                };
+            }
+            if (termsOfServiceLabel == null) {
+                createWebButtons();
+            }
+            if (signupBackground == null) {
+                signupBackground = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.signinblock.png", assembly),
+                    EnsureSquare = false,
+                };
+            }
+            Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            for (int i = 0; i < 20; i++) {
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            int colsWide = 8;
+            for (int j = 0; j < colsWide; j++) {
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+
+            portraitView.Children.Add(backgroundImgP, 0, 0);
+            Grid.SetColumnSpan(backgroundImgP, colsWide);
+            Grid.SetRowSpan(backgroundImgP, 20);
+
+            portraitView.Children.Add(loggedInLabel, 0, 6);
+            Grid.SetColumnSpan(loggedInLabel, colsWide);
+            portraitView.Children.Add(signupBackground, 1, 7);
+            Grid.SetColumnSpan(signupBackground, 6);
+            Grid.SetRowSpan(signupBackground, 2);
+            portraitView.Children.Add(usernameEntry, 2, 7);
+            Grid.SetColumnSpan(usernameEntry, 4);
+            portraitView.Children.Add(passwordEntry, 2, 8);
+            Grid.SetColumnSpan(passwordEntry, 4);
+            portraitView.Children.Add(connectButton, 1, 10);
+            Grid.SetColumnSpan(connectButton, 6);
+            portraitView.Children.Add(facebookLogin, 1, 12);
+            Grid.SetColumnSpan(facebookLogin, 6);
+            if (Device.OS == TargetPlatform.iOS) {
+                portraitView.Children.Add(googleLogin,1,13);
+                Grid.SetColumnSpan(googleLogin, 6);
+            }
+
+            Label forgotPassword = new Label {
+                Text = "Forgot Password?",
+                TextColor = Color.Blue,
+                HorizontalTextAlignment =TextAlignment.Center,
+                VerticalTextAlignment =TextAlignment.End,
+                FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
+            };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += (object sender, EventArgs args) => {
+                Content = createForgotPwdLayout();
+            };
+            forgotPassword.GestureRecognizers.Add(tap);
+
+            portraitView.Children.Add(forgotPassword, 0, 15);
+            Grid.SetColumnSpan(forgotPassword, 4);
+            Label registerLabel = new Label {
+                Text = "New? Enter an email, password above \n then tap here to play",
+                TextColor =Color.Blue,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Start,
+                Margin = 0,
+                FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
+            };
+            portraitView.Children.Add(registerLabel, 4, 15);
+            Grid.SetColumnSpan(registerLabel, 4);
+            Grid.SetRowSpan(registerLabel, 2);
+            portraitView.Children.Add(termsOfServiceLabel, 0, 17);
+            Grid.SetColumnSpan(termsOfServiceLabel, 4);
+            portraitView.Children.Add(privacyPolicyLabel, 4, 17);
+            Grid.SetColumnSpan(privacyPolicyLabel, 4);
+            //layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            //return layoutP;
+            return portraitView;
         }
 
         // @todo Refactoring. Do we still need this page?  Provides access to registration for an anon account. 
@@ -411,6 +543,78 @@ namespace ImageImprov {
             //anonLoggedInLayout.Children.Add(defaultNavigationButtons, 0, 2);  // object, col, row
             anonLoggedInLayout.BackgroundColor = GlobalStatusSingleton.backgroundColor;
             return anonLoggedInLayout;
+        }
+
+        protected Layout<View> createForgotPwdLayout() {
+            if (backgroundImgP == null) {
+                assembly = this.GetType().GetTypeInfo().Assembly;
+                backgroundImgP = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(backgroundFilename, assembly),
+                    EnsureSquare = false,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                };
+            }
+            if (termsOfServiceLabel == null) {
+                createWebButtons();
+            }
+            Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            for (int i = 0; i < 20; i++) {
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            int colsWide = 8;
+            for (int j = 0; j < colsWide; j++) {
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+
+            portraitView.Children.Add(backgroundImgP, 0, 0);
+            Grid.SetColumnSpan(backgroundImgP, colsWide);
+            Grid.SetRowSpan(backgroundImgP, 20);
+
+            portraitView.Children.Add(loggedInLabel, 0, 6);
+            Grid.SetColumnSpan(loggedInLabel, colsWide);
+
+            usernameEntry.Placeholder = "Enter your email";
+            portraitView.Children.Add(usernameEntry, 2, 7);
+            Grid.SetColumnSpan(usernameEntry, 4);
+
+            if (forgotButton == null) {
+                forgotButton = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.sendForgotPasswordButton_inactive.png", assembly),
+                    EnsureSquare = false,
+                };
+                TapGestureRecognizer forgot = new TapGestureRecognizer();
+                forgot.Tapped += (object sender, EventArgs args) => {
+                    if (ForgotClicked != null) {
+                        ForgotClicked(sender, args);
+                    }
+                };
+                forgotButton.GestureRecognizers.Add(forgot);
+            }
+            portraitView.Children.Add(forgotButton, 2, 10);
+            Grid.SetColumnSpan(forgotButton, 4);
+
+            if (backButton == null) {
+                backButton = new iiBitmapView() {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png",assembly),
+                    EnsureSquare = false,
+                };
+                TapGestureRecognizer tap = new TapGestureRecognizer();
+                tap.Tapped += (object Sender, EventArgs args) => {
+                    Content = createCommonLayout();
+                };
+                backButton.GestureRecognizers.Add(tap);
+            }
+            portraitView.Children.Add(backButton, 0, 1);
+            
+
+            portraitView.Children.Add(termsOfServiceLabel, 0, 17);
+            Grid.SetColumnSpan(termsOfServiceLabel, 4);
+            portraitView.Children.Add(privacyPolicyLabel, 4, 17);
+            Grid.SetColumnSpan(privacyPolicyLabel, 4);
+            //layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
+            //return layoutP;
+            return portraitView;
         }
 
         protected Layout<View> createRegistrationLayout() {
@@ -489,10 +693,12 @@ namespace ImageImprov {
             tosPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
             //tosPage.setReturnPoint(this.Content);
             termsOfServiceLabel = new Label {
-                Text = "Tap here to read our Terms of Service",
+                //Text = "Tap here to read our Terms of Service",
+                Text = "Terms of Service",
                 TextColor = Color.Blue,
                 FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
                 HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.End,
             };
             TapGestureRecognizer tap = new TapGestureRecognizer();
             termsOfServiceLabel.GestureRecognizers.Add(tap);
@@ -505,10 +711,12 @@ namespace ImageImprov {
 
             privacyPolicyPage = iiWebPage.getInstance(GlobalStatusSingleton.PRIVACY_POLICY_URL, this, Content);
             privacyPolicyLabel = new Label {
-                Text = "And here for our Privacy Policy",
+                //Text = "And here for our Privacy Policy",
+                Text = "Privacy Policy",
                 TextColor = Color.Blue,
                 FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
                 HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.End,
             };
             tap = new TapGestureRecognizer();
             privacyPolicyLabel.GestureRecognizers.Add(tap);
@@ -945,7 +1153,59 @@ namespace ImageImprov {
         ///////// END OAUTH
         ///////// END OAUTH
 
+        /// Forgot Password
+        public async void OnForgotPwdClicked(object sender, EventArgs args) {
+            GlobalStatusSingleton.username = usernameEntry.Text;
+            string result = await requestForgotPassword();
+            if (result.Equals("Success")) {
+                Device.BeginInvokeOnMainThread(() => {
+                    loggedInLabel.Text = "Check your inbox. An email has been sent!";
+                    Content = createCommonLayout();
+                });
+            } else if (result.Equals("Unknown")) {
+                Device.BeginInvokeOnMainThread(() => {
+                    loggedInLabel.Text = "Sorry. That email address is not recognized.";
+                });
+            }
+        }
 
+        protected static async Task<string> requestForgotPassword() {
+            string result = BAD_PASSWORD_LOGIN_FAILURE;
+
+            try {
+                HttpClient client = new HttpClient();
+
+                //client.BaseAddress = new Uri(GlobalStatusSingleton.startingURL);
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                Debug.WriteLine("DHB:LoginPage:requestForgotPassword queryJson:");
+                HttpRequestMessage baseRequest = new HttpRequestMessage(HttpMethod.Get, GlobalStatusSingleton.startingURL + FORGOT_PWD + "?email="+ GlobalStatusSingleton.username);
+
+                // should not have a token.
+                //baseRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+
+                HttpResponseMessage baseResult = await client.SendAsync(baseRequest);
+                Debug.WriteLine("DHB:LoginPage:requestForgotPassword requestResultCode:" + System.Net.HttpStatusCode.OK);
+                if (baseResult.StatusCode == System.Net.HttpStatusCode.OK) {
+                    Debug.WriteLine("DHB:LoginPage:requestForgotPassword success");
+                    result = "Success";
+                } else if (baseResult.StatusCode == System.Net.HttpStatusCode.NotFound) {
+                    Debug.WriteLine("DHB:LoginPage:requestForgotPassword fail");
+                    result = "Unknown";
+                }
+            } catch (System.Net.WebException err) {
+                // The server was down last time this happened.  Is that the case now, when you are rereading this?
+                // Or, is it a connection fail?
+                Debug.WriteLine(err.ToString());
+                result = "Network error. Please check your connection and try again.";
+            } catch (HttpRequestException err) {
+                // do something!!
+                Debug.WriteLine(err.ToString());
+                result = "login failure";
+            }
+            return result;
+        }
+        /// 
         // @todo Refactoring Question.  Do we still need the goHome function?
         // What calls it?
         // How do we get to the loggedOut screen?

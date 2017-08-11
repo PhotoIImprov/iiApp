@@ -20,7 +20,11 @@ using SkiaSharp;
 
 namespace ImageImprov.iOS {
     public partial class CameraServices_iOS : UIViewController {  // UIViewController needed for this.View.Frame
-        bool flashOn = false;
+        bool flashMode = false;
+        UIButton flashButton;
+        UIImage flashOffImg;
+        UIImage flashOnImg;
+        public static bool exitFromPhoto = false;
 
         //public CameraService(IntPtr handle): base(handle) { }
 
@@ -49,8 +53,10 @@ namespace ImageImprov.iOS {
             // take picture button
             var takePicButton = UIButton.FromType(UIButtonType.RoundedRect);
             Debug.WriteLine("DHB:CameraService:ViewDidLoad device height:" + UIScreen.MainScreen.Bounds.Size.Height);
-            UIImage buttonImg = UIImage.FromFile("contests_inactive.png");
+            UIImage buttonImg = UIImage.FromFile("camerabutton.png");
+            UIImage highlightImg = UIImage.FromFile("cameraButton_active.png");
             takePicButton.SetImage(buttonImg, UIControlState.Normal);
+            takePicButton.SetImage(highlightImg, UIControlState.Highlighted);
             takePicButton.Frame = new CGRect(123, 470, 74, 74);
             //Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             //UIImage buttonImg = UIImage.FromResource(assembly, "Images/contests_inactive.png");
@@ -67,10 +73,25 @@ namespace ImageImprov.iOS {
             //label.ToggleBoldface(null);  hmm. this blows up.
             //Debug.WriteLine("DHB:CameraServices_iOS:ViewDidLoad font name: " + label.Font.ToString());  //.SFUIText 17
             label.Font = UIFont.FromName(".SFUIText-Bold", 30);
-            
             label.BackgroundColor = new UIColor(252.0f / 255.0f, 213.0f / 255.0f, 21.0f / 255.0f, 1.0f);
             label.Frame = new CGRect(0, 30, View.Bounds.Width, 50);
             View.AddSubview(label);
+
+            UIButton backButton = new UIButton();
+            UIImage backImg = UIImage.FromFile("backbutton.png");
+            backButton.SetImage(backImg, UIControlState.Normal);
+            backButton.Frame = new CGRect(5, 40, 19, 24);
+            backButton.TouchUpInside += ExitWithoutPhoto;
+            View.AddSubview(backButton);
+
+            flashButton = new UIButton();
+            flashOffImg = UIImage.FromFile("flash_inactive.png");
+            flashOnImg = UIImage.FromFile("flash.png");
+            flashButton.SetImage(flashOffImg, UIControlState.Normal);
+            flashButton.SetImage(flashOnImg, UIControlState.Selected);
+            flashButton.Frame = new CGRect(30, 470, 74, 74);
+            flashButton.TouchUpInside += toggleFlash;
+            View.AddSubview(flashButton);
         }
 
         public override void DidReceiveMemoryWarning() {
@@ -182,11 +203,44 @@ namespace ImageImprov.iOS {
                 //GlobalSingletonHelpers.readExifOrientation(jpegAsByteArray);
                 //Debug.WriteLine("DHB:CameraServices_iOS:TakePhotoButton:TakePhotoButtonTapped orientation:" + UIDevice.CurrentDevice.Orientation);
                 GlobalStatusSingleton.mostRecentImgBytes = jpegAsByteArray;
+                exitFromPhoto = true;
                 if (FinishedPickingMedia != null) {
                     FinishedPickingMedia(this, e);
                 }
             } catch (Exception err) {
                 Debug.WriteLine("DHB:Exception " + err.ToString());
+            }
+        }
+
+        public void ExitWithoutPhoto(object sender, EventArgs e) {
+            Debug.WriteLine("DHB:CameraService:TakePhotoButtonTapped");
+            try {
+                //Debug.WriteLine("DHB:CameraServices_iOS:TakePhotoButton:TakePhotoButtonTapped orientation:" + UIDevice.CurrentDevice.Orientation);
+                exitFromPhoto = false;
+                if (FinishedPickingMedia != null) {
+                    System.EventArgs eMax = (System.EventArgs)e;
+                    FinishedPickingMedia(this, e);
+                }
+            } catch (Exception err) {
+                Debug.WriteLine("DHB:Exception " + err.ToString());
+            }
+        }
+
+        public void toggleFlash(object sender, EventArgs e) {
+            flashMode = !flashMode;
+            flashButton.Selected = !flashButton.Selected;
+            var error = new NSError();
+            //Debug.WriteLine("DHB:CameraServices_iOS:toggleFlash button state:" + flashButton.State.ToString());
+            if (captureDevice.HasFlash) {
+                if (flashMode == true) {
+                    captureDevice.LockForConfiguration(out error);
+                    captureDevice.FlashMode = AVCaptureFlashMode.On;
+                    captureDevice.UnlockForConfiguration();
+                } else {
+                    captureDevice.LockForConfiguration(out error);
+                    captureDevice.FlashMode = AVCaptureFlashMode.Off;
+                    captureDevice.UnlockForConfiguration();
+                }
             }
         }
 

@@ -13,8 +13,11 @@ namespace ImageImprov {
         Grid settingsGrid;
 
         // flips between remaining logged in and out
-        CheckBox maintainLoginCheckbox;
+        //CheckBox maintainLoginCheckbox;
+        Switch maintainLoginCheckbox;
+        Label maintainLoginLabel;
         //CheckBox aspectOrFillCheckbox;
+        StackLayout maintainLogin;
 
         public SettingsPage() {
             buildUI();
@@ -23,11 +26,19 @@ namespace ImageImprov {
 
         protected void buildUI() {
             if (GlobalSingletonHelpers.isEmailAddress(GlobalStatusSingleton.username)) {
-                maintainLoginCheckbox = new CheckBox { Text = "Stay logged in on restart", IsChecked = GlobalStatusSingleton.maintainLogin, };
-                maintainLoginCheckbox.CheckChanged += (sender, args) =>
+                //maintainLoginCheckbox = new CheckBox { Text = "Stay logged in on restart", IsChecked = GlobalStatusSingleton.maintainLogin, };
+                maintainLoginCheckbox = new Switch() { IsToggled = GlobalStatusSingleton.maintainLogin, };
+                maintainLoginCheckbox.Toggled += (sender, args) =>
                 {
                     OnCheckBoxTapped(sender, new EventArgs());
                 };
+                maintainLoginLabel = new Label() { Text = "Stay logged in on restart", TextColor = Color.Black, VerticalTextAlignment=TextAlignment.Center };
+                maintainLogin = new StackLayout() {
+                    Orientation = StackOrientation.Horizontal,
+                    Spacing = 3,
+                };
+                maintainLogin.Children.Add(maintainLoginCheckbox);
+                maintainLogin.Children.Add(maintainLoginLabel);
             }
             /*
             aspectOrFillCheckbox = new CheckBox {
@@ -45,8 +56,12 @@ namespace ImageImprov {
             for (int i = 0; i < 8; i++) {
                 someGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
-            if (maintainLoginCheckbox != null) {
-                someGrid.Children.Add(maintainLoginCheckbox, 0, 3);
+            for (int i = 0; i < 6; i++) {
+                someGrid.ColumnDefinitions.Add(new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star) });
+            }
+            if (maintainLogin  != null) {
+                someGrid.Children.Add(maintainLogin, 1, 3);
+                Grid.SetColumnSpan(maintainLogin, 4);
             }
             //settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
             //settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
@@ -55,7 +70,7 @@ namespace ImageImprov {
 
         void OnCheckBoxTapped(object sender, EventArgs args) {
             if (sender == maintainLoginCheckbox) {
-                GlobalStatusSingleton.maintainLogin = ((CheckBox)sender).IsChecked;
+                GlobalStatusSingleton.maintainLogin = ((Switch)sender).IsToggled;
                 App myApp = ((App)Application.Current);
                 myApp.Properties["maintainLogin"] = GlobalStatusSingleton.maintainLogin.ToString();
                 myApp.SavePropertiesAsync();

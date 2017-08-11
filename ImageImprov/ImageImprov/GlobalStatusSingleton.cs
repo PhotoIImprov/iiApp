@@ -74,6 +74,7 @@ namespace ImageImprov
         public static Color highlightColor = Color.FromRgb(100, 100, 100);
         public static Color ButtonColor = Color.FromRgb(252, 213, 21);
         public static Color ActiveButtonColor = Color.FromRgb(252, 21, 21);
+        public static Color SplashBackgroundColor = Color.FromRgb(252, 187, 21);
         /////////////////////////////////// 
         /// END PREFERENCES SECTION
         /// END PREFERENCES SECTION

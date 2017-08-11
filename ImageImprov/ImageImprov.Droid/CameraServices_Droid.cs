@@ -26,10 +26,13 @@ namespace ImageImprov.Droid {
         private RelativeLayout upperOverlay;
         private RelativeLayout lowerOverlay;
         // snap pic
-        private bool flashMode = false;
+        private ImageButton flashButton;
+        bool flashMode = false;
         private int cameraId;
         // flash button
         // other camera button
+        Android.Support.Graphics.Drawable.VectorDrawableCompat flashOffImg;
+        Android.Support.Graphics.Drawable.VectorDrawableCompat flashOnImg;
 
         private Context context;
         // there's probably a proper way for inner classes to see this.
@@ -62,7 +65,10 @@ namespace ImageImprov.Droid {
 
             // category header
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnCreate layout created!");
-            Button categoryButton = new Button(this) { Text = GlobalStatusSingleton.uploadingCategories[0].description, };
+            Button categoryButton = new Button(this) { Text = GlobalStatusSingleton.uploadingCategories[0].description };
+            categoryButton.SetTextColor(Android.Graphics.Color.White);
+            categoryButton.SetTextSize(Android.Util.ComplexUnitType.Pt,30.0f);
+            categoryButton.SetTypeface(Android.Graphics.Typeface.SansSerif, Android.Graphics.TypefaceStyle.Bold);
             RelativeLayout.LayoutParams btnParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.FillParent, WindowManagerLayoutParams.WrapContent);
             btnParams.AddRule(LayoutRules.CenterHorizontal);
             categoryButton.LayoutParameters = btnParams;
@@ -103,7 +109,8 @@ namespace ImageImprov.Droid {
 
             // take picture button
             ImageButton takePictureButton = new ImageButton(this);
-            var btnImg = Android.Support.Graphics.Drawable.VectorDrawableCompat.Create(this.Resources, Resource.Drawable.contests_inactive, null);
+            var btnImg = Android.Support.Graphics.Drawable.VectorDrawableCompat.Create(this.Resources, Resource.Drawable.camerabutton, null);
+            
             takePictureButton.SetImageDrawable(btnImg);
             takePictureButton.Click += OnSnapPicture;
             takePictureButton.SetBackgroundColor(Android.Graphics.Color.Transparent);
@@ -114,11 +121,23 @@ namespace ImageImprov.Droid {
             takePictureButton.Id = TAKE_PICTURE_BUTTON_ID;
             // end take picture button
 
+            flashButton = new ImageButton(this);
+            flashOffImg = Android.Support.Graphics.Drawable.VectorDrawableCompat.Create(this.Resources, Resource.Drawable.flash_inactive, null);
+            flashOnImg = Android.Support.Graphics.Drawable.VectorDrawableCompat.Create(this.Resources, Resource.Drawable.flash, null);
+            flashButton.SetImageDrawable(flashOffImg);
+            flashButton.Click += toggleFlash;
+            RelativeLayout.LayoutParams flashParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, WindowManagerLayoutParams.WrapContent);
+            flashParams.AddRule(LayoutRules.AlignParentBottom);
+            flashParams.AddRule(LayoutRules.LeftOf, TAKE_PICTURE_BUTTON_ID);
+            flashButton.LayoutParameters = flashParams;
+
             myLayout.AddView(surfaceView);
             myLayout.AddView(upperOverlay);
             myLayout.AddView(lowerOverlay);
             myLayout.AddView(categoryButton);
             myLayout.AddView(takePictureButton);
+            myLayout.AddView(flashButton);
+            
             SetContentView(myLayout);
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnCreate done");
         }
@@ -171,6 +190,19 @@ namespace ImageImprov.Droid {
             camera.TakePicture(null, null, raw);
 
             //this.Finish(); need to generate an event and fire this there. firing here occurs before takePic and invalidates it.
+        }
+
+        public void toggleFlash(object sender, EventArgs e) {
+            flashMode = !flashMode;
+            if (flashMode == true) {
+                flashButton.SetImageDrawable(flashOnImg);
+            } else {
+                flashButton.SetImageDrawable(flashOffImg);
+            }
+            
+            Camera.Parameters cParams = camera.GetParameters();
+            cParams.FlashMode = (flashMode) ? Camera.Parameters.FlashModeOn : Camera.Parameters.FlashModeOff;
+            camera.SetParameters(cParams);
         }
 
         public void OnExit(object sender, EventArgs e) {
@@ -272,7 +304,6 @@ namespace ImageImprov.Droid {
                 } else {
                     System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestSquare image and preview size aspect ratios match");
                 }
-                
             } catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestSquare exception: " + e.ToString());
             }

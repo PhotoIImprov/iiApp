@@ -39,6 +39,20 @@ namespace ImageImprov {
         public static readonly BindableProperty ScalingProperty
             = BindableProperty.Create("Scaling", typeof(bool), typeof(iiBitmapView), true, BindingMode.Default, null, OnScalingChanged);
 
+        // EnsureSquare Property. Defaults to true.
+        public bool EnsureSquare {
+            get { return (bool)GetValue(EnsureSquareProperty); }
+            set { SetValue(EnsureSquareProperty, value); }
+        }
+
+        private static void OnEnsureSquareChanged(BindableObject bindable, object oldValue, object newValue) {
+            var myObj = bindable as iiBitmapView;
+            Device.BeginInvokeOnMainThread(() => myObj.InvalidateSurface());
+        }
+
+        public static readonly BindableProperty EnsureSquareProperty
+            = BindableProperty.Create("EnsureSquare", typeof(bool), typeof(iiBitmapView), true, BindingMode.Default, null, OnEnsureSquareChanged);
+
         public iiBitmapView() {
             this.PaintSurface += OnCanvasViewPaintSurface;
         }
@@ -61,17 +75,19 @@ namespace ImageImprov {
                 int drawHeight = surfaceHeight;
                 int startX = 0;
                 int startY = 0;
-                // currently, always maintain aspect ratio.
-                if (drawWidth < drawHeight) {
-                    drawHeight = drawWidth;
-                } else {
-                    drawWidth = drawHeight;
-                }
-                if (drawWidth < surfaceWidth) {
-                    startX = (int)((surfaceWidth - drawWidth) / 2);
-                }
-                if (drawHeight < surfaceHeight) {
-                    startY = (int)((surfaceHeight - drawHeight) / 2);
+                if (EnsureSquare == true) {
+                    // This maintains  an aspect ratio of 1.
+                    if (drawWidth < drawHeight) {
+                        drawHeight = drawWidth;
+                    } else {
+                        drawWidth = drawHeight;
+                    }
+                    if (drawWidth < surfaceWidth) {
+                        startX = (int)((surfaceWidth - drawWidth) / 2);
+                    }
+                    if (drawHeight < surfaceHeight) {
+                        startY = (int)((surfaceHeight - drawHeight) / 2);
+                    }
                 }
                 SKBitmap bitmap = new SKBitmap(new SKImageInfo(drawWidth, drawHeight));
                 if ((bitmap != null) && (Bitmap != null)) {

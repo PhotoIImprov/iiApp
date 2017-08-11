@@ -380,7 +380,7 @@ namespace ImageImprov {
                     // Calling this here is calling from an invalid height state that seems to fubar everything...
                     //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
                     //#endif
-                    portraitView.Children.Add(challengeLabelP, 0, 15);
+                    portraitView.Children.Add(challengeLabelP, 0, 0);  // orig 15, now moved to top
                     Grid.SetColumnSpan(challengeLabelP, 6);
                     Grid.SetRowSpan(challengeLabelP, 2);
                 }
