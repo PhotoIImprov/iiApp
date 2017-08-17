@@ -69,7 +69,7 @@ namespace ImageImprov {
         // Need to instances to accomodate the way GridLayout handles spans.
         IList<iiBitmapView> ballotImgsP = null;
         IList<iiBitmapView> voteBoxes = null;
-        const string VOTE_BOX_FILENAME = "ImageImprov.IconImages.votebox.png";
+        public const string VOTE_BOX_FILENAME = "ImageImprov.IconImages.votebox.png";
 
         /// <summary>
         /// ballot, ballotImgsP, and ballotImgsL hold the active Ballot.
@@ -113,6 +113,10 @@ namespace ImageImprov {
         // tracks which ballots have not yet received a vote in the multi-img vote voting scenario.
         List<BallotCandidateJSON> unvotedImgs;
 
+        iiBitmapView helpButton;
+        private const string HELP_BUTTON_FILENAME = "ImageImprov.IconImages.Help.png";
+        private const string LOADING_FILENAME = "ImageImprov.IconImages.ii_loading.png";
+
         //
         //   BEGIN Variables related/needed for images to place image rankings and backgrounds on screen.
         //
@@ -120,7 +124,7 @@ namespace ImageImprov {
         List<iiBitmapView> rankImages = new List<iiBitmapView>();
         Assembly assembly = null;
         Image backgroundImgP = null;
-        string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
+        public static string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
                 "ImageImprov.IconImages.third.png", "ImageImprov.IconImages.fourth.png"};
         string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
         //
@@ -172,6 +176,9 @@ namespace ImageImprov {
             managePersistedBallot(this, eDummy);
         }
 
+        /// <summary>
+        /// This has actualy become a generic helper function to load most persistent button images.
+        /// </summary>
         protected void buildRankImages() {
             voteBoxes = new List<iiBitmapView>();
             TapGestureRecognizer tap = new TapGestureRecognizer();
@@ -182,6 +189,7 @@ namespace ImageImprov {
                     HorizontalOptions = LayoutOptions.FillAndExpand,
                     VerticalOptions = LayoutOptions.FillAndExpand,
                     MinimumWidthRequest = 60,
+                    Margin = 2,
                 };
                 vBox.GestureRecognizers.Add(tap);
                 voteBoxes.Add(vBox);
@@ -193,10 +201,21 @@ namespace ImageImprov {
                     HorizontalOptions = LayoutOptions.FillAndExpand,
                     VerticalOptions = LayoutOptions.FillAndExpand,
                     MinimumWidthRequest = 60,
+                    Margin = 2,
                 };
-                //Grid.SetRowSpan(img, 2); sadly, this HAS to happen after inserting onto grid.
+                //img.GestureRecognizers.Add(tap);
                 rankImages.Add(img);
             }
+
+            TapGestureRecognizer helpTap = new TapGestureRecognizer();
+            helpTap.Tapped += OnHelpTapped;
+            helpButton = new iiBitmapView {
+                Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(HELP_BUTTON_FILENAME, assembly),
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Center,
+                Margin = 2,
+            };
+            helpButton.GestureRecognizers.Add(helpTap);
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
@@ -317,6 +336,7 @@ namespace ImageImprov {
             try {
                 // all my elements are already members...
                 if (portraitView == null) {
+                    // yes, these are unbalanced for a reason.
                     portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
                     portraitView.SizeChanged += OnPortraitViewSizeChanged;
                 } else {
@@ -448,6 +468,8 @@ namespace ImageImprov {
             portraitView.Children.Add(challengeLabelP, 0, 0);
             Grid.SetColumnSpan(challengeLabelP, 6);
             Grid.SetRowSpan(challengeLabelP, 2);
+            portraitView.Children.Add(helpButton, 5, 0);
+            Grid.SetRowSpan(helpButton, 2);
 
             if (lightbulbRow == null) {
                 lightbulbRow = new LightbulbTracker { HorizontalOptions = LayoutOptions.FillAndExpand, };
@@ -576,6 +598,19 @@ namespace ImageImprov {
             Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick end");
 
         }
+
+        public async void OnHelpTapped(object sender, EventArgs e) {
+            IList<iiBitmapView> newImgs = new List<iiBitmapView>();
+            foreach (iiBitmapView img in ballotImgsP) {
+                iiBitmapView newCopy = new iiBitmapView {
+                    Bitmap = img.Bitmap.Copy(),
+                };
+                newImgs.Add(newCopy);
+            }
+            VotingInstructionsOverlay helpPage = new VotingInstructionsOverlay(newImgs);
+            this.Navigation.PushModalAsync(helpPage);
+        }
+
         /////
         /////
         ///// BEGIN Loading section
@@ -855,15 +890,17 @@ namespace ImageImprov {
         /// </summary>
         protected virtual void loadInstructions() {
             ballot.ballots = new List<BallotCandidateJSON>();
-            challengeLabelP.Text = "Instructions";
+            //challengeLabelP.Text = "Instructions";
+            challengeLabelP.Text = "Loading...";
             if (portraitView != null) {
                 GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height / 10.0);
             }
             // now handle ballot
             Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
-            for (int i=1;i<5; i++) { 
+            for (int i=1;i<5; i++) {
                 iiBitmapView imgP = new iiBitmapView() {
-                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png", assembly)
+                    //Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Instructions.Instructions_" + i + ".png", assembly)
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_FILENAME, assembly),
                 };
                 ballotImgsP.Add(imgP);
             }
@@ -1369,10 +1406,11 @@ namespace ImageImprov {
             int removePosn = 0;
             bool res = votedOn(bid, ref removePosn);
             if (res) {
-                if (Device.OS == TargetPlatform.iOS) {
-                    checkPosition = removePosn;
-                    Debug.WriteLine("DHB:JudgingContentPage:uncheckCase set checkposition to " + removePosn);
-                }
+                //if (Device.OS == TargetPlatform.iOS) {
+                //    checkPosition = removePosn;
+                //    Debug.WriteLine("DHB:JudgingContentPage:uncheckCase set checkposition to " + removePosn);
+                //}
+
                 // process the uncheck.
                 //    remove this bid from the votes object.
                 //    add back into the unvoted images list.
@@ -1401,9 +1439,9 @@ namespace ImageImprov {
             }
 
             // only needed for iOS.
-            if (Device.OS == TargetPlatform.iOS) {
-                lastClicked = (iiBitmapView)sender;
-            }
+            //if (Device.OS == TargetPlatform.iOS) {
+            //    lastClicked = (iiBitmapView)sender;
+            //}
 
             // ballots may have been cleared and this can be a dbl tap registration.
             // in which case, ignore.
@@ -1512,9 +1550,14 @@ namespace ImageImprov {
                 } else {
                     int col = 0;
                     int row = 0;
+                    Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot updating selection:" + selectionId);
+                    // removing and adding the voteBox is for apple as the topmost widget always consumes a tap, even if they do nothing with it.
+                    portraitView.Children.Remove(voteBoxes[selectionId]);
                     determineColAndRowFromIndex(selectionId, ref col, ref row);
                     portraitView.Children.Add(rankImages[vote.vote - 1], col, row);
                     Grid.SetRowSpan(rankImages[vote.vote - 1], 2);
+                    portraitView.Children.Add(voteBoxes[selectionId], col, row);
+                    Grid.SetRowSpan(voteBoxes[selectionId], 2);
                 }
             }
         }
