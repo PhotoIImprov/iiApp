@@ -31,7 +31,7 @@ namespace ImageImprov {
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(.25, GridUnitType.Star) });
-            myView.ColumnDefinitions.Add(new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star) });
+            myView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             myView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             myView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -69,6 +69,18 @@ namespace ImageImprov {
             img7.SetBinding(iiBitmapView.BitmapProperty, "bitmap7");
             img8.SetBinding(iiBitmapView.BitmapProperty, "bitmap8");
 
+            TapGestureRecognizer imgTapped = new TapGestureRecognizer();
+            imgTapped.Tapped += OnImgTapped;
+            img0.GestureRecognizers.Add(imgTapped);
+            img1.GestureRecognizers.Add(imgTapped);
+            img2.GestureRecognizers.Add(imgTapped);
+            img3.GestureRecognizers.Add(imgTapped);
+            img4.GestureRecognizers.Add(imgTapped);
+            img5.GestureRecognizers.Add(imgTapped);
+            img6.GestureRecognizers.Add(imgTapped);
+            img7.GestureRecognizers.Add(imgTapped);
+            img8.GestureRecognizers.Add(imgTapped);
+
             myView.Children.Add(categoryDescription, 0, 0);
             Grid.SetColumnSpan(categoryDescription, 3);
             myView.Children.Add(img0, 0, 1);
@@ -84,5 +96,19 @@ namespace ImageImprov {
             this.View = myView;
         }
 
+        public void OnImgTapped(object sender, EventArgs args) {
+            if (((iiBitmapView)sender) != null) {
+                MasterPage mp = ((MasterPage)Application.Current.MainPage);
+                mp.zoomPage.ActiveMetaBallot = new BallotCandidateJSON(); // nada for now.
+
+                iiBitmapView taggedImg = new iiBitmapView {
+                    Bitmap = ((iiBitmapView)sender).Bitmap.Copy()
+                };
+                mp.zoomPage.MainImage = taggedImg;
+                mp.zoomPage.buildZoomView();
+                mp.zoomPage.PreviousContent = mp.thePages.leaderboardPage;
+                mp.thePages.leaderboardPage.Content = mp.zoomPage.Content;
+            }
+        }
     }
 }

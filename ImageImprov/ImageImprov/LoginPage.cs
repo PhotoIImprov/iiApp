@@ -100,7 +100,7 @@ namespace ImageImprov {
             Margin = 1,
         };
 
-        iiBitmapView signupBackground;
+        //iiBitmapView signupBackground;
         iiBitmapView forgotButton;
         iiBitmapView backButton;
 
@@ -192,7 +192,9 @@ namespace ImageImprov {
                 EnsureSquare = false,
             };
             TapGestureRecognizer tap = new TapGestureRecognizer();
-            tap.Tapped += (sender, args) => {
+            tap.Tapped += async (sender, args) => {
+                await connectButton.FadeTo(0, 175);
+                await connectButton.FadeTo(1, 175);
                 GlobalStatusSingleton.username = usernameEntry.Text;
                 GlobalStatusSingleton.password = passwordEntry.Text;
                 // clear oauth data so we force(ensure) a regular password login.
@@ -253,8 +255,8 @@ namespace ImageImprov {
 #endif
         }
 
-
-        protected Layout<View> createPreConnectAutoLoginLayout() {
+        // public so it is exposed to ThirdPartyAuthenticator
+        public Layout<View> createPreConnectAutoLoginLayout() {
             activeLayout = LAYOUT_PRE_CONNECT_AUTO_LOGIN;
             logoutButton = new Button {
                 Text = "Logout",
@@ -282,11 +284,12 @@ namespace ImageImprov {
                 };
             }
 
+            Debug.WriteLine("DHB:LoginPage:createPreConnectAutoLoginLayout");
+            controls.BackgroundColor = GlobalStatusSingleton.SplashBackgroundColor;
             controls.Children.Add(backgroundImgP, 0, 0);
             Grid.SetRowSpan(backgroundImgP, 10);
             controls.Children.Add(loggedInLabel, 0, 4);
             controls.Children.Add(versionLabel, 0, 6);
-            controls.BackgroundColor = GlobalStatusSingleton.backgroundColor;
             return controls;
         }
 
@@ -321,7 +324,7 @@ namespace ImageImprov {
 
             controls.Children.Add(backgroundImgP, 0, 0);
             Grid.SetRowSpan(backgroundImgP, 10);
-
+            Debug.WriteLine("DHB:LoginPage:createAutoLoginLayout");
             //controls.Children.Add(logoutButton, 0, 1);
             controls.Children.Add(loggedInLabel, 0, 4);
             controls.Children.Add(versionLabel, 0, 5);
@@ -428,12 +431,12 @@ namespace ImageImprov {
             if (termsOfServiceLabel == null) {
                 createWebButtons();
             }
-            if (signupBackground == null) {
+            /*if (signupBackground == null) {
                 signupBackground = new iiBitmapView() {
                     Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.signinblock.png", assembly),
                     EnsureSquare = false,
                 };
-            }
+            }*/
             Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
             for (int i = 0; i < 20; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -449,13 +452,13 @@ namespace ImageImprov {
 
             portraitView.Children.Add(loggedInLabel, 0, 6);
             Grid.SetColumnSpan(loggedInLabel, colsWide);
-            portraitView.Children.Add(signupBackground, 1, 7);
-            Grid.SetColumnSpan(signupBackground, 6);
-            Grid.SetRowSpan(signupBackground, 2);
-            portraitView.Children.Add(usernameEntry, 2, 7);
-            Grid.SetColumnSpan(usernameEntry, 4);
-            portraitView.Children.Add(passwordEntry, 2, 8);
-            Grid.SetColumnSpan(passwordEntry, 4);
+            //portraitView.Children.Add(signupBackground, 1, 7);
+            //Grid.SetColumnSpan(signupBackground, 6);
+            //Grid.SetRowSpan(signupBackground, 2);
+            portraitView.Children.Add(usernameEntry, 1, 7);
+            Grid.SetColumnSpan(usernameEntry, 6);
+            portraitView.Children.Add(passwordEntry, 1, 8);
+            Grid.SetColumnSpan(passwordEntry, 6);
             portraitView.Children.Add(connectButton, 1, 10);
             Grid.SetColumnSpan(connectButton, 6);
             portraitView.Children.Add(facebookLogin, 1, 12);
@@ -473,7 +476,9 @@ namespace ImageImprov {
                 FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
             };
             TapGestureRecognizer tap = new TapGestureRecognizer();
-            tap.Tapped += (object sender, EventArgs args) => {
+            tap.Tapped += async (object sender, EventArgs args) => {
+                await forgotPassword.FadeTo(0, 175);
+                await forgotPassword.FadeTo(1, 175);
                 Content = createForgotPwdLayout();
             };
             forgotPassword.GestureRecognizers.Add(tap);
@@ -488,6 +493,20 @@ namespace ImageImprov {
                 Margin = 0,
                 FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
             };
+            TapGestureRecognizer regTap = new TapGestureRecognizer();
+            regTap.Tapped += async (sender, args) => {
+                await registerLabel.FadeTo(0, 175);
+                await registerLabel.FadeTo(1, 175);
+                loggedInLabel.Text = "Registering...";
+                GlobalStatusSingleton.username = usernameEntry.Text;
+                GlobalStatusSingleton.password = passwordEntry.Text;
+                // call the event handler that manages the communication with server for registration.
+                if (RegisterNow != null) {
+                    RegisterNow(this, eDummy);
+                }
+            };
+            registerLabel.GestureRecognizers.Add(regTap);
+
             portraitView.Children.Add(registerLabel, 4, 15);
             Grid.SetColumnSpan(registerLabel, 4);
             Grid.SetRowSpan(registerLabel, 2);
@@ -897,7 +916,7 @@ namespace ImageImprov {
             if (isEmailAddress(GlobalStatusSingleton.username) || (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID))) {
                 string registrationResult = await requestRegistrationAsync();
                 if (registrationResult.Equals(REGISTRATION_FAILURE)) {
-                    blankRowLabel.Text = registrationResult;
+                    loggedInLabel.Text = registrationResult;
                 } else {
                     // registration success. Send a login request message.
                     if (MyLogin != null) {
@@ -961,7 +980,13 @@ namespace ImageImprov {
                 } else {
                     // login creds are no good.
                     Debug.WriteLine("DHB:LoginPage:requestRegistrationAsync failure! statuscode: " + result.StatusCode.ToString());
-                    resultMsg = REGISTRATION_FAILURE;
+                    string serverResponse = await requestTokenAsync();
+                    if (serverResponse.Equals("Success")) {
+                        // the user entered a correct username and password. treat as a login...
+                        resultMsg = serverResponse;
+                    } else {
+                        resultMsg = REGISTRATION_FAILURE;
+                    }
                 }
                 ////////// still todo above here..........
             } catch (System.Net.WebException err) {
@@ -1133,7 +1158,9 @@ namespace ImageImprov {
         private void createGoogleButton() {
             googleLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.google_login.png"), };
             TapGestureRecognizer tap = new TapGestureRecognizer();
-            tap.Tapped += (sender, EventArgs) => {
+            tap.Tapped += async (sender, EventArgs) => {
+                await googleLogin.FadeTo(0.25, 175);
+                await googleLogin.FadeTo(1, 175);
                 oauthManager.configForGoogle();
                 oauthManager.startAuthentication(Navigation);
             };
@@ -1143,7 +1170,9 @@ namespace ImageImprov {
         private void createFacebookButton() {
             facebookLogin = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.facebook_login.png"), };
             TapGestureRecognizer tap = new TapGestureRecognizer();
-            tap.Tapped += (sender, EventArgs) => {
+            tap.Tapped += async (sender, EventArgs) => {
+                await facebookLogin.FadeTo(0.25, 175);
+                await facebookLogin.FadeTo(1, 175);
                 oauthManager.configForFacebook();
                 oauthManager.startAuthentication(Navigation);
             };

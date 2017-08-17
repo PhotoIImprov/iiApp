@@ -194,6 +194,8 @@ namespace ImageImprov {
         public void OnClickedWhenOn(object sender, EventArgs e) {
             if (sender == gotoVotingImgButtonOn) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPageHome();
+            } else if (sender == gotoLeaderboardImgButtonOn) {
+                    ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
             } else if (sender == gotoCameraImgButtonOn) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
             } else if (sender == gotoHamburgerImgButtonOn) {

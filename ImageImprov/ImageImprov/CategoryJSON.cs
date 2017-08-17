@@ -10,8 +10,7 @@ namespace ImageImprov
 {
     // Represents a category users compete on, along with associated meta data.
     [JsonObject]
-    public class CategoryJSON
-    {
+    public class CategoryJSON : IComparable<CategoryJSON> {
         public readonly static string UNKNOWN = "UNKNOWN";   // i shouldn't recv this one.
         public readonly static string UPLOAD = "UPLOAD";
         public readonly static string VOTING = "VOTING";
@@ -67,6 +66,12 @@ namespace ImageImprov
                 res = description.GetHashCode();
             }
             return res;
+        }
+
+        public int CompareTo(CategoryJSON b) {
+            if (this.categoryId > b.categoryId) return 1;
+            else if (this.categoryId < b.categoryId) return -1;
+            else return 0;
         }
     }
 }

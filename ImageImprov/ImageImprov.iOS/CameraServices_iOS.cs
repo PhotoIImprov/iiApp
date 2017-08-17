@@ -280,7 +280,11 @@ namespace ImageImprov.iOS {
             } else if (UIDevice.CurrentDevice.Orientation == UIDeviceOrientation.PortraitUpsideDown) {
                 rotation = 270;
             } else {
-                throw new IndexOutOfRangeException("Invalid orientation: " + UIDevice.CurrentDevice.Orientation.ToString());
+                // can get here from faceup.
+                rotation = 0;
+                // throwing an exception will prevent picture snappage.
+                //throw new IndexOutOfRangeException("Invalid orientation: " + UIDevice.CurrentDevice.Orientation.ToString());
+                Debug.WriteLine(("DHB:CameraService_iOS:calculateRotationDegrees: Invalid orientation: " + UIDevice.CurrentDevice.Orientation.ToString()));
             }
             return rotation;
         }

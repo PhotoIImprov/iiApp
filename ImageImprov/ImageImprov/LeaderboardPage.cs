@@ -16,7 +16,7 @@ using SkiaSharp;
 using ExifLib;
 
 namespace ImageImprov {
-    public class LeaderboardPage : ContentView {
+    public class LeaderboardPage : ContentView, ILeaveZoomCallback {
         public const int MAX_LEADERBOARDS = 5;
         public const int MAX_IMAGES = 9;
 
@@ -35,7 +35,6 @@ namespace ImageImprov {
         //IList<LeaderboardElement> leaderboards = new List<LeaderboardElement>();
         ObservableCollection<LeaderboardElement> leaderboards = new ObservableCollection<LeaderboardElement>();
         DataTemplate myDataTemplate = new DataTemplate(typeof(LeaderboardCell));
-
 
         // tracks what category I'm showing
         //long activeCategory;
@@ -423,6 +422,11 @@ namespace ImageImprov {
         }
         public IDictionary<CategoryJSON, DateTime> GetLeaderboardTimestamps() {
             return leaderboardUpdateTimestamps;
+        }
+
+        // the zoom callback.
+        public void returnToCaller() {
+            Content = portraitView;
         }
 
     }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace ImageImprov {
+    [JsonObject]
     public class BallotCandidateJSON {
 
         // the bid id

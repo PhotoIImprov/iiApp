@@ -44,6 +44,11 @@ namespace ImageImprov {
         Image settingsButton;
         Label settingsLabel;
 
+        Label termsOfServiceLabel;
+        iiWebPage tosPage;
+        Label privacyPolicyLabel;
+        iiWebPage privacyPolicyPage;
+
         Label loggedInLabel = new Label
         {
             Text = "Connecting...",
@@ -207,41 +212,38 @@ namespace ImageImprov {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoSettingsPage();
             };
 
-            Label blankrow = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            Label blankrow2 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            Label blankrow3 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            Label blankrow4 = new Label { Text = "", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label comingSoon = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label medals = new Label { Text = "   My medals", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
 
             Label myfavs = new Label { Text = "   My favorites", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             //Label purchases = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
 
-            StackLayout hamburger = new StackLayout
-            {
-                Orientation = StackOrientation.Vertical,
-                Spacing = 6,
-                //Children = { instructionsRow, votingRow, homeRow, cameraRow, leaderboardRow, settingsRow, }
-                Children = { instructionsRow, blankrow, submissionsRow, blankrow2, settingsRow, blankrow3, comingSoon, medals, myfavs, blankrow4, versionLabel, loggedInLabel, }
-            };
-            //ScrollView scroller = new ScrollView { Padding = new Thickness(10) };
-            //scroller.Content = hamburger;
-
-            //if (defaultNavigationButtons == null) {
-            //    defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
-            //}
+            if (termsOfServiceLabel == null) {
+                createWebButtons();
+            }
 
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(4, GridUnitType.Star) });
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12, GridUnitType.Star) });
-                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+                for (int i = 0; i < 16; i++) {
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
+            portraitView.Children.Add(instructionsRow, 1, 4);
+            portraitView.Children.Add(submissionsRow, 1, 6);
+            portraitView.Children.Add(settingsRow, 1, 8);
+            portraitView.Children.Add(comingSoon, 1, 10);
+            portraitView.Children.Add(medals, 1, 11);
+            portraitView.Children.Add(myfavs, 1, 12);
+            portraitView.Children.Add(versionLabel, 1, 13);
+            portraitView.Children.Add(loggedInLabel, 1, 14);
+            portraitView.Children.Add(termsOfServiceLabel, 1, 15);
+            portraitView.Children.Add(privacyPolicyLabel, 1, 16);
+
             //portraitView.Children.Add(scroller, 1, 1);
-            portraitView.Children.Add(hamburger, 1, 1);
+            //portraitView.Children.Add(hamburger, 1, 1);
             //portraitView.Children.Add(defaultNavigationButtons, 0, 2);
             //Grid.SetColumnSpan(defaultNavigationButtons, 3);
             return 1;
@@ -254,6 +256,45 @@ namespace ImageImprov {
         /// <param name="e"></param>
         public virtual void TokenReceived(object sender, EventArgs e) {
             loggedInLabel.Text = GlobalStatusSingleton.username;
+        }
+
+        View returnLayout;
+        protected void createWebButtons() {
+            tosPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
+            //tosPage.setReturnPoint(this.Content);
+            termsOfServiceLabel = new Label {
+                //Text = "Tap here to read our Terms of Service",
+                Text = "Terms of Service",
+                TextColor = Color.Blue,
+                FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.End,
+            };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            termsOfServiceLabel.GestureRecognizers.Add(tap);
+            tap.Tapped += (sender, args) => {
+                //boom.
+                returnLayout = Content;
+                iiWebPage newPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
+                Content = newPage;
+            };
+
+            privacyPolicyPage = iiWebPage.getInstance(GlobalStatusSingleton.PRIVACY_POLICY_URL, this, Content);
+            privacyPolicyLabel = new Label {
+                //Text = "And here for our Privacy Policy",
+                Text = "Privacy Policy",
+                TextColor = Color.Blue,
+                FontSize = Device.GetNamedSize(NamedSize.Micro, typeof(Label)),
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.End,
+            };
+            tap = new TapGestureRecognizer();
+            privacyPolicyLabel.GestureRecognizers.Add(tap);
+            tap.Tapped += (sender, args) => {
+                returnLayout = Content;
+                iiWebPage newPage = iiWebPage.getInstance(GlobalStatusSingleton.PRIVACY_POLICY_URL, this, Content);
+                Content = newPage;
+            };
         }
 
     }

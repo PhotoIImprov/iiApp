@@ -23,11 +23,7 @@ namespace ImageImprov
     /// Will become a player profile page eventually.
     /// Currently refactoring out the login stuff.
     /// </summary>
-    public class PlayerContentPage : ContentView {
-
-        //KeyPageNavigator defaultNavigationButtons;
-
-
+    public class PlayerContentPage : ContentView, ILeaveZoomCallback {
         PlayerPageCenterConsole playerPageCenterConsole;
         public PlayerPageCenterConsole CenterConsole {
             get { return playerPageCenterConsole; }
@@ -59,56 +55,14 @@ namespace ImageImprov
             if (GlobalStatusSingleton.loggedIn == false) {
                 Debug.WriteLine("DHB:PlayerContentPage:goHome fyi - not logged in");
             }
-
-            /*
-            if (GlobalStatusSingleton.username.Equals(GlobalStatusSingleton.UUID)) {
-                // anonymous user
-                Content = createAnonLoggedInLayout();
-            } else {
-                Content = createAutoLoginLayout();
-            }
-            */
-
-            /* this was live pre refactor.
-            if (GlobalStausSingleton.isEmailAddress(GlobalStatusSingleton.username)) {
-                Content = createAutoLoginLayout();
-            } else {
-                // anonymous user
-                Content = createAnonLoggedInLayout();
-            }
-            */
         }
 
-
-
-        //< requestLoginAsync
-        // @todo bad password/account fail case
-        // @todo no network connection fail case
-        // I'm deserializing and instantly reserializing an object. consider fixing.
-
-
-        /* lives and works in teh KeyPageNavigator
-        public void OnClicked(object sender, EventArgs e) {
-            // I need to know which image.  
-            // From there I vote... (?)
-            if (sender == gotoVotingImgButton) {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
-            } else if (sender == gotoCameraImgButton) {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
-            } // else ignore goHomeImgButton
+        // the zoom callback.
+        public void returnToCaller() {
+            // This will be a problem that I have to refactor out when we get to PlayerProfile Page.
+            // Right now, this is the only page that has a zoom in the center console, so skirting by.
+            Content = CenterConsole.MySubmissionsPage;
         }
-        */
-
-
-        /*
-        public IDictionary<CategoryJSON, IList<LeaderboardJSON>> GetLeaderboardList() {
-            return CenterConsole.LeaderboardPage.GetLeaderboardList();
-        }
-        public IDictionary<CategoryJSON, DateTime> GetLeaderboardTimestamps() {
-            return CenterConsole.LeaderboardPage.GetLeaderboardTimestamps();
-        }
-        */
-
     }  // class
 
 }  // namespace

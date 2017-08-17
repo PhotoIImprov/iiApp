@@ -109,6 +109,8 @@ namespace ImageImprov
         //public static string mostRecentClosedCategoryDescription = "";
         public static IList<CategoryJSON> closedCategories = new List<CategoryJSON>();
 
+        public static IList<CategoryJSON> countingCategories = new List<CategoryJSON>();
+
         /// <summary>
         /// Used for setting notifications.
         /// </summary>

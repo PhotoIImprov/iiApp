@@ -24,9 +24,10 @@ namespace ImageImprov
         }
 
         JudgingContentPage judgingPage;
-        LeaderboardPage leaderboardPage;
+        // public so that i can implement zoom callback.
+        public LeaderboardPage leaderboardPage;
         CameraContentPage cameraPage;
-        PlayerContentPage playerPage;
+        public PlayerContentPage playerPage;
 
         // Listed as a reference to highlight I no longer own the lifecycle of this page.
         LoginPage refToLoginPage;
@@ -62,6 +63,7 @@ namespace ImageImprov
             // is categoryLoad?
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(cameraPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
+            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnCategoryLoad);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(judgingPage.OnLoadBallotFromSubmission);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnPhotoSubmit);
 
@@ -110,6 +112,7 @@ namespace ImageImprov
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage");
             //playerPage.Content = playerPage.CenterConsole.LeaderboardPage;
             //this.CurrentPage = playerPage;
+            leaderboardPage.returnToCaller();
             this.Position = 1;
         }
         public void gotoSettingsPage() {

@@ -21,7 +21,7 @@ namespace ImageImprov {
     public delegate void DequeueBallotRequestEventHandler(object sender, EventArgs e);
 
     // This is the first roog page of the judging.
-    class JudgingContentPage : ContentView {
+    class JudgingContentPage : ContentView, ILeaveZoomCallback {
         public static string LOAD_FAILURE = "No open voting category currently available.";
 
         // A dummy object for controlling lock on ui resources
@@ -68,6 +68,8 @@ namespace ImageImprov {
         // @todo imgs currently only respond to taps.  Would like to be able to longtap a fast vote.
         // Need to instances to accomodate the way GridLayout handles spans.
         IList<iiBitmapView> ballotImgsP = null;
+        IList<iiBitmapView> voteBoxes = null;
+        const string VOTE_BOX_FILENAME = "ImageImprov.IconImages.votebox.png";
 
         /// <summary>
         /// ballot, ballotImgsP, and ballotImgsL hold the active Ballot.
@@ -124,24 +126,12 @@ namespace ImageImprov {
         //
         //   END Variables related/needed for images to place image rankings and backgrounds on screen.
         // 
-
         //
         //   BEGIN Variables related/needed for double clicking an image
         //
 
-        /// <summary>
-        /// Tracks whether to display a ballot or the meta data for an image.
-        /// </summary>
-        Grid zoomView;
-        iiBitmapView unlikedImg;
-        iiBitmapView unflaggedImg;
-        iiBitmapView likedImg;
-        iiBitmapView flaggedImg;
-        Button backButton = null;
-        BallotCandidateJSON activeMetaBallot;
-        //
-        //   END Variables related/needed for double clicking an image
-        // 
+        // Going with a single zoomPage owned by MasterPage
+        //ZoomPage zoomPage = new ZoomPage();
 
         // lightbulb stars for voting!
         LightbulbTracker lightbulbRow; // = new LightbulbTracker();
@@ -183,6 +173,20 @@ namespace ImageImprov {
         }
 
         protected void buildRankImages() {
+            voteBoxes = new List<iiBitmapView>();
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += OnClicked;
+            for (int i = 0; i < 4; i++) {
+                iiBitmapView vBox = new iiBitmapView {
+                    Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(VOTE_BOX_FILENAME, assembly),
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                    MinimumWidthRequest = 60,
+                };
+                vBox.GestureRecognizers.Add(tap);
+                voteBoxes.Add(vBox);
+            }
+
             foreach (string filename in rankFilenames) {
                 iiBitmapView img = new iiBitmapView {
                     Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(filename, assembly),
@@ -393,99 +397,6 @@ namespace ImageImprov {
             return result;
         }
 
-        private void buildMetaButtons() {
-            unlikedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unliked.png", assembly));
-            unflaggedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unflagged.png", assembly));
-            likedImg = new iiBitmapView {
-                Bitmap = (GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.liked.png", assembly)),
-                IsVisible = false
-            };
-            flaggedImg = new iiBitmapView {
-                Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.flagged.png", assembly),
-                IsVisible = false
-            };
-
-            TapGestureRecognizer ulTap = new TapGestureRecognizer();
-            ulTap.Tapped += (sender, args) => {
-                activeMetaBallot.isLiked = true;
-                unlikedImg.IsVisible = false;
-                likedImg.IsVisible = true;
-            };
-            unlikedImg.GestureRecognizers.Add(ulTap);
-
-            TapGestureRecognizer lTap = new TapGestureRecognizer();
-            lTap.Tapped += (sender, args) => {
-                activeMetaBallot.isLiked = false;
-                likedImg.IsVisible = false;
-                unlikedImg.IsVisible = true;
-            };
-            likedImg.GestureRecognizers.Add(lTap);
-
-            TapGestureRecognizer ufTap = new TapGestureRecognizer();
-            ufTap.Tapped += (sender, args) => {
-                activeMetaBallot.isFlagged = true;
-                unflaggedImg.IsVisible = false;
-                flaggedImg.IsVisible = true;
-            };
-            unflaggedImg.GestureRecognizers.Add(ufTap);
-
-            TapGestureRecognizer fTap = new TapGestureRecognizer();
-            fTap.Tapped += (sender, args) => {
-                activeMetaBallot.isFlagged = false;
-                flaggedImg.IsVisible = false;
-                unflaggedImg.IsVisible = true;
-            };
-            flaggedImg.GestureRecognizers.Add(fTap);
-
-            backButton = new Button
-            {
-                //Text = buttonText,
-                Text = "Save and return to voting",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                //VerticalOptions = LayoutOptions.FillAndExpand,
-                TextColor = Color.Black,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            };
-            backButton.Clicked += (sender, args) => {
-                Content = portraitView;
-            };
-        }
-
-        private int buildZoomView(iiBitmapView mainImage, BallotCandidateJSON ballot) {
-            int result = 1;
-            if (zoomView == null) {
-                zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                for (int i = 0; i < 16; i++) {
-                    zoomView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                }
-                zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width= new GridLength(1, GridUnitType.Star) });
-                buildMetaButtons();
-            } else {
-                unlikedImg.IsVisible = !ballot.isLiked;
-                likedImg.IsVisible = ballot.isLiked;
-                unflaggedImg.IsVisible = !ballot.isFlagged;
-                flaggedImg.IsVisible = ballot.isFlagged;
-            }
-            activeMetaBallot = ballot;
-            mainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
-            //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
-
-            zoomView.Children.Clear();
-            zoomView.Children.Add(mainImage,0,0);
-            Grid.SetRowSpan(mainImage, 10);
-            Grid.SetColumnSpan(mainImage, 2);
-            zoomView.Children.Add(unlikedImg,0,11);
-            zoomView.Children.Add(likedImg,0,11);
-            zoomView.Children.Add(unflaggedImg,1,11);
-            zoomView.Children.Add(flaggedImg,1,11);
-            zoomView.Children.Add(backButton,0,14);
-            Grid.SetColumnSpan(backButton, 2);
-            Grid.SetRowSpan(backButton, 2);
-            return result;
-        }
-
         /// <summary>
         /// Helper function for buildPortraitView that constructs the layout when the current ballot has 4
         /// images exif defines as portrait images.
@@ -518,6 +429,14 @@ namespace ImageImprov {
             portraitView.Children.Add(ballotImgsP[3], 3, 8);  // col, row format
             Grid.SetRowSpan(ballotImgsP[3], 6);
             Grid.SetColumnSpan(ballotImgsP[3], 3);
+
+            portraitView.Children.Add(voteBoxes[0], 2, 6);
+            portraitView.Children.Add(voteBoxes[1], 5, 6);
+            portraitView.Children.Add(voteBoxes[2], 2, 12);
+            portraitView.Children.Add(voteBoxes[3], 5, 12);
+            for (int i=0;i<4;i++) {
+                Grid.SetRowSpan(voteBoxes[i], 2);
+            }
 
             //#if DEBUG
             //challengeLabelP.Text += " 4P_P case";
@@ -574,7 +493,7 @@ namespace ImageImprov {
             Debug.WriteLine("DHB:JudgingContentPage:OnClicked end");
         }
 
-        public void OnDoubleClick(object sender, EventArgs e) {
+        public async void OnDoubleClick(object sender, EventArgs e) {
             // want to switch to a UI where just the sending image is present.
             // with a like button
             //    a flag button
@@ -588,19 +507,34 @@ namespace ImageImprov {
             int selectionId = 0;
             long bid = -1;
             BallotCandidateJSON votedOnCandidate = null;
-            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate);
+            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate, ballotImgsP);
             if (found) {
                 //taggedImg = GlobalSingletonHelpers.buildFixedRotationImage(votedOnCandidate);
                 taggedImg = new iiBitmapView {
                     Bitmap = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(votedOnCandidate.imgStr, (ExifOrientation)votedOnCandidate.orientation)
                 };
             }
-            buildZoomView(taggedImg, votedOnCandidate);
+
+            
+            //buildZoomView(taggedImg, votedOnCandidate);
             Device.BeginInvokeOnMainThread(() => {
-                Content = zoomView;
+                MasterPage mp = ((MasterPage)Application.Current.MainPage);
+                mp.zoomPage.MainImage = taggedImg;
+                mp.zoomPage.ActiveMetaBallot = votedOnCandidate;
+                mp.zoomPage.buildZoomView();
+                mp.zoomPage.PreviousContent = this;
+                Content = mp.zoomPage.Content;
                 Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick Content==zoomView");
             });
+            /*
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.zoomPage.MainImage = taggedImg;
+            mp.zoomPage.ActiveMetaBallot = votedOnCandidate;
+            mp.zoomPage.buildZoomView();
+            await mp.Navigation.PushModalAsync(mp.zoomPage);
+            */
 
+            /*
             if (Device.OS == TargetPlatform.iOS) {
                 Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick on iOS do single click cleanup");
                 Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick checkposition == " + checkPosition);
@@ -632,7 +566,7 @@ namespace ImageImprov {
                 // reset at start of process, as there are no process steps that can set these flags.
                 //lastClicked = null;
                 //checkPosition = -1;
-            }
+            } */
 
             // event args has nothing I can set.
             // use a class member to show this has been processed and prevent click processing.
@@ -778,12 +712,17 @@ namespace ImageImprov {
                                 GlobalStatusSingleton.uploadingCategories.Add(cat);
                                 // should not exist in voting or closed categories!
                             }
+                        } else if (cat.state.Equals(CategoryJSON.COUNTING)) {
+                            if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.countingCategories, cat)) {
+                                GlobalStatusSingleton.countingCategories.Add(cat);
+                                GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.votingCategories, cat);
+                            }
                         } else if (cat.state.Equals(CategoryJSON.CLOSED)) {
                             //GlobalStatusSingleton.mostRecentClosedCategoryId = cat.categoryId;
                             //GlobalStatusSingleton.mostRecentClosedCategoryDescription = cat.description;
                             if (!GlobalSingletonHelpers.listContainsCategory(GlobalStatusSingleton.closedCategories, cat)) {
                                 GlobalStatusSingleton.closedCategories.Add(cat);
-                                GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.votingCategories, cat);
+                                GlobalSingletonHelpers.removeCategoryFromList(GlobalStatusSingleton.countingCategories, cat);
                             }
                         } else if (cat.state.Equals(CategoryJSON.PENDING)) {
                             // For now I don't persist pending categories, so no further housekeeping is needed with any cateogry.
@@ -1055,12 +994,10 @@ namespace ImageImprov {
             // This works. looks like a long press will be a pain in the ass.
             // bleh. iOS always responds to both the doubleTap and tap. Whereas android only responds to the double tap
             // order of addition is immaterial. iOS grabs.
-            TapGestureRecognizer tapGesture = new TapGestureRecognizer();
-            tapGesture.Tapped += OnClicked;
-            image.GestureRecognizers.Add(tapGesture);
 
+            // no longer a double tap
             TapGestureRecognizer doubleTap = new TapGestureRecognizer();
-            doubleTap.NumberOfTapsRequired = 2;
+            //doubleTap.NumberOfTapsRequired = 2;
             doubleTap.Tapped += OnDoubleClick;
             image.GestureRecognizers.Add(doubleTap);
 
@@ -1349,13 +1286,16 @@ namespace ImageImprov {
         /// bleh, setting so many things this turned out to be more trouble than worth...
         /// </summary>
         /// <returns></returns>
-        private bool findSelectionIndexAndBid(object sender, ref int selectionId, ref long bid, ref BallotCandidateJSON votedOnCandidate) {
+        private bool findSelectionIndexAndBid(object sender, ref int selectionId, ref long bid, ref BallotCandidateJSON votedOnCandidate, IList<iiBitmapView> searchGroup) {
             bool found = false;
             int index = 0;
             // ballotImgsP and L have same meta info, so only need this once.
             // but I do need to search the correct one to id the sender.
             var searchImgs = ballotImgsP;
-            foreach (iiBitmapView img in searchImgs) {
+            //foreach (iiBitmapView img in searchImgs) {
+            //foreach (iiBitmapView img in voteBoxes) { 
+            // if i tap the hitbox, need that index, if i tap the like, need that box, if i tap the img, need that one.
+            foreach (iiBitmapView img in searchGroup) {
                 if (img == sender) {
                     found = true;
                     votedOnCandidate = ballot.ballots[index];
@@ -1414,27 +1354,6 @@ namespace ImageImprov {
                 }
             });
         }
-        /*
-        private void rebuildAllImagesWithVotesOld() {
-            Device.BeginInvokeOnMainThread(() =>
-            {
-                int ballotIndex = 0;
-                int voteNum = -1;
-                foreach (BallotCandidateJSON candidate in ballot.ballots) {
-                    if (votedOn(candidate.bidId, ref voteNum)) {
-                        SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation);
-                        // note: votedOn sets voteNum to the zero based index, not the votes.votes.vote num.
-                        SKImage mergedImage = GlobalSingletonHelpers.MergeImages(baseImg, rankImages[voteNum]);
-                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], mergedImage);
-                    } else {
-                        SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation));
-                        GlobalSingletonHelpers.UpdateXamarinImageFromSKImage(ballotImgsP[ballotIndex], img);
-                    }
-                    ballotIndex++;
-                }
-            });
-        }
-        */
 
         /// <summary>
         /// Check for 4 votes already, as Enabled=false seems to fail... (maybe I need to turn of the gestures?)
@@ -1492,7 +1411,7 @@ namespace ImageImprov {
             int selectionId = 0;
             long bid = -1;
             BallotCandidateJSON votedOnCandidate = null;
-            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate);
+            bool found = findSelectionIndexAndBid(sender, ref selectionId, ref bid, ref votedOnCandidate, voteBoxes);
 
 #if DEBUG
             if (found == false) {
@@ -1766,6 +1685,10 @@ namespace ImageImprov {
             Content = portraitView;
         }
 
+        // the zoom callback.
+        public void returnToCaller() {
+            Content = portraitView;
+        }
     } // class
 } // namespace
 

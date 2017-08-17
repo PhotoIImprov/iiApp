@@ -48,14 +48,6 @@ namespace ImageImprov.iOS {
             });
 
             Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
-            Debug.WriteLine("DHB:Notifications:CheckNotificationPriveledges allowed?" + alertsAllowed.ToString());
 
             if (!alertsAllowed) { RequestAuthorization(); }
             //}
@@ -95,20 +87,6 @@ namespace ImageImprov.iOS {
                     Debug.WriteLine("DHB:iOS:Notifications:ScheduleNotification err:" + err.ToString());
                 }
             });
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
-            Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
             Debug.WriteLine("DHB:Notifications:ScheduleNotification scheduled");
         }
 

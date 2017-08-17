@@ -5,16 +5,18 @@ using System;
 using System.Reflection;
 
 namespace ImageImprov {
-    class iiBitmapView : SKCanvasView {
+    public class iiBitmapView : SKCanvasView {
         /// <summary>
         /// @todo You need to actually create this bitmap!!
         /// </summary>
         public static SKBitmap BLANK_BITMAP = null; //loadBitmap("ListViewLearning.Images.ImageImprov_2.jpg");
+        public static PhotoMetaJSON DEFAULT_PHOTO_META = null; // have nada as the default.
 
 
         public SKBitmap Bitmap {
             get { return (SKBitmap)GetValue(BitmapProperty); }
-            set { SetValue(BitmapProperty, value); }
+            //set { SetValue(BitmapProperty, value); }
+            set { Device.BeginInvokeOnMainThread(() => SetValue(BitmapProperty, value)); }
         }
 
         private static void OnBitmapChanged(BindableObject bindable, object oldValue, object newValue) {
@@ -24,6 +26,19 @@ namespace ImageImprov {
 
         public static readonly BindableProperty BitmapProperty
             = BindableProperty.Create("Bitmap", typeof(SKBitmap), typeof(iiBitmapView), BLANK_BITMAP, BindingMode.Default, null, OnBitmapChanged);
+
+        // PhotoMeta Property.
+        public PhotoMetaJSON PhotoMeta {
+            get { return (PhotoMetaJSON)GetValue(PhotoMetaProperty); }
+            set { SetValue(PhotoMetaProperty, value); }
+        }
+
+        private static void OnPhotoMetaChanged(BindableObject bindable, object oldValue, object newValue) {
+            var myObj = bindable as iiBitmapView;
+        }
+
+        public static readonly BindableProperty PhotoMetaProperty
+            = BindableProperty.Create("PhotoMeta", typeof(PhotoMetaJSON), typeof(iiBitmapView), DEFAULT_PHOTO_META, BindingMode.Default, null, OnPhotoMetaChanged);
 
         // Scaling Property.
         public bool Scaling {

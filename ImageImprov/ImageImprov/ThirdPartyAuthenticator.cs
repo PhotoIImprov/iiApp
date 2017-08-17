@@ -135,6 +135,7 @@ namespace ImageImprov {
             */
             if (method == METHOD_FACEBOOK) {
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
+                //authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
             } else if (method == METHOD_GOOGLE) {
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
             } else {
@@ -259,13 +260,18 @@ namespace ImageImprov {
         /// <param name="args"></param>
         public async void OnAuthCompleted(object sender, EventArgs args) {
             Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted");
-            Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
-            //await navigation.PopModalAsync();
 
             if (((AuthenticatorCompletedEventArgs)args).Account == null) {
+                Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
                 Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted User backed out of oauth. Exit and return to regular login ui.");
                 return;
             }
+
+            // this is the success case.
+            parent.Content = parent.createPreConnectAutoLoginLayout();
+            Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
+            //await navigation.PopModalAsync();
+
             // and now returning to our regularly scheduled programming
             Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted Successful login!");
             if (oauthData == null) {
@@ -304,7 +310,7 @@ namespace ImageImprov {
             } catch (Exception e) {
                 Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted EXCEPTION!:" + e.ToString());
             }
-
+            Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted done");
         }
 
         /// <summary>
@@ -351,12 +357,13 @@ namespace ImageImprov {
                 Debug.WriteLine(err.ToString());
                 result = "login failure";
             }
+            Debug.WriteLine("DHB:ThirdPartyAuthenticator:requestTokenAsync done");
             return result;
         }
 
         public void OnAuthError(object sender, EventArgs args) {
             // do something with the error condition.
-            Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthCompleted login fail");
+            Debug.WriteLine("DHB:ThirdPartyAuthenticator:OnAuthError login fail");
             //AuthenticatorCompletedEventArgs.
             parent.loggedInLabel.Text = method + " login failed. Please try again.";
             // should just return to login page.

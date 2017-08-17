@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;  // for debug assertions.
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using System.Diagnostics;
+
 using Xamarin.Forms;
 using SkiaSharp;
+using Newtonsoft.Json;
 
 namespace ImageImprov {
     /// <summary>
@@ -21,155 +26,228 @@ namespace ImageImprov {
     /// </summary>
     public class MySubmissionsPage : ContentView {
         public const string IMG_FILENAME_PREFIX = "ImageImprov_";
+        readonly static string SUBMISSIONS = "submissions";
+        readonly static string PREVIEW = "preview";
 
-        StackLayout submissionStack = new StackLayout {
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center,
-            Spacing = 2.0,
-        };
-        ScrollView scroller = new ScrollView();
+        public const string LOADING_IMG_NAME = "ImageImprov.IconImages.ii_loading.png";
 
+        Assembly assembly = null;
         Grid portraitView;
+        ListView myListView;
+        ObservableCollection<SubmissionsRow> submissions = new ObservableCollection<SubmissionsRow>();
+        DataTemplateSelector dts = new SubmissionsDataTemplateSelector();
 
         public MySubmissionsPage() {
-            submissionStack.SizeChanged += redrawImages;
-
-            // right now, the next two lines take 35 secs on boot.
-
-            buildMyImages();
-            Debug.WriteLine("DHB:MySubmissionsPage:MySubmissionsPage async test");
-            // wait till the redraw to call this. due to the resize...
+            assembly = this.GetType().GetTypeInfo().Assembly;
+            // get submissions filled somehow.
             buildUI();
-            
-            //buildLoadingUI();
         }
 
-        private const double SCALE_CHANGE = 3.01;
-
-        IList<Image> myImages = new List<Image>();
-
-        protected async void buildMyImages() {
-            Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages: memory:" + PlatformSpecificCalls.GetMemoryStatus());
-            //var t = await Task.Run(() => {  see if this solves my load time issue
-            await Task.Run(() => {
-                myImages.Clear();
-                // img tracker is 1-indexed...
-                //for (int i=1;i<=GlobalStatusSingleton.imgsTakenTracker;i++) {
-                //IList<string> filenames = DependencyService.Get<IFileServices>().getImageImprovFileNames();
-                //if (Width > -1) { // don't bother unless we are live... as the memory usage is not pretty.
-                    IList<string> filenames = PlatformSpecificCalls.getImageImprovFileNames();
-                    foreach (string f in filenames) {
-                        byte[] raw = PlatformSpecificCalls.loadImageBytes(f);
-                        if (raw != null) {
-                            // height set to width as the images should be square and we want them sized as a function of the width.
-                            //Image final = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(raw, ExifLib.ExifOrientation.Undefined, (int)(Width / SCALE_CHANGE), (int)(Width / SCALE_CHANGE));
-                            Image final = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(raw, ExifLib.ExifOrientation.Undefined, 720, 720);
-                            if (final != null) {
-                                myImages.Add(final);
-                            }
-                        }
-                        Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages memory diagnostics:");
-                        Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages: memory:" + PlatformSpecificCalls.GetMemoryStatus());
-                    }
-                //}
-            });
-            //t.Wait();  // what if we don't wait?  never loads.
-
-            Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages startup done.");
-            Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages async test");
-            //Debug.WriteLine("DHB:MySubmissionsPage:buildMyImages: memory:" + PlatformSpecificCalls.GetMemoryStatus());
-        }
-
-        protected void buildUI() {
+        public int buildUI() {
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-                /* This differs from Leaderboard page. This crashes, leaderboard doesn't, so try it the leaderboard way...
-                 * no joy.
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(15, GridUnitType.Star) });
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
-                */
-                for (int i=0; i<16; i++) {
+                for (int i = 0; i < 16; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
-            Debug.WriteLine("DHB:MySubmissionsPage:buildUI: pre3 across memory:" + PlatformSpecificCalls.GetMemoryStatus());
-            build3Across();
-            Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post3across memory:" + PlatformSpecificCalls.GetMemoryStatus());
+            myListView = new ListView { ItemsSource = submissions, ItemTemplate = dts, HasUnevenRows = true, };
 
-            scroller.Content = submissionStack;
-
-            Label titleBar = new Label {
-                Text = "My submissions:",
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-                TextColor = Color.White,
-                HorizontalTextAlignment = TextAlignment.Center,
-            };
-            GlobalSingletonHelpers.fixLabelHeight(titleBar, Width, Height / 10.0, 20);
-            Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post scroller set memory:" + PlatformSpecificCalls.GetMemoryStatus());
-            portraitView.Children.Add(titleBar, 0, 0);
-            //Grid.SetRowSpan(titleBar, 2);
-
-            portraitView.Children.Add(scroller, 0, 2);
-            Grid.SetRowSpan(scroller, 14);  // switching order did not help...
-            //portraitView.Children.Add(submissionStack, 0, 2); doing no scroller did not help
+            portraitView.Children.Add(myListView, 0, 0);
+            Grid.SetRowSpan(myListView, 16);
             Content = portraitView;
-            Debug.WriteLine("DHB:MySubmissionsPage:buildUI: post content set memory:" + PlatformSpecificCalls.GetMemoryStatus());
+            return 1;
         }
 
-        private void build3Across() {
-            submissionStack.Children.Clear();
-            for (int j = 0; j < myImages.Count; j += 3) {
-                // does not contrain to screen width.
-                // of course not.  It's a STACK!!  Solution: set the suggested width of the images!
-                StackLayout leaderRow = new StackLayout
-                {
-                    Orientation = StackOrientation.Horizontal,
-                    VerticalOptions = LayoutOptions.Center,
-                    HorizontalOptions = LayoutOptions.Center,
 
-                };
-                myImages[j].MinimumWidthRequest = (double)((int)(Width / 3.01));
-                myImages[j].HeightRequest = (double)((int)(Width / 3.01));
-                leaderRow.Children.Add(myImages[j]);
-                if ((j + 1) < myImages.Count) {
-                    myImages[j + 1].WidthRequest = (Width / 3.01);
-                    myImages[j + 1].HeightRequest = (Width / 3.01);
-                    leaderRow.Children.Add(myImages[j + 1]);
-
-                    if ((j + 2) < myImages.Count) {
-                        myImages[j + 2].WidthRequest = (Width / 3.01);
-                        myImages[j + 2].HeightRequest = (Width / 3.01);
-                        leaderRow.Children.Add(myImages[j + 2]);
-                    }
-                }
-                submissionStack.Children.Add(leaderRow);
-            }
-        }
-
-        double lastRedrawnWidth = -2.0;
-        public void redrawImages(object sender, EventArgs args) {
-            if ((Width > 0) && (Width != lastRedrawnWidth)) {
-                Debug.WriteLine("DHB:MySubmissionsPage:redrawImages redrawing... Width="+Width);
-                //submissionStack.Children.Clear();
-                lastRedrawnWidth = Width;
-                if (myImages.Count == 0) {
-                    buildMyImages(); //should not need this line!
-                }
-                buildUI();
-            }
-        }
 
         public void OnPhotoSubmit(object sender, EventArgs args) {
             // buildMyImages();  // this is a SLOOOOW function. just add the latest image
             byte[] raw = ((CameraContentPage)sender).latestTakenImgBytes;
             Image final = GlobalSingletonHelpers.buildFixedRotationImageFromBytes(raw, ExifLib.ExifOrientation.Undefined, 720, 720);
             if (final != null) {
-                myImages.Add(final);
+                //myImages.Add(final);
             }
             raw = null;
             buildUI();
+        }
+
+        /// <summary>
+        /// Testing the reorder of this stuff.
+        /// </summary>
+        /// <param name="subs"></param>
+        private void printSubs(IList<SubmissionJSON> subs) {
+            foreach (SubmissionJSON sub in subs) {
+                Debug.WriteLine("DHB:MySubmissionsPage:printSubs Current cat id: " + sub.category.categoryId);
+            }
+        }
+
+        /// <summary>
+        /// Get the submissions whenever categories are loaded.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public async virtual void OnCategoryLoad(object sender, EventArgs e) {
+            long lookupId = -1;
+            if (GlobalStatusSingleton.closedCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.closedCategories[0].categoryId;
+            } else if (GlobalStatusSingleton.countingCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.countingCategories[0].categoryId;
+            } else if (GlobalStatusSingleton.votingCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.votingCategories[0].categoryId;
+            } else if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
+            }
+            if (lookupId == -1) return;  // no valid categories!
+
+            string result = await requestSubmissionsAsync(lookupId);
+            // hmmm... I think I want to fire off 5 threads here...
+            // convert the json into the submissions object.
+            // Reminder: ObservableCollection<SubmissionsRow> submissions = new ObservableCollection<SubmissionsRow>();
+            SubmissionsResponseJSON mySubs = JsonConvert.DeserializeObject<SubmissionsResponseJSON>(result);
+            if ((mySubs != null) && (mySubs.submissions!=null) && (mySubs.submissions.Count>0)) {
+                mySubs.submissions.Sort();
+                printSubs(mySubs.submissions);
+                mySubs.submissions.Reverse();
+                Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad break");
+                printSubs(mySubs.submissions);
+                foreach (SubmissionJSON subCategory in mySubs.submissions) {
+                    if (subCategory.photos.Count > 0) {
+                        SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = subCategory.category.description };
+                        submissions.Add(titleRow);
+                        Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad about to load: " + subCategory.photos.Count + " photos.");
+                        //foreach (PhotoMetaJSON photo in subCategory.photos) {
+                        for (int i = 0; i < subCategory.photos.Count; i = i + 3) {
+                            int j = i;
+                            SubmissionsImageRow imgRow = new SubmissionsImageRow();
+                            submissions.Add(imgRow);
+                            imgRow.bitmap0 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                            Task.Run(async () => {
+                                Debug.WriteLine("DHB:MySubmissionsPage imgload started for img " + j);
+                                imgRow.bitmap0 = await loadBitmapAsync(subCategory.photos[j].pid);
+                                Debug.WriteLine("DHB:MySubmissionsPage imgload finished for img " + j);
+                            });
+                            imgRow.bmp0Meta = subCategory.photos[j];
+
+                            if (j + 1 < subCategory.photos.Count) {
+                                imgRow.bitmap1 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                                Task.Run(() => imgRow.bitmap1 = loadBitmapAsync(subCategory.photos[j + 1].pid).Result);
+                                imgRow.bmp1Meta = subCategory.photos[j + 1];
+                            }
+
+                            if (j + 2 < subCategory.photos.Count) {
+                                imgRow.bitmap2 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                                Task.Run(() => {
+                                    Debug.WriteLine("DHB:MySubmissionsPage imgload started for img " + (j + 2));
+                                    imgRow.bitmap2 = loadBitmapAsync(subCategory.photos[j + 2].pid).Result;
+                                    Debug.WriteLine("DHB:MySubmissionsPage imgload finished for img " + (j + 2));
+                                });
+                                imgRow.bmp2Meta = subCategory.photos[j + 2];
+                            }
+                            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
+                        }
+                        //SubmissionsBlankRow blank = new SubmissionsBlankRow();
+                        //submissions.Add(blank);  // causing issues at this row. skip for now.
+                    }
+                    Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad category: " + subCategory.category.description + " complete.");
+                }
+            }
+            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
+        }
+
+        private async Task<SKBitmap> loadBitmapAsync(long pid, int attempt = 0) {
+            Debug.WriteLine("DHB:MySubmissionsPage:loadBitmapAsync depth:" +attempt);
+            SKBitmap output = null;
+            byte[] result = await requestImageAsync(pid);
+            if (result != null) {
+                try {
+                    /*
+                    PreviewResponseJSON resp = JsonConvert.DeserializeObject<PreviewResponseJSON>(result);
+                    if (resp != null) {
+                        output = GlobalSingletonHelpers.SKBitmapFromBytes(resp.imgStr);
+                    }
+                    */
+                    //output = SKBitmap.Decode(result);
+                    output = GlobalSingletonHelpers.SKBitmapFromBytes(result);
+                } catch (Exception e) {
+                    Debug.WriteLine("DHB:MySubmissionsPage:loadBitmapAsync err:" + e.ToString());
+                }
+            }
+            if (output == null) {
+                //output = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.alert.png", assembly);
+                if (attempt < 10) {  // fail after 10 attempts.
+                    await Task.Delay(3000);
+                    await loadBitmapAsync(pid, attempt + 1);  // will recurse down till we get it.  
+                } else {
+                    Debug.WriteLine("DHB:MySubmissionsPage:loadBitmapAsync MaxDepth hit");
+                    output = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.alert.png", assembly);
+                }
+            }
+            return output;
+        }
+
+        /// <summary>
+        /// Currently only requests for categories in the category call.
+        /// </summary>
+        /// <param name="category_id"></param>
+        /// <returns></returns>
+        static async Task<string> requestSubmissionsAsync(long category_id) {
+            Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync start");
+            string result = "fail";
+
+            try {
+                HttpClient client = new HttpClient();
+                string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + category_id;
+
+                HttpRequestMessage submissionRequest = new HttpRequestMessage(HttpMethod.Get, submissionURL);
+                submissionRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+
+                HttpResponseMessage subResult = await client.SendAsync(submissionRequest);
+                if (subResult.StatusCode == System.Net.HttpStatusCode.OK) {
+                    result = await subResult.Content.ReadAsStringAsync();
+                } else {
+                    // no ok back from the server! gahh.
+                    Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync invalid result code: " + subResult.StatusCode.ToString());
+                }
+            } catch (System.Net.WebException err) {
+                Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync:WebException");
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:MySubmissionsPage:Exception");
+                Debug.WriteLine(e.ToString());
+            }
+            Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync end");
+            return result;
+        }
+
+        static async Task<byte[]> requestImageAsync(long pid) {
+            Debug.WriteLine("DHB:MySubmissionsPage:requestImageAsync start pid:" + pid);
+            byte[] result = null;// "fail";
+
+            try {
+                HttpClient client = new HttpClient();
+                string previewURL = GlobalStatusSingleton.activeURL + PREVIEW + "/" + pid;
+
+                HttpRequestMessage previewRequest = new HttpRequestMessage(HttpMethod.Get, previewURL);
+                previewRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+
+                HttpResponseMessage previewResult = await client.SendAsync(previewRequest);
+                if (previewResult.StatusCode == System.Net.HttpStatusCode.OK) {
+                    //result = await previewResult.Content.ReadAsStringAsync();
+                    result = await previewResult.Content.ReadAsByteArrayAsync();
+                } else {
+                    // no ok back from the server! gahh.
+                    Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync invalid result code: " + previewResult.StatusCode.ToString());
+                }
+            } catch (System.Net.WebException err) {
+                Debug.WriteLine("DHB:MySubmissionsPage:requestSubmissionsAsync:WebException");
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:MySubmissionsPage:Exception");
+                Debug.WriteLine(e.ToString());
+            }
+            Debug.WriteLine("DHB:MySubmissionsPage:requestImageAsync end pid:" + pid);
+            return result;
         }
     }
 }

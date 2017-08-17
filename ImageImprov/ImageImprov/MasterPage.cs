@@ -16,9 +16,11 @@ namespace ImageImprov {
         // Q: Do I need IProvideNavigation???  Yes. Drilling down from root is how the system is setup.
         Grid portraitView = new Grid();
         PageHeader header = new PageHeader();
-        MainPageSwipeUI thePages;
+        // thePages is public so that modal pages I push/pop can bind 
+        public MainPageSwipeUI thePages;
         KeyPageNavigator defaultNavigation; // = new KeyPageNavigator { HighlightedButtonIndex = 0, }; must be created after thepages
         LoginPage loginPage = new LoginPage();
+        public ZoomPage zoomPage { get; set; }
 
         public MasterPage() {
             BackgroundColor = GlobalStatusSingleton.backgroundColor;
@@ -32,6 +34,9 @@ namespace ImageImprov {
             // bind the footer to the current position on the list view
             Binding binding = new Binding { Source = thePages, Path = "Position" };
             defaultNavigation.SetBinding(KeyPageNavigator.HighlightedButton, binding);
+
+            zoomPage = new ZoomPage();
+
 
             Content = loginPage;
             Debug.WriteLine("DHB:MasterPage ctor complete");

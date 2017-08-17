@@ -180,6 +180,7 @@ namespace ImageImprov.Droid {
                 camera.Release();
                 camera = null;
             }
+            orienter.Disable();
         }
 
         public void OnSnapPicture(object sender, EventArgs e) {
