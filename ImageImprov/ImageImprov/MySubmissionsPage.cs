@@ -37,7 +37,26 @@ namespace ImageImprov {
         ObservableCollection<SubmissionsRow> submissions = new ObservableCollection<SubmissionsRow>();
         DataTemplateSelector dts = new SubmissionsDataTemplateSelector();
 
+        struct PhotoLoad {
+            public long pid;
+            public SubmissionsImageRow drawRow;
+            public int index;
+            public PhotoLoad(long pid, SubmissionsImageRow row, int idx) {
+                this.pid = pid;
+                drawRow = row;
+                index = idx;
+            }
+        }
+        Queue<PhotoLoad> photosToLoad = new Queue<PhotoLoad>();
+        EventHandler processPhotoLoadQueue;
+
         public MySubmissionsPage() {
+            // this starts up the process photo thread.
+            processPhotoLoadQueue += OnProcessPhotoLoadQueue;
+            if (processPhotoLoadQueue != null) {
+                processPhotoLoadQueue(this, new EventArgs());
+            }
+
             assembly = this.GetType().GetTypeInfo().Assembly;
             // get submissions filled somehow.
             buildUI();
@@ -93,17 +112,23 @@ namespace ImageImprov {
                 lookupId = GlobalStatusSingleton.closedCategories[0].categoryId;
             } else if (GlobalStatusSingleton.countingCategories.Count > 0) {
                 lookupId = GlobalStatusSingleton.countingCategories[0].categoryId;
-            } else if (GlobalStatusSingleton.votingCategories.Count > 0) {
+            } else   
+            if (GlobalStatusSingleton.votingCategories.Count > 0) {
                 lookupId = GlobalStatusSingleton.votingCategories[0].categoryId;
             } else if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
                 lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
             }
             if (lookupId == -1) return;  // no valid categories!
+                                         //lookupId = 10;
 
-            string result = await requestSubmissionsAsync(lookupId);
-            // hmmm... I think I want to fire off 5 threads here...
-            // convert the json into the submissions object.
-            // Reminder: ObservableCollection<SubmissionsRow> submissions = new ObservableCollection<SubmissionsRow>();
+            string result = "fail";
+            while (result.Equals("fail")) {
+                result = await requestSubmissionsAsync(lookupId);
+                if (result.Equals("fail")) {
+                    await Task.Delay(10000);
+                }
+            }
+
             SubmissionsResponseJSON mySubs = JsonConvert.DeserializeObject<SubmissionsResponseJSON>(result);
             if ((mySubs != null) && (mySubs.submissions!=null) && (mySubs.submissions.Count>0)) {
                 mySubs.submissions.Sort();
@@ -112,42 +137,54 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad break");
                 printSubs(mySubs.submissions);
                 foreach (SubmissionJSON subCategory in mySubs.submissions) {
-                    if (subCategory.photos.Count > 0) {
-                        SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = subCategory.category.description };
-                        submissions.Add(titleRow);
-                        Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad about to load: " + subCategory.photos.Count + " photos.");
-                        //foreach (PhotoMetaJSON photo in subCategory.photos) {
-                        for (int i = 0; i < subCategory.photos.Count; i = i + 3) {
-                            int j = i;
-                            SubmissionsImageRow imgRow = new SubmissionsImageRow();
-                            submissions.Add(imgRow);
-                            imgRow.bitmap0 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
-                            Task.Run(async () => {
-                                Debug.WriteLine("DHB:MySubmissionsPage imgload started for img " + j);
-                                imgRow.bitmap0 = await loadBitmapAsync(subCategory.photos[j].pid);
-                                Debug.WriteLine("DHB:MySubmissionsPage imgload finished for img " + j);
-                            });
-                            imgRow.bmp0Meta = subCategory.photos[j];
-
-                            if (j + 1 < subCategory.photos.Count) {
-                                imgRow.bitmap1 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
-                                Task.Run(() => imgRow.bitmap1 = loadBitmapAsync(subCategory.photos[j + 1].pid).Result);
-                                imgRow.bmp1Meta = subCategory.photos[j + 1];
-                            }
-
-                            if (j + 2 < subCategory.photos.Count) {
-                                imgRow.bitmap2 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
-                                Task.Run(() => {
-                                    Debug.WriteLine("DHB:MySubmissionsPage imgload started for img " + (j + 2));
-                                    imgRow.bitmap2 = loadBitmapAsync(subCategory.photos[j + 2].pid).Result;
-                                    Debug.WriteLine("DHB:MySubmissionsPage imgload finished for img " + (j + 2));
+                    if ((subCategory.photos.Count > 0) && (!subCategory.category.state.Equals(CategoryJSON.CLOSED))) {
+                        if ((GlobalStatusSingleton.pendingCategories.Count == 0) ||
+                            ((GlobalStatusSingleton.pendingCategories.Count > 0) && (subCategory.category.categoryId < GlobalStatusSingleton.pendingCategories[0].categoryId))) {
+                            SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = subCategory.category.description };
+# if DEBUG
+                            titleRow.title += " - " + subCategory.category.categoryId;
+#endif
+                            submissions.Add(titleRow);
+                            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad about to load: " + subCategory.photos.Count + " photos.");
+                            //foreach (PhotoMetaJSON photo in subCategory.photos) {
+                            for (int i = 0; i < subCategory.photos.Count; i = i + 3) {
+                                int j = i;
+                                SubmissionsImageRow imgRow = new SubmissionsImageRow();
+                                submissions.Add(imgRow);
+                                imgRow.bitmap0 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                                imgRow.bmp0Meta = subCategory.photos[j];
+                                PhotoLoad pl = new PhotoLoad(subCategory.photos[j].pid, imgRow, 0);
+                                photosToLoad.Enqueue(pl);
+                                //imgRow.bitmap0 = loadBitmapAsync(subCategory.photos[j].pid).Result;
+                                /*
+                                Task.Run(async () => {
+                                    Debug.WriteLine("DHB:MySubmissionsPage imgload started for img " + j);
+                                    imgRow.bitmap0 = await loadBitmapAsync(subCategory.photos[j].pid);
+                                    Debug.WriteLine("DHB:MySubmissionsPage imgload finished for img " + j);
                                 });
-                                imgRow.bmp2Meta = subCategory.photos[j + 2];
+                                */
+
+                                if (j + 1 < subCategory.photos.Count) {
+                                    imgRow.bitmap1 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                                    imgRow.bmp1Meta = subCategory.photos[j + 1];
+                                    //imgRow.bitmap1 = loadBitmapAsync(subCategory.photos[j + 1].pid).Result;
+                                    //Task.Run(() => imgRow.bitmap1 = loadBitmapAsync(subCategory.photos[j + 1].pid).Result);
+                                    //imgRow.bmp1Meta = subCategory.photos[j + 1];
+                                    pl = new PhotoLoad(subCategory.photos[j+1].pid, imgRow, 1);
+                                    photosToLoad.Enqueue(pl);
+                                }
+
+                                if (j + 2 < subCategory.photos.Count) {
+                                    imgRow.bitmap2 = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, assembly);
+                                    imgRow.bmp2Meta = subCategory.photos[j + 2];
+                                    pl = new PhotoLoad(subCategory.photos[j+2].pid, imgRow, 2);
+                                    photosToLoad.Enqueue(pl);
+                                }
+                                Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
                             }
-                            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
+                            //SubmissionsBlankRow blank = new SubmissionsBlankRow();
+                            //submissions.Add(blank);  // causing issues at this row. skip for now.
                         }
-                        //SubmissionsBlankRow blank = new SubmissionsBlankRow();
-                        //submissions.Add(blank);  // causing issues at this row. skip for now.
                     }
                     Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad category: " + subCategory.category.description + " complete.");
                 }
@@ -197,7 +234,9 @@ namespace ImageImprov {
 
             try {
                 HttpClient client = new HttpClient();
-                string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + category_id;
+                //string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + category_id + "?num_categories=5";
+                //string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + System.Convert.ToString(category_id) + "?num_categories=5";
+                string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next/"+category_id;
 
                 HttpRequestMessage submissionRequest = new HttpRequestMessage(HttpMethod.Get, submissionURL);
                 submissionRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
@@ -248,6 +287,32 @@ namespace ImageImprov {
             }
             Debug.WriteLine("DHB:MySubmissionsPage:requestImageAsync end pid:" + pid);
             return result;
+        }
+
+        private async void OnProcessPhotoLoadQueue(object sender, EventArgs args) {
+            while (true) {
+                if (photosToLoad.Count > 0) {
+                    PhotoLoad pl = photosToLoad.Dequeue();
+                    Debug.WriteLine("DHB:OnProcessPhotoLoadQueue loading:" + pl.pid);
+                    switch (pl.index) {
+                        case 0:
+                            pl.drawRow.bitmap0 = await loadBitmapAsync(pl.pid);
+                            break;
+                        case 1:
+                            pl.drawRow.bitmap1 = await loadBitmapAsync(pl.pid);
+                            break;
+                        case 2:
+                            pl.drawRow.bitmap2 = await loadBitmapAsync(pl.pid);
+                            break;
+                        default:
+                            Debug.WriteLine("DHB:MySubmissionsPage:OnProcessPhotoLoadQueue invalid index");
+                            break;
+                    }
+                } else {
+                    await Task.Delay(15000);
+                    // should shut this down after some period of time...
+                }
+            }
         }
     }
 }

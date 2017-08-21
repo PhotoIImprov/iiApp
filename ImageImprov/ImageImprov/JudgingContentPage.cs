@@ -21,7 +21,7 @@ namespace ImageImprov {
     public delegate void DequeueBallotRequestEventHandler(object sender, EventArgs e);
 
     // This is the first roog page of the judging.
-    class JudgingContentPage : ContentView, ILeaveZoomCallback {
+    public class JudgingContentPage : ContentView, ILeaveZoomCallback {
         public static string LOAD_FAILURE = "No open voting category currently available.";
 
         // A dummy object for controlling lock on ui resources
@@ -139,6 +139,8 @@ namespace ImageImprov {
 
         // lightbulb stars for voting!
         LightbulbTracker lightbulbRow; // = new LightbulbTracker();
+
+        VotingInstructionsOverlay helpPage;
 
         public JudgingContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
@@ -599,7 +601,8 @@ namespace ImageImprov {
 
         }
 
-        public async void OnHelpTapped(object sender, EventArgs e) {
+        public void OnHelpTapped(object sender, EventArgs e) {
+            IOverlayable uiMaster = (IOverlayable)Application.Current.MainPage;
             IList<iiBitmapView> newImgs = new List<iiBitmapView>();
             foreach (iiBitmapView img in ballotImgsP) {
                 iiBitmapView newCopy = new iiBitmapView {
@@ -607,8 +610,14 @@ namespace ImageImprov {
                 };
                 newImgs.Add(newCopy);
             }
-            VotingInstructionsOverlay helpPage = new VotingInstructionsOverlay(newImgs);
-            this.Navigation.PushModalAsync(helpPage);
+            if (helpPage == null) {
+                helpPage = new VotingInstructionsOverlay(uiMaster, newImgs);
+                helpPage.IsVisible = false;                
+            } else {
+                helpPage.setImages(newImgs);
+            }
+            //this.Navigation.PushModalAsync(helpPage);  this never works. :(
+            uiMaster.pushOverlay(helpPage);
         }
 
         /////
@@ -1163,7 +1172,7 @@ namespace ImageImprov {
             MultiVoteGeneratesBallot(sender, e);
         }
 
-        protected int findUnallocatedBid(List<VoteJSON> votes) {
+        private int findUnallocatedBid(List<VoteJSON> votes) {
             return 1;
         }
 
@@ -1189,7 +1198,7 @@ namespace ImageImprov {
         /// <param name="votes"></param>
         /// <param name="penultimateSelectedIndex"></param>
         /// <param name="ultimateSelectedIndex"></param>
-        protected void UpdateUIForFinalVote(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
+        private void UpdateUIForFinalVote(List<VoteJSON> votes, int penultimateSelectedIndex, int ultimateSelectedIndex) {
             /*
             SKBitmap baseImg = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(
                     ballot.ballots[penultimateSelectedIndex].imgStr, (ExifOrientation)ballot.ballots[penultimateSelectedIndex].orientation);

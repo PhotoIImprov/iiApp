@@ -8,17 +8,19 @@ using Xamarin.Forms;
 
 namespace ImageImprov {
     // has to be a contentpage to be modally pushed/popped.
-    public class VotingInstructionsOverlay : ContentPage {
+    public class VotingInstructionsOverlay : ContentView {
         Assembly assembly = null;
+        IOverlayable parent;
+
         Grid portraitView;
         IList<iiBitmapView> imgs;
         IList<iiBitmapView> voteBoxes;
         IList<iiBitmapView> rankImages;
-
         bool active = true;
         EventHandler animate;
 
-        public VotingInstructionsOverlay(IList<iiBitmapView> imgs) {
+        public VotingInstructionsOverlay(IOverlayable parent, IList<iiBitmapView> imgs) {
+            this.parent = parent;
             this.imgs = imgs;
             this.animate += new EventHandler(AnimationEvent);
             buildUI();
@@ -89,7 +91,9 @@ namespace ImageImprov {
 
         public void OnCloseTapped(object sender, EventArgs args) {
             active = false;
-            this.Navigation.PopModalAsync();
+            //this.Navigation.PopModalAsync();
+            this.IsVisible = false;
+            parent.popOverlay();
         }
 
         protected void buildRankImages() {
@@ -120,6 +124,7 @@ namespace ImageImprov {
         }
 
         public async void AnimationEvent(object sender, EventArgs args) {
+            active = true;  // need to reset when coming back in.
             portraitView.Children.Add(rankImages[0], 3, 7);
             portraitView.Children.Add(rankImages[1], 9, 7);
             portraitView.Children.Add(rankImages[2], 3, 12);
@@ -138,6 +143,11 @@ namespace ImageImprov {
                 await rankImages[3].FadeTo(1.0, 2000);
                 await Task.Delay(250);
             }
+        }
+
+        public void setImages(IList<iiBitmapView> newImages) {
+            this.imgs = newImages;
+            buildUI();
         }
     }
 }

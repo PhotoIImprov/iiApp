@@ -11,7 +11,7 @@ namespace ImageImprov {
     /// <summary>
     /// This replaces MainPageUISwipe as the parent page for the UI. (That's now a carousel view subset of this).
     /// </summary>
-    class MasterPage : ContentPage, IExposeCamera, IProvideNavigation, ILifecycleManager {
+    class MasterPage : ContentPage, IExposeCamera, IProvideNavigation, ILifecycleManager, IOverlayable {
         // Q: Do I need IExposeCamera?  Yes. As that is reached through App.
         // Q: Do I need IProvideNavigation???  Yes. Drilling down from root is how the system is setup.
         Grid portraitView = new Grid();
@@ -131,5 +131,17 @@ namespace ImageImprov {
         }
         //public void gotoPurchasePage();
 
+        ContentView overlay = null;
+        public void pushOverlay(ContentView overlay) {
+            this.overlay = overlay;
+            portraitView.Children.Add(overlay, 0, 0);
+            Grid.SetRowSpan(overlay, 3);  // it's units of 20, but only 3 rows.
+            Grid.SetColumnSpan(overlay, 1);
+            overlay.IsVisible = true;
+        }
+        public void popOverlay() {
+            overlay.IsVisible = false;
+            portraitView.Children.Remove(overlay);
+        }
     }
 }
