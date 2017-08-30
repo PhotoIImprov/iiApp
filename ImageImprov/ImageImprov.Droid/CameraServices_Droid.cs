@@ -39,6 +39,10 @@ namespace ImageImprov.Droid {
         private static MyOrientationListener orienter;
         private static int degreesToRotateCameraToNatural;
 
+        // the amount of scaling needed to correctly crop the actual image, based on the amount to crop the preview image.
+        // needed because the actual image is much larger than the cropped image.
+        private double scalingFactor;
+
         const int CATEGORY_HEADER_ID = 2001;
         const int TAKE_PICTURE_BUTTON_ID = 2002;
         const int DEFAULT_NAV_ID = 2003;
@@ -65,6 +69,10 @@ namespace ImageImprov.Droid {
 
             // category header
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnCreate layout created!");
+            if ((GlobalStatusSingleton.uploadingCategories == null) || (GlobalStatusSingleton.uploadingCategories.Count==0)) {
+                this.Finish();
+                return;
+            }
             Button categoryButton = new Button(this) { Text = GlobalStatusSingleton.uploadingCategories[0].description };
             categoryButton.SetTextColor(Android.Graphics.Color.White);
             categoryButton.SetTextSize(Android.Util.ComplexUnitType.Pt,30.0f);
@@ -85,8 +93,9 @@ namespace ImageImprov.Droid {
             }
             surfaceView = new CameraPreview(this, camera);
             RelativeLayout.LayoutParams viewParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-            viewParams.AddRule(LayoutRules.Below, CATEGORY_HEADER_ID);
-            viewParams.AddRule(LayoutRules.Above, TAKE_PICTURE_BUTTON_ID);
+            // I think these are messing with the camera image... causing it to be scrunched, and then output not matching preview
+            //viewParams.AddRule(LayoutRules.Below, CATEGORY_HEADER_ID);
+            //viewParams.AddRule(LayoutRules.Above, TAKE_PICTURE_BUTTON_ID);
             surfaceView.LayoutParameters = viewParams;
             //surfaceView.Rotation = 90.0f; // is this always true that it needs to rotate?
             // end surface view
@@ -96,14 +105,16 @@ namespace ImageImprov.Droid {
             upperOverlay = new RelativeLayout(this);
             upperOverlay.SetBackgroundColor(Android.Graphics.Color.White);
             RelativeLayout.LayoutParams uoParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
-            uoParams.AddRule(LayoutRules.Below, CATEGORY_HEADER_ID);
+            //uoParams.AddRule(LayoutRules.Below, CATEGORY_HEADER_ID);
+            uoParams.AddRule(LayoutRules.AlignParentTop);
             upperOverlay.LayoutParameters = uoParams;
             // end upper overlay
             // lower overlay
             lowerOverlay = new RelativeLayout(this);
             lowerOverlay.SetBackgroundColor(Android.Graphics.Color.White);
             RelativeLayout.LayoutParams loParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
-            loParams.AddRule(LayoutRules.Above, TAKE_PICTURE_BUTTON_ID);  // will be interesting to see if take_picture_button needed to exist first...
+            //loParams.AddRule(LayoutRules.Above, TAKE_PICTURE_BUTTON_ID);  // will be interesting to see if take_picture_button needed to exist first...
+            loParams.AddRule(LayoutRules.AlignParentBottom);
             lowerOverlay.LayoutParameters = loParams;
             // end lower overlay
 
@@ -186,7 +197,14 @@ namespace ImageImprov.Droid {
         public void OnSnapPicture(object sender, EventArgs e) {
             // image save code goes here.
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnSnapPicture snap!");
-            MyPictureData raw = new MyPictureData();
+
+            // hmm... if I come back to trying to figure out why the big picture has broader extents than the preview pic,
+            // test using the output cam size == preview pic.  curious to what happens then.
+            System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnSnapPicture uo measuredHt" + upperOverlay.MeasuredHeight);
+            System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnSnapPicture lo measuredHt" + lowerOverlay.MeasuredHeight);
+            int scaledYOffset = (int)(scalingFactor * (double)lowerOverlay.MeasuredHeight);
+            MyPictureData raw = new MyPictureData(scaledYOffset);
+            //MyPictureData raw = new MyPictureData(504);
             raw.timeToExit += OnExit;
             camera.TakePicture(null, null, raw);
 
@@ -200,10 +218,12 @@ namespace ImageImprov.Droid {
             } else {
                 flashButton.SetImageDrawable(flashOffImg);
             }
-            
-            Camera.Parameters cParams = camera.GetParameters();
-            cParams.FlashMode = (flashMode) ? Camera.Parameters.FlashModeOn : Camera.Parameters.FlashModeOff;
-            camera.SetParameters(cParams);
+            // there is a timing issue that can occur... make sure camera still exists.
+            if (camera != null) {
+                Camera.Parameters cParams = camera.GetParameters();
+                cParams.FlashMode = (flashMode) ? Camera.Parameters.FlashModeOn : Camera.Parameters.FlashModeOff;
+                camera.SetParameters(cParams);
+            }
         }
 
         public void OnExit(object sender, EventArgs e) {
@@ -215,6 +235,12 @@ namespace ImageImprov.Droid {
 
         public class MyPictureData : Java.Lang.Object, Camera.IPictureCallback {
             public EventHandler timeToExit;
+
+            private int offsetAmount;
+            public MyPictureData(int offsetAmount) {
+                this.offsetAmount = offsetAmount;
+            }
+
             public void OnPictureTaken(byte[] data, Camera camera) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken here!");
 
@@ -227,7 +253,14 @@ namespace ImageImprov.Droid {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:MyPictureData:OnPictureTaken camera orientation:" + degreesToRotateCameraToNatural);
 
                 int rotateDegrees = degreesToRotateCameraToNatural + orienter.currentOrientation;
+
+                // off the bottom.
+                //GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data), rotateDegrees, offsetAmount);
+                // off the top:
+                //GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data), rotateDegrees, offsetAmount);
+                // midpoint
                 GlobalStatusSingleton.latestImg = GlobalSingletonHelpers.rotateAndCrop(GlobalSingletonHelpers.SKBitmapFromBytes(data), rotateDegrees);
+
                 //GlobalStatusSingleton.mostRecentImgBytes = data;  // this is the un modified data as jpg.  bytes will give me a byte array (i think)
                 //GlobalStatusSingleton.mostRecentImgBytes = GlobalStatusSingleton.latestImg.Bytes;  this is 34mb.! :)
                 SKImage outImg = SKImage.FromBitmap(GlobalStatusSingleton.latestImg);
@@ -237,7 +270,7 @@ namespace ImageImprov.Droid {
             }
         }
 
-        public static Camera getCameraInstance() {
+        public Camera getCameraInstance() {
             Camera c = null;
             try {
                 c = Camera.Open((int)Android.Hardware.CameraFacing.Back);
@@ -287,7 +320,7 @@ namespace ImageImprov.Droid {
         /// <summary>
         /// Given I have a camera, sets the image taken to the largest square image format.
         /// </summary>
-        private static void toLargestSquare(Camera inCamera) {
+        private void toLargestSquare(Camera inCamera) {
             int outputW = 0, outputH = 0;
             int previewW = 0, previewH = 0;
             try {
@@ -298,7 +331,7 @@ namespace ImageImprov.Droid {
                 //if (largestSquare==0) { largestSquare = shortestSideOfLargestCamera; }
                 cParams.SetPictureSize(outputW, outputH);
                 cParams.SetPreviewSize(previewW, previewH);
-                cParams.FocusMode = Camera.Parameters.FocusModeContinuousPicture;
+                cParams.FocusMode = Camera.Parameters.FocusModeAuto;
                 inCamera.SetParameters(cParams);
                 if (calcAspectRatio(outputW, outputH) != calcAspectRatio(previewW, previewH)) {
                     System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestSquare image and preview sizes have different aspect ratios!!");
@@ -333,7 +366,7 @@ namespace ImageImprov.Droid {
         /// So sacrifice some image detail for consistency.
         /// </summary>
         /// <param name="inCamera"></param>
-        private static void toLargestImage(Camera inCamera) {
+        private void toLargestImage(Camera inCamera) {
             int outputW = 0, outputH = 0;
             int previewW = 0, previewH = 0;
             try {
@@ -351,6 +384,7 @@ namespace ImageImprov.Droid {
                 } else {
                     System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestImage image and preview size aspect ratios match");
                 }
+                scalingFactor = (double)outputW / (double)previewW;
             } catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:toLargestImage exception: " + e.ToString());
             }

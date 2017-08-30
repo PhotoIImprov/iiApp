@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;  // for debug assertions.
@@ -532,13 +533,34 @@ namespace ImageImprov {
             return result;
         }
 
-        public static SKImage CropImage(SKBitmap inImg) {
+        public static SKBitmap CropImage(SKBitmap inImg, int yOffset = 0) {
             int w = inImg.Width;
             int h = inImg.Height;
             int shortestLen = ((w < h) ? w : h);
+            /*
             SKImage image = SKImage.FromBitmap(inImg);
-            SKImage subset = image.Subset(SKRectI.Create(0, 0, shortestLen, shortestLen));
-            return subset;
+            SKImage subset = image.Subset(SKRectI.Create(0, yOffset, shortestLen, shortestLen));
+            return subset;*/
+            SKRectI square = SKRectI.Create(0, yOffset, shortestLen, shortestLen);
+            SKBitmap finalBmp = new SKBitmap(shortestLen, shortestLen);
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop pre extract");
+            inImg.ExtractSubset(finalBmp, square);
+            return finalBmp;
+        }
+
+        public static SKBitmap SquareFromTop(SKBitmap inImg) {
+            int w = inImg.Width;
+            int h = inImg.Height;
+            int shortestLen = ((w < h) ? w : h);
+            /*
+            SKImage image = SKImage.FromBitmap(inImg);
+            SKImage subset = image.Subset(SKRectI.Create(0, yOffset, shortestLen, shortestLen));
+            return subset;*/
+            SKRectI square = SKRectI.Create(0, h-shortestLen, shortestLen, shortestLen);
+            SKBitmap finalBmp = new SKBitmap(shortestLen, shortestLen);
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop pre extract");
+            inImg.ExtractSubset(finalBmp, square);
+            return finalBmp;
         }
 
         public static SKBitmap CropImageAtMidPoint(SKBitmap inImg) {
@@ -553,11 +575,14 @@ namespace ImageImprov {
                 longestLen = h;
                 x = 0;
                 y = (h - w) / 2;
-            } else {
+            } else if (h < w) {
                 shortestLen = h;
                 longestLen = w;
                 y = 0;
                 x = (w - h) / 2;
+            } else {
+                // already square. return.
+                return inImg;
             }
             SKRectI square = SKRectI.Create(x, y, shortestLen, shortestLen);
             SKBitmap finalBmp = new SKBitmap(shortestLen, shortestLen);
@@ -570,7 +595,7 @@ namespace ImageImprov {
             // my passed in imgBytes are a jpg, not a bmp.
             //SKBitmap bmp = GlobalSingletonHelpers.SKBitmapFromBytes(imgBytes);
             SKBitmap bmp = buildFixedRotationSKBitmapFromBytes(imgBytes);
-            SKImage res = CropImage(bmp);
+            SKImage res = SKImage.FromBitmap(CropImage(bmp));
             return res.Encode(SKEncodedImageFormat.Jpeg, 100).ToArray();
 
             // testing
@@ -585,7 +610,7 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="baseBmp"></param>
         /// <returns></returns>
-        public static SKBitmap rotateAndCrop(SKBitmap baseBmp, int rotateDegrees = 90) {
+        public static SKBitmap rotateAndCrop(SKBitmap baseBmp, int rotateDegrees = 90, int offsetAmount = -1) {
             SKBitmap rotatedBmp = null;
 
             if (rotateDegrees == 90) {
@@ -629,7 +654,15 @@ namespace ImageImprov {
             rotatedBmp.ExtractSubset(finalBmp, square);
             Debug.WriteLine("DHB:GlobalSingletonHelpers:rotateAndCrop post extract");
             */
-            SKBitmap finalBmp = CropImageAtMidPoint(rotatedBmp);
+            SKBitmap finalBmp;
+            //finalBmp = CropImageAtMidPoint(rotatedBmp);
+            
+            if (offsetAmount == -1) {
+                finalBmp = CropImageAtMidPoint(rotatedBmp);
+            } else {
+                finalBmp = CropImage(rotatedBmp, offsetAmount);
+                //finalBmp = SquareFromTop(rotatedBmp);
+            }
             return finalBmp;
         }
 
@@ -771,5 +804,62 @@ namespace ImageImprov {
             theList.Remove(foundCat);
             return removed;
         }
+
+        public static async Task<string> requestFromServerAsync(HttpMethod method, string apiCall, string jsonQuery) {
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync start");
+            string result = "fail";
+            try {
+                HttpClient client = new HttpClient();
+
+                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                HttpRequestMessage request = new HttpRequestMessage(method, apiCall);
+                request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
+
+                HttpResponseMessage response = await client.SendAsync(request);
+                if (response.StatusCode == System.Net.HttpStatusCode.OK) {
+                    // do I need these?
+                    result = await response.Content.ReadAsStringAsync();
+                } else {
+                    // pooh. what do i do here?
+                    //result = "internal fail; why?";
+                    // server failure. keep the msg as a fail for correct onVote processing
+                    // do we get back json?
+                    result = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync " + apiCall + " result recvd");
+                }
+                response.Dispose();
+                request.Dispose();
+                client.Dispose();
+            } catch (System.Net.WebException err) {
+                //result = "exception";
+                // web failure. keep the msg as a simple fail for correct onVote processing
+                Debug.WriteLine(err.ToString());
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync:Exception apiCall:" + apiCall);
+                Debug.WriteLine(e.ToString());
+            }
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync " + apiCall + " end");
+            return result;
+        }
+
+        public static void SortAndReverse<T>(this ObservableCollection<T> observable) where T : IComparable<T>, IEquatable<T> {
+            List<T> sorted = observable.OrderBy(x => x).ToList();
+            sorted.Reverse();
+
+            int ptr = 0;
+            while (ptr < sorted.Count) {
+                if (!observable[ptr].Equals(sorted[ptr])) {
+                    T t = observable[ptr];
+                    observable.RemoveAt(ptr);
+                    observable.Insert(sorted.IndexOf(t), t);
+                } else {
+                    ptr++;
+                }
+            }
+        }
+
     }
 }

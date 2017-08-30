@@ -37,6 +37,9 @@ namespace ImageImprov {
         ObservableCollection<SubmissionsRow> submissions = new ObservableCollection<SubmissionsRow>();
         DataTemplateSelector dts = new SubmissionsDataTemplateSelector();
 
+        bool loadingMoreCategories = false;
+        long nextLookupId;
+        
         struct PhotoLoad {
             public long pid;
             public SubmissionsImageRow drawRow;
@@ -70,7 +73,8 @@ namespace ImageImprov {
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
-            myListView = new ListView { ItemsSource = submissions, ItemTemplate = dts, HasUnevenRows = true, };
+            myListView = new ListView { ItemsSource = submissions, ItemTemplate = dts, HasUnevenRows = true, SeparatorVisibility=SeparatorVisibility.None, Margin=0, };
+            myListView.ItemAppearing += OnNewCategoryAppearing;
 
             portraitView.Children.Add(myListView, 0, 0);
             Grid.SetRowSpan(myListView, 16);
@@ -108,18 +112,22 @@ namespace ImageImprov {
         /// <param name="e"></param>
         public async virtual void OnCategoryLoad(object sender, EventArgs e) {
             long lookupId = -1;
-            if (GlobalStatusSingleton.closedCategories.Count > 0) {
-                lookupId = GlobalStatusSingleton.closedCategories[0].categoryId;
+            if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
+            } else if (GlobalStatusSingleton.votingCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.votingCategories[0].categoryId;
             } else if (GlobalStatusSingleton.countingCategories.Count > 0) {
                 lookupId = GlobalStatusSingleton.countingCategories[0].categoryId;
-            } else   
-            if (GlobalStatusSingleton.votingCategories.Count > 0) {
-                lookupId = GlobalStatusSingleton.votingCategories[0].categoryId;
-            } else if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
-                lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
+            } else if (GlobalStatusSingleton.closedCategories.Count > 0) {
+                lookupId = GlobalStatusSingleton.closedCategories[0].categoryId;
             }
             if (lookupId == -1) return;  // no valid categories!
                                          //lookupId = 10;
+            await processSubmissionsLoadAsync(lookupId);
+        }
+
+        public async Task processSubmissionsLoadAsync(long lookupId) {
+            loadingMoreCategories = true;
 
             string result = "fail";
             while (result.Equals("fail")) {
@@ -137,7 +145,8 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad break");
                 printSubs(mySubs.submissions);
                 foreach (SubmissionJSON subCategory in mySubs.submissions) {
-                    if ((subCategory.photos.Count > 0) && (!subCategory.category.state.Equals(CategoryJSON.CLOSED))) {
+                    //if (subCategory.photos.Count > 0) && (!subCategory.category.state.Equals(CategoryJSON.CLOSED))) {
+                    if (subCategory.photos.Count > 0) {
                         if ((GlobalStatusSingleton.pendingCategories.Count == 0) ||
                             ((GlobalStatusSingleton.pendingCategories.Count > 0) && (subCategory.category.categoryId < GlobalStatusSingleton.pendingCategories[0].categoryId))) {
                             SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = subCategory.category.description };
@@ -190,6 +199,8 @@ namespace ImageImprov {
                 }
             }
             Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
+            nextLookupId = mySubs.submissions[mySubs.submissions.Count - 1].category.categoryId;
+            loadingMoreCategories = false;
         }
 
         private async Task<SKBitmap> loadBitmapAsync(long pid, int attempt = 0) {
@@ -234,9 +245,10 @@ namespace ImageImprov {
 
             try {
                 HttpClient client = new HttpClient();
+                string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/prev" + "/" + category_id + "?num_categories=5";
                 //string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + category_id + "?num_categories=5";
                 //string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next" + "/" + System.Convert.ToString(category_id) + "?num_categories=5";
-                string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next/"+category_id;
+                //string submissionURL = GlobalStatusSingleton.activeURL + SUBMISSIONS + "/next/"+category_id;
 
                 HttpRequestMessage submissionRequest = new HttpRequestMessage(HttpMethod.Get, submissionURL);
                 submissionRequest.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
@@ -312,6 +324,16 @@ namespace ImageImprov {
                     await Task.Delay(15000);
                     // should shut this down after some period of time...
                 }
+            }
+        }
+
+        private void OnNewCategoryAppearing(object sender, ItemVisibilityEventArgs args) {
+            if (loadingMoreCategories || submissions.Count == 0) {
+                return;  // already getting more.
+            }
+            if (args.Item == submissions[submissions.Count - 1]) {
+                loadingMoreCategories = true;
+                processSubmissionsLoadAsync(nextLookupId);
             }
         }
     }

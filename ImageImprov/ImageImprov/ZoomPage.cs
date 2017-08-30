@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 using Xamarin.Forms;
 using System.Reflection;
+using System.Diagnostics;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace ImageImprov {
     /// <summary>
@@ -22,8 +25,21 @@ namespace ImageImprov {
         iiBitmapView unflaggedImg;
         iiBitmapView likedImg;
         iiBitmapView flaggedImg;
+        long pid;
+
+        Entry tagEntry = new Entry {
+            Placeholder = "#tag",
+            PlaceholderColor = Color.Gray,
+            TextColor = Color.Black,
+            FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
+            BackgroundColor = Color.White,
+            HorizontalTextAlignment = TextAlignment.Start,
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            Margin = 1,
+        };
 
         public ILeaveZoomCallback PreviousContent { get; set; }
+        public bool saveDataOnExit { get; set; } = false;
         Button backButton = null;
 
         // this points back to the original calling ballot.
@@ -43,6 +59,8 @@ namespace ImageImprov {
         }
 
         private void buildMetaButtons() {
+            saveDataOnExit = false;  //default setting.
+
             unlikedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unliked.png", assembly));
             unflaggedImg = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.unflagged.png", assembly));
             likedImg = new iiBitmapView {
@@ -99,6 +117,18 @@ namespace ImageImprov {
                 // Need to return to caller instead.
                 //MasterPage mp = ((MasterPage)Application.Current.MainPage);
                 //await mp.Navigation.PopModalAsync();
+
+                // only bother checking the textentry on exit.
+                if (ActiveMetaBallot != null) {
+                    if ((ActiveMetaBallot.tags == null) || (!ActiveMetaBallot.tags.Equals(tagEntry.Text))) {
+                        ActiveMetaBallot.tags = tagEntry.Text;
+                    }
+                }
+
+                if (saveDataOnExit) {
+                    saveDataOnExitAsync(this);
+                    Debug.WriteLine("DHB:ZoomPage:buildMetaButtons:backButtonClickedAnon this should print first");
+                }
                 PreviousContent.returnToCaller();
             };
         }
@@ -118,6 +148,7 @@ namespace ImageImprov {
                 likedImg.IsVisible = ActiveMetaBallot.isLiked;
                 unflaggedImg.IsVisible = !ActiveMetaBallot.isFlagged;
                 flaggedImg.IsVisible = ActiveMetaBallot.isFlagged;
+                tagEntry.Text = ActiveMetaBallot.tags;
             }
             MainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
             //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
@@ -130,6 +161,8 @@ namespace ImageImprov {
             zoomView.Children.Add(likedImg, 0, 12);
             zoomView.Children.Add(unflaggedImg, 1, 12);
             zoomView.Children.Add(flaggedImg, 1, 12);
+            zoomView.Children.Add(tagEntry, 0, 13);
+            Grid.SetColumnSpan(tagEntry, 2);
             zoomView.Children.Add(backButton, 0, 14);
 
             Grid.SetColumnSpan(backButton, 2);
@@ -145,7 +178,8 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="photoMeta"></param>
         /// <returns></returns>
-        public int buildZoomFromUserPhotoMeta(PhotoMetaJSON photoMeta) {
+        public int buildZoomFromUserPhotoMeta(PhotoMetaJSON photoMeta, bool saveOnExit = false) {
+            saveDataOnExit = saveOnExit;
             int result = 1;
             if (zoomView == null) {
                 zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
@@ -196,6 +230,20 @@ namespace ImageImprov {
 
             Content = zoomView;
             return result;
+        }
+
+        private static async void saveDataOnExitAsync(ZoomPage saveData) {
+            await Task.Delay(500);
+            Debug.WriteLine("DHB:ZoomPage:saveDataOnExitAsync this should print second");
+            PhotoUpdateJSON pJSON = new PhotoUpdateJSON();
+            pJSON.flag = saveData.flaggedImg.IsVisible;
+            pJSON.like = saveData.likedImg.IsVisible;
+            pJSON.tags = saveData.tagEntry.Text;
+            string jsonQuery = JsonConvert.SerializeObject(pJSON);
+            if (jsonQuery != null) {
+                string apiCall = "update/photo/" + saveData.pid;
+                string result = await GlobalSingletonHelpers.requestFromServerAsync(HttpMethod.Put, apiCall, jsonQuery);
+            }
         }
     }
 }

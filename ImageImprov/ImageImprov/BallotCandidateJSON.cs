@@ -22,6 +22,9 @@ namespace ImageImprov {
         [JsonProperty("orientation")]
         public int orientation { get; set; }
 
+        [JsonProperty("tags")]
+        public string tags { get; set; }
+
         static int ORIENTATION_UNKNOWN = -1;
         public static int LANDSCAPE = 0;
         public static int PORTRAIT = 1;

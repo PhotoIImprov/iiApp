@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,7 +11,7 @@ namespace ImageImprov {
     /// <summary>
     /// Backing object for LeaderboardCell.
     /// </summary>
-    public class LeaderboardElement : INotifyPropertyChanged {
+    public class LeaderboardElement : INotifyPropertyChanged, IComparable<LeaderboardElement>, IEquatable<LeaderboardElement> {
         public string title { get; set; }
 
         // Cleverness has run out. Brutus Forcus!
@@ -97,7 +99,88 @@ namespace ImageImprov {
         // Not drawn, but needed to uniquely id leaderboards.
         public long categoryId { get; set; }
 
-        public LeaderboardElement(string title, long categoryId, IList<SKBitmap> bitmaps) {
+        private LeaderboardJSON _bmp0Meta;
+        public LeaderboardJSON bmp0Meta {
+            get { return _bmp0Meta; }
+            set {
+                _bmp0Meta = value;
+                OnPropertyChanged(this, "bmp0Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp1Meta;
+        public LeaderboardJSON bmp1Meta {
+            get { return _bmp1Meta; }
+            set {
+                _bmp1Meta = value;
+                OnPropertyChanged(this, "bmp1Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp2Meta;
+        public LeaderboardJSON bmp2Meta {
+            get { return _bmp2Meta; }
+            set {
+                _bmp2Meta = value;
+                OnPropertyChanged(this, "bmp2Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp3Meta;
+        public LeaderboardJSON bmp3Meta {
+            get { return _bmp3Meta; }
+            set {
+                _bmp3Meta = value;
+                OnPropertyChanged(this, "bmp3Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp4Meta;
+        public LeaderboardJSON bmp4Meta {
+            get { return _bmp4Meta; }
+            set {
+                _bmp4Meta = value;
+                OnPropertyChanged(this, "bmp4Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp5Meta;
+        public LeaderboardJSON bmp5Meta {
+            get { return _bmp5Meta; }
+            set {
+                _bmp5Meta = value;
+                OnPropertyChanged(this, "bmp5Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp6Meta;
+        public LeaderboardJSON bmp6Meta {
+            get { return _bmp6Meta; }
+            set {
+                _bmp6Meta = value;
+                OnPropertyChanged(this, "bmp6Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp7Meta;
+        public LeaderboardJSON bmp7Meta {
+            get { return _bmp7Meta; }
+            set {
+                _bmp7Meta = value;
+                OnPropertyChanged(this, "bmp7Meta");
+            }
+        }
+
+        private LeaderboardJSON _bmp8Meta;
+        public LeaderboardJSON bmp8Meta {
+            get { return _bmp8Meta; }
+            set {
+                _bmp8Meta = value;
+                OnPropertyChanged(this, "bmp8Meta");
+            }
+        }
+
+        public LeaderboardElement(string title, long categoryId, IList<SKBitmap> bitmaps, IList<LeaderboardJSON> photoMeta) {
             //public MyRowElement(string title, string msg, Color textColor) {
             this.title = title;
             this.categoryId = categoryId;
@@ -106,6 +189,9 @@ namespace ImageImprov {
             while (i < maxIndex) {
                 PropertyInfo o = GlobalSingletonHelpers.GetProperty(this, "bitmap"+i);
                 o.SetValue(this, bitmaps[i]);
+
+                PropertyInfo p = GlobalSingletonHelpers.GetProperty(this, "bmp" + i + "Meta");
+                p.SetValue(this, photoMeta[i]);
                 i++;
             }
         }
@@ -117,5 +203,13 @@ namespace ImageImprov {
             }
         }
 
+        public int CompareTo(LeaderboardElement b) {
+            return categoryId.CompareTo(b.categoryId);
+        }
+
+        public bool Equals(LeaderboardElement b) {
+            return categoryId == b.categoryId;
+        }
     }
 }
+

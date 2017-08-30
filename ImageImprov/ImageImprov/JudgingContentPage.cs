@@ -215,7 +215,7 @@ namespace ImageImprov {
                 Bitmap = GlobalSingletonHelpers.loadSKBitmapFromResourceName(HELP_BUTTON_FILENAME, assembly),
                 HorizontalOptions = LayoutOptions.End,
                 VerticalOptions = LayoutOptions.Center,
-                Margin = 2,
+                Margin = 14,
             };
             helpButton.GestureRecognizers.Add(helpTap);
         }
@@ -557,40 +557,6 @@ namespace ImageImprov {
             mp.zoomPage.buildZoomView();
             await mp.Navigation.PushModalAsync(mp.zoomPage);
             */
-
-            /*
-            if (Device.OS == TargetPlatform.iOS) {
-                Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick on iOS do single click cleanup");
-                Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick checkposition == " + checkPosition);
-                if (checkPosition>-1) {
-                    // was checked. deal with it.
-                    if (checkPosition == (votes.votes.Count)) {  // no -1 here as the instance has been removed.
-                        // was just on the end. simple fix.
-                        Vote(sender, e);
-                    } else {
-                        // this is the pain in the butt case...
-                        for (int i = checkPosition; i < votes.votes.Count; i++) {
-                            votes.votes[i].vote++;
-                        }
-                        VoteJSON vote = new ImageImprov.VoteJSON();
-                        // This has to be the only one left.
-                        vote.bid = votedOnCandidate.bidId;
-                        vote.vote = checkPosition;
-                        vote.like = votedOnCandidate.isLiked ? "1" : "0";
-                        vote.offensive = votedOnCandidate.isFlagged ? "1" : "0";
-                        votes.votes.Insert(checkPosition, vote);
-                        unvotedImgs.Remove(votedOnCandidate);
-                        // brute force the images and do all four...
-                        rebuildAllImagesWithVotes();
-                    }
-                } else {
-                    // was not checked before. just uncheck.
-                    Vote(sender, e);
-                }
-                // reset at start of process, as there are no process steps that can set these flags.
-                //lastClicked = null;
-                //checkPosition = -1;
-            } */
 
             // event args has nothing I can set.
             // use a class member to show this has been processed and prevent click processing.

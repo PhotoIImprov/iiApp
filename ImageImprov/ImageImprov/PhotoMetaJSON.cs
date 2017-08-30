@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace ImageImprov {
-    // all the non-image data info about a photo
+    /// <summary>
+    /// all the non-image data info about a photo that we share with users.
+    /// @see PhotoUpdateJSON for the meta data a user can share with us about a photo.
+    /// </summary>
     [JsonObject]
     public class PhotoMetaJSON {
         [JsonProperty("likes")]

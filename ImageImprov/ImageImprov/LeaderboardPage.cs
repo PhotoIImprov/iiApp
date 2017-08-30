@@ -271,10 +271,14 @@ namespace ImageImprov {
                         leaderboards.Add(le);
                     }
                 }
+                // bleh. this returns a new, not observablecollection object.
+                //leaderboards.OrderByDescending(a => a.categoryId);
+                GlobalSingletonHelpers.SortAndReverse(leaderboards);
+                //printOrder();
             }
 
             // want to fill a listview instead of a scroller holding a stack.
-            myListView = new ListView { RowHeight = 450, ItemsSource = leaderboards, ItemTemplate = myDataTemplate };
+            myListView = new ListView { RowHeight = 450, ItemsSource = leaderboards, ItemTemplate = myDataTemplate,  };
 
             portraitView.Children.Add(myListView, 0, 0);
             Grid.SetRowSpan(myListView, 16);
@@ -294,7 +298,10 @@ namespace ImageImprov {
                         bitmaps.Add(bitmap);
                     }
                 }
-                le = new LeaderboardElement(category.description, category.categoryId, bitmaps);
+                le = new LeaderboardElement(category.description, category.categoryId, bitmaps, leaderboard);
+#if DEBUG
+                le.title = le.title + " - " + le.categoryId;
+#endif
             }
             return le;
         }
@@ -349,6 +356,9 @@ namespace ImageImprov {
                 {
                     if (leaderboardStatus == -1) {
                         leaderboards.Add(le);
+                        //leaderboards.OrderByDescending(a => a.categoryId);
+                        GlobalSingletonHelpers.SortAndReverse(leaderboards);
+                        //printOrder();
                     } else {
                         leaderboards.RemoveAt(leaderboardStatus);
                         leaderboards.Insert(leaderboardStatus, le);
@@ -390,7 +400,7 @@ namespace ImageImprov {
         }
 
         static async Task<string> requestLeaderboardAsync(long category_id) {
-            Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync start");
+            Debug.WriteLine("DHB:LeaderboardPage:requestLeaderboardAsync start for id:" +category_id);
             string result = LOAD_FAILURE;
 
             try {
@@ -429,5 +439,11 @@ namespace ImageImprov {
             Content = portraitView;
         }
 
+        /*private void printOrder() {
+            // prints out the category ids in order to the debug console for testing purposes.
+            foreach (LeaderboardElement le in leaderboards) {
+                Debug.WriteLine("DHB:LeaderboardPage:printOrder: " + le.categoryId);
+            }
+        }*/
     }
 }

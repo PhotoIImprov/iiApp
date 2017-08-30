@@ -450,6 +450,10 @@ namespace ImageImprov {
                 request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
 
                 request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                HttpContent baseContent = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                MemoryStream dummyStream = new MemoryStream();
+                ProgressableStreamContent trackableSend = new ProgressableStreamContent(baseContent, 4096, (sent, total) => { Debug.WriteLine("Uploading {0}/{1}", sent, total); }, imgBytes);
+                //request.Content = trackableSend;
                 Debug.WriteLine("DHB:CameraContentPage:sendSubmitAsync request obj built");
                 // string test = request.ToString();
 
