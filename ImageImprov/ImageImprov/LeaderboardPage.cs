@@ -49,10 +49,10 @@ namespace ImageImprov {
         //
         //   BEGIN Variables related/needed for images to place background on screen.
         //
-        AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
+        //AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
         Assembly assembly = null;
-        Image backgroundImgP = null;
-        string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
+        //Image backgroundImgP = null;
+        //string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
         //
         //   END Variables related/needed for images to place background on screen.
         // 
@@ -277,8 +277,12 @@ namespace ImageImprov {
                 //printOrder();
             }
 
+            int deviceDependentRowHeight = 450;
+            if (Device.Idiom == TargetIdiom.Tablet) {
+                deviceDependentRowHeight = (90 + (3 * 270));
+            }
             // want to fill a listview instead of a scroller holding a stack.
-            myListView = new ListView { RowHeight = 450, ItemsSource = leaderboards, ItemTemplate = myDataTemplate,  };
+            myListView = new ListView { RowHeight = deviceDependentRowHeight, ItemsSource = leaderboards, ItemTemplate = myDataTemplate,  };
 
             portraitView.Children.Add(myListView, 0, 0);
             Grid.SetRowSpan(myListView, 16);

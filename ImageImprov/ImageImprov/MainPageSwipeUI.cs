@@ -23,10 +23,10 @@ namespace ImageImprov
             }
         }
 
-        JudgingContentPage judgingPage;
+        public JudgingContentPage judgingPage;
         // public so that i can implement zoom callback.
         public LeaderboardPage leaderboardPage;
-        CameraContentPage cameraPage;
+        public CameraContentPage cameraPage;
         public PlayerContentPage playerPage;
 
         // Listed as a reference to highlight I no longer own the lifecycle of this page.
@@ -47,6 +47,7 @@ namespace ImageImprov
             leaderboardPage = new LeaderboardPage();  
             judgingPage = new JudgingContentPage();
             cameraPage = new CameraContentPage();
+            Debug.WriteLine("DHB:MainPageSwipeUI:ctor cameraPage created.");
 
             //hamburgerPage = new HamburgerPage(); // owned by player page; subordinate to playerPage.
             playerPage = new PlayerContentPage();  // now on the carousel stack.
@@ -130,7 +131,9 @@ namespace ImageImprov
         public void gotoCameraPage() {
             //this.CurrentPage = cameraPage;
             this.Position = 2;
-            cameraPage.startCamera();
+            // no switching of current scene occurs.
+            // this moves into the click observer for category selection
+            //cameraPage.startCamera();
         }
 
         public void gotoHamburgerPage() {

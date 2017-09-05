@@ -100,6 +100,7 @@ namespace ImageImprov
         //public static string uploadCategoryDescription = "";
         // @see getUploadingCategoryDesc
         public static IList<CategoryJSON> uploadingCategories = new List<CategoryJSON>();
+
         /// <summary>
         /// Used for access from things like the KeyPageNavigator.
         /// </summary>

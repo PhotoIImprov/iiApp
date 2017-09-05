@@ -25,7 +25,7 @@ namespace ImageImprov {
                 result = this.submissionsImageRowDataTemplate;
             } else if (item is SubmissionsTitleRow) {
                 result = this.submissionsTitleDataTemplate;
-            } else if (item is SubmissionsTitleRow) {
+            } else if (item is SubmissionsBlankRow) {
                 result = this.submissionsBlankRowDataTemplate;
             }
             return result;

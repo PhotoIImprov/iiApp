@@ -702,6 +702,19 @@ namespace ImageImprov {
             }
             return (int)result;
         }
+
+        public static SKBitmap combineLightbulbs(SKBitmap lowerImage, SKBitmap upperImage, double pctScale) {
+            SKBitmap outputBmp = new SKBitmap(lowerImage.Height, upperImage.Width);
+            using (var canvas = new SKCanvas(outputBmp)) {
+                int y = (int)(pctScale * (double)lowerImage.Height);
+                SKRect lwrRegion = new SKRect(0, 0, lowerImage.Width, y);
+                canvas.DrawBitmap(lowerImage, lwrRegion, lwrRegion);
+                SKRect uprRegion = new SKRect(0, y, upperImage.Width, upperImage.Height - y);
+                canvas.DrawBitmap(upperImage, uprRegion, uprRegion);
+            }
+            return outputBmp;
+        }
+
         //
         //
         //   END IMAGE PROCESSING HELPERS
@@ -772,13 +785,14 @@ namespace ImageImprov {
             label.Text = label.Text.Replace("??", label.FontSize.ToString("F0"));
         }
 
+        /*
         public static string getUploadingCategoryDesc() {
             string categoryDesc = "";
             if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
                 categoryDesc = GlobalStatusSingleton.uploadingCategories[0].description;
             }
             return categoryDesc;
-        }
+        }*/
 
         public static bool listContainsCategory(IList<CategoryJSON> theList, CategoryJSON theCategory) {
             bool found = false;
@@ -811,15 +825,25 @@ namespace ImageImprov {
             try {
                 HttpClient client = new HttpClient();
 
-                client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                string requestCall = null;
+                HttpRequestMessage request = null;
 
-                HttpRequestMessage request = new HttpRequestMessage(method, apiCall);
-                request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                if (method == HttpMethod.Get) {
+                    requestCall = GlobalStatusSingleton.activeURL + apiCall + jsonQuery;
+                    Uri req = new Uri(requestCall);
+                    request = new HttpRequestMessage(method, req);
+                } else {
+                    client.BaseAddress = new Uri(GlobalStatusSingleton.activeURL);
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                    requestCall = apiCall;
+                    request = new HttpRequestMessage(method, requestCall);
+                    request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                }
+
                 request.Headers.Add("Authorization", GlobalSingletonHelpers.getAuthToken());
 
                 HttpResponseMessage response = await client.SendAsync(request);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK) {
+                if ((response.StatusCode == System.Net.HttpStatusCode.OK) || (response.StatusCode == System.Net.HttpStatusCode.Created)) {
                     // do I need these?
                     result = await response.Content.ReadAsStringAsync();
                 } else {
@@ -828,7 +852,8 @@ namespace ImageImprov {
                     // server failure. keep the msg as a fail for correct onVote processing
                     // do we get back json?
                     result = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync " + apiCall + " result recvd");
+                    Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync " + apiCall + " result recvd:" +result);
+                    result = "fail";
                 }
                 response.Dispose();
                 request.Dispose();

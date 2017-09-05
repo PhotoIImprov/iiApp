@@ -69,13 +69,13 @@ namespace ImageImprov.Droid {
 
             // category header
             System.Diagnostics.Debug.WriteLine("DHB:CameraServices_Droid:OnCreate layout created!");
-            if ((GlobalStatusSingleton.uploadingCategories == null) || (GlobalStatusSingleton.uploadingCategories.Count==0)) {
+            if (CameraContentPage.activeCameraCategory == null) { 
                 this.Finish();
                 return;
             }
-            Button categoryButton = new Button(this) { Text = GlobalStatusSingleton.uploadingCategories[0].description };
+            Button categoryButton = new Button(this) { Text = CameraContentPage.activeCameraCategory.description };
             categoryButton.SetTextColor(Android.Graphics.Color.White);
-            categoryButton.SetTextSize(Android.Util.ComplexUnitType.Pt,30.0f);
+            categoryButton.SetTextSize(Android.Util.ComplexUnitType.Pt,(float)CameraContentPage.bestFontSize);
             categoryButton.SetTypeface(Android.Graphics.Typeface.SansSerif, Android.Graphics.TypefaceStyle.Bold);
             RelativeLayout.LayoutParams btnParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.FillParent, WindowManagerLayoutParams.WrapContent);
             btnParams.AddRule(LayoutRules.CenterHorizontal);

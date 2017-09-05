@@ -16,6 +16,9 @@ namespace ImageImprov {
         public SubmissionsImageRowViewCell() {
             //View.MinimumHeightRequest = 120;
             Height = 120;
+            if (Device.Idiom == TargetIdiom.Tablet) {
+                Height = 270;
+            }
             //this.ForceUpdateSize();
             myView = new Grid { ColumnSpacing = 1, RowSpacing = 1, };
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
@@ -44,7 +47,7 @@ namespace ImageImprov {
             myView.Children.Add(img0, 0, 0);
             myView.Children.Add(img1, 1, 0);
             myView.Children.Add(img2, 2, 0);
-            myView.MinimumHeightRequest = 120;
+            myView.MinimumHeightRequest = Height;
             this.View = myView;
         }
 

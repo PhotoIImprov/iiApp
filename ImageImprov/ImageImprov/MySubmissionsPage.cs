@@ -100,6 +100,7 @@ namespace ImageImprov {
         /// </summary>
         /// <param name="subs"></param>
         private void printSubs(IList<SubmissionJSON> subs) {
+            Debug.WriteLine("DHB:MySubmissionsPage:printSubs");
             foreach (SubmissionJSON sub in subs) {
                 Debug.WriteLine("DHB:MySubmissionsPage:printSubs Current cat id: " + sub.category.categoryId);
             }
@@ -112,17 +113,20 @@ namespace ImageImprov {
         /// <param name="e"></param>
         public async virtual void OnCategoryLoad(object sender, EventArgs e) {
             long lookupId = -1;
-            if (GlobalStatusSingleton.uploadingCategories.Count > 0) {
-                lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
-            } else if (GlobalStatusSingleton.votingCategories.Count > 0) {
+            if ((GlobalStatusSingleton.uploadingCategories!= null) && (GlobalStatusSingleton.uploadingCategories.Count > 0)) {
+                //lookupId = GlobalStatusSingleton.uploadingCategories[0].categoryId;
+                // this is some awesome slickness:
+                lookupId = GlobalStatusSingleton.uploadingCategories.Max(r => r.categoryId);
+            } else if ((GlobalStatusSingleton.votingCategories != null) &&(GlobalStatusSingleton.votingCategories.Count > 0)) {
                 lookupId = GlobalStatusSingleton.votingCategories[0].categoryId;
-            } else if (GlobalStatusSingleton.countingCategories.Count > 0) {
+            } else if ((GlobalStatusSingleton.countingCategories != null) && (GlobalStatusSingleton.countingCategories.Count > 0)) {
                 lookupId = GlobalStatusSingleton.countingCategories[0].categoryId;
-            } else if (GlobalStatusSingleton.closedCategories.Count > 0) {
+            } else if ((GlobalStatusSingleton.closedCategories != null) && (GlobalStatusSingleton.closedCategories.Count > 0)) {
                 lookupId = GlobalStatusSingleton.closedCategories[0].categoryId;
             }
             if (lookupId == -1) return;  // no valid categories!
                                          //lookupId = 10;
+            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad lookup id:" + lookupId);
             await processSubmissionsLoadAsync(lookupId);
         }
 
@@ -132,19 +136,24 @@ namespace ImageImprov {
             string result = "fail";
             while (result.Equals("fail")) {
                 result = await requestSubmissionsAsync(lookupId);
+                if (result == null) result = "fail";
                 if (result.Equals("fail")) {
                     await Task.Delay(10000);
                 }
             }
+            Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync through request call");
 
             SubmissionsResponseJSON mySubs = JsonConvert.DeserializeObject<SubmissionsResponseJSON>(result);
+            Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync pre if stmt");
             if ((mySubs != null) && (mySubs.submissions!=null) && (mySubs.submissions.Count>0)) {
+                Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync post if stmt");
                 mySubs.submissions.Sort();
                 printSubs(mySubs.submissions);
                 mySubs.submissions.Reverse();
-                Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad break");
+                Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync break");
                 printSubs(mySubs.submissions);
                 foreach (SubmissionJSON subCategory in mySubs.submissions) {
+                    Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync inside foreach");
                     //if (subCategory.photos.Count > 0) && (!subCategory.category.state.Equals(CategoryJSON.CLOSED))) {
                     if (subCategory.photos.Count > 0) {
                         if ((GlobalStatusSingleton.pendingCategories.Count == 0) ||
@@ -154,7 +163,7 @@ namespace ImageImprov {
                             titleRow.title += " - " + subCategory.category.categoryId;
 #endif
                             submissions.Add(titleRow);
-                            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad about to load: " + subCategory.photos.Count + " photos.");
+                            Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync  about to load: " + subCategory.photos.Count + " photos.");
                             //foreach (PhotoMetaJSON photo in subCategory.photos) {
                             for (int i = 0; i < subCategory.photos.Count; i = i + 3) {
                                 int j = i;
@@ -189,17 +198,17 @@ namespace ImageImprov {
                                     pl = new PhotoLoad(subCategory.photos[j+2].pid, imgRow, 2);
                                     photosToLoad.Enqueue(pl);
                                 }
-                                Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
+                                Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync  complete.");
                             }
                             //SubmissionsBlankRow blank = new SubmissionsBlankRow();
                             //submissions.Add(blank);  // causing issues at this row. skip for now.
                         }
                     }
-                    Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad category: " + subCategory.category.description + " complete.");
+                    Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync  category: " + subCategory.category.description + " complete.");
                 }
+                nextLookupId = mySubs.submissions[mySubs.submissions.Count - 1].category.categoryId;
             }
-            Debug.WriteLine("DHB:MySubmissionsPage:OnCategoryLoad complete.");
-            nextLookupId = mySubs.submissions[mySubs.submissions.Count - 1].category.categoryId;
+            Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync  complete.");
             loadingMoreCategories = false;
         }
 

@@ -47,9 +47,11 @@ namespace ImageImprov {
             //WidthRequest = Width,
             //MinimumHeightRequest = Height / 15.0,
             //FontSize = 30, // program later
-
         };
-        
+        // value differs for tablet and phones
+        double heightAdjustment = 10.0;
+
+
         //> challengeLabel
         // This is the request to load.
         public event LoadChallengeNameEventHandler LoadChallengeName;
@@ -120,13 +122,13 @@ namespace ImageImprov {
         //
         //   BEGIN Variables related/needed for images to place image rankings and backgrounds on screen.
         //
-        AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
+        //AbsoluteLayout layoutP;  // this lets us place a background image on the screen.
         List<iiBitmapView> rankImages = new List<iiBitmapView>();
         Assembly assembly = null;
-        Image backgroundImgP = null;
+        //Image backgroundImgP = null;
         public static string[] rankFilenames = new string[] { "ImageImprov.IconImages.first.png", "ImageImprov.IconImages.second.png",
                 "ImageImprov.IconImages.third.png", "ImageImprov.IconImages.fourth.png"};
-        string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
+        //string backgroundPatternFilename = "ImageImprov.IconImages.pattern.png";
         //
         //   END Variables related/needed for images to place image rankings and backgrounds on screen.
         // 
@@ -144,6 +146,7 @@ namespace ImageImprov {
 
         public JudgingContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
+            if (Device.Idiom == TargetIdiom.Tablet) heightAdjustment = 20.0;
             ballot = new BallotJSON();
 
             preloadedBallots = new Queue<string>();
@@ -226,6 +229,9 @@ namespace ImageImprov {
             }
         }
 
+        public void fireLoadChallenge() {
+            TokenReceived(this, eDummy);
+        }
         /// <summary>
         /// Used by App:OnResume.
         /// </summary>
@@ -239,8 +245,7 @@ namespace ImageImprov {
             View view = (View)sender;
             if ((view.Width <=0)||(view.Height<=0)) { return; }
             // This assumes label can be whole width.
-            
-            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, view.Width, view.Height/10.0);
+            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, view.Width, view.Height/heightAdjustment);
         }
 
         /// <summary>
@@ -320,7 +325,11 @@ namespace ImageImprov {
         public int buildUI() {
             int res = 0;
             Device.BeginInvokeOnMainThread(() => {
-                res = buildPortraitView();
+                if (Device.Idiom == TargetIdiom.Phone) {
+                    res = buildPortraitView();
+                } else {
+                    res = buildTabletPortraitView();
+                }
                 if (res==1) {
                     Content = portraitView;
                 }
@@ -404,7 +413,7 @@ namespace ImageImprov {
                     //@todo Periodically check to see if my xamarin forums query solved this.
                     //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
                     // Calling this here is calling from an invalid height state that seems to fubar everything...
-                    //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                    //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                     //#endif
                     portraitView.Children.Add(challengeLabelP, 0, 0);  // orig 15, now moved to top
                     Grid.SetColumnSpan(challengeLabelP, 6);
@@ -416,6 +425,92 @@ namespace ImageImprov {
                 result = -1;
             }
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView end");
+            return result;
+        }
+
+        /// <summary>
+        /// Builds/updates the tablet portrait view
+        /// </summary>
+        /// <returns>1 on success, -1 if there are the wrong number of ballot imgs.</returns>
+        private int buildTabletPortraitView() {
+            Debug.WriteLine("DHB:JudgingContentPage:buildTabletPortraitView begin");
+            int result = 1;
+            try {
+                // all my elements are already members...
+                if (portraitView == null) {
+                    // yes, these are unbalanced for a reason.
+                    portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                    portraitView.SizeChanged += OnPortraitViewSizeChanged;
+                } else {
+                    // flush the old children.
+                    portraitView.Children.Clear();
+                    portraitView.IsEnabled = true;
+                }
+                portraitView.RowDefinitions.Clear();
+                portraitView.ColumnDefinitions.Clear();
+                for (int i = 0; i < 16; i++) {
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+                for (int j = 0; j < 6; j++) {
+                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    // I can add none, but if i add one, then i just have 1. So here's 2. :)
+                    //portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                }
+
+                portraitView.Children.Add(ballotImgsP[0], 0, 1);
+                Grid.SetRowSpan(ballotImgsP[0], 7);
+                Grid.SetColumnSpan(ballotImgsP[0], 3);
+
+                portraitView.Children.Add(ballotImgsP[1], 3, 1);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[1], 7);
+                Grid.SetColumnSpan(ballotImgsP[1], 3);
+
+                portraitView.Children.Add(ballotImgsP[2], 0, 8);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[2], 7);
+                Grid.SetColumnSpan(ballotImgsP[2], 3);
+
+                portraitView.Children.Add(ballotImgsP[3], 3, 8);  // col, row format
+                Grid.SetRowSpan(ballotImgsP[3], 7);
+                Grid.SetColumnSpan(ballotImgsP[3], 3);
+
+                portraitView.Children.Add(voteBoxes[0], 2, 6);
+                portraitView.Children.Add(voteBoxes[1], 5, 6);
+                portraitView.Children.Add(voteBoxes[2], 2, 13);
+                portraitView.Children.Add(voteBoxes[3], 5, 13);
+                for (int i = 0; i < 4; i++) {
+                    Grid.SetRowSpan(voteBoxes[i], 2);
+                }
+
+                //#if DEBUG
+                //challengeLabelP.Text += " 4P_P case";
+                //@todo Periodically check to see if my xamarin forums query solved this.
+                //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
+                // Calling this here is calling from an invalid height state that seems to fubar everything...
+                //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
+                //#endif
+                portraitView.Children.Add(challengeLabelP, 0, 0);
+                Grid.SetColumnSpan(challengeLabelP, 6);
+                //Grid.SetRowSpan(challengeLabelP, 2);
+                portraitView.Children.Add(helpButton, 5, 0);
+                //Grid.SetRowSpan(helpButton, 2);
+
+                if (lightbulbRow == null) {
+                    lightbulbRow = new LightbulbTracker { HorizontalOptions = LayoutOptions.FillAndExpand, };
+                    lightbulbRow.buildUI();
+                }
+
+                //Grid.LayoutChildIntoBoundingRegion(lightbulbRow, new Xamarin.Forms.Rectangle(0.0, 17.0, 2.0, 1.0) );
+                //Grid.SetColumnSpan(lightbulbRow, 2);  // Wanted this to hold the width stable, which it does, but sadly at half width.
+                portraitView.Children.Add(lightbulbRow, 0, 15);
+                Grid.SetColumnSpan(lightbulbRow, 6);  // this this line has to be after adding.
+                //Grid.SetRowSpan(lightbulbRow, 2);
+                Debug.WriteLine("DHB:JudgingContentPage:buildTabletPortraitView  end");
+            } catch (Exception e) {
+                Debug.WriteLine("DHB:JudgingContentPage:buildTabletPortraitView exception");
+                Debug.WriteLine(e.ToString());
+                result = -1;
+            }
+
             return result;
         }
 
@@ -465,7 +560,7 @@ namespace ImageImprov {
             //@todo Periodically check to see if my xamarin forums query solved this.
             //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView, portraitView.Width);
             // Calling this here is calling from an invalid height state that seems to fubar everything...
-            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+            //GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
             //#endif
             portraitView.Children.Add(challengeLabelP, 0, 0);
             Grid.SetColumnSpan(challengeLabelP, 6);
@@ -571,9 +666,15 @@ namespace ImageImprov {
             IOverlayable uiMaster = (IOverlayable)Application.Current.MainPage;
             IList<iiBitmapView> newImgs = new List<iiBitmapView>();
             foreach (iiBitmapView img in ballotImgsP) {
-                iiBitmapView newCopy = new iiBitmapView {
-                    Bitmap = img.Bitmap.Copy(),
-                };
+                // copying inside setter seems to fail on some devices...
+                // I've tried multiple work arounds for this without success.
+                // no idea why it fails. the same methods all work in other places on the same device.
+                // all i can do is handle the null and not implode when it is null...
+                //iiBitmapView newCopy = new iiBitmapView {
+                //    Bitmap = img.Bitmap.Copy(),
+                //};
+                iiBitmapView newCopy = new iiBitmapView(img.Bitmap.Copy());
+                //iiBitmapView newCopy = new iiBitmapView(img.Bitmap);
                 newImgs.Add(newCopy);
             }
             if (helpPage == null) {
@@ -1041,7 +1142,7 @@ namespace ImageImprov {
                     bool falseBreak = true;
                 }
                 challengeLabelP.Text = ballot.category.description;
-                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                 // now handle ballot
                 Debug.WriteLine("DHB:JudgingContentPage:processBallotString generating images");
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
@@ -1143,18 +1244,24 @@ namespace ImageImprov {
         }
 
         protected void determineColAndRowFromIndex(int index, ref int col, ref int row) {
+            int y1 = 6;
+            int y2 = 12;
+            if (Device.Idiom == TargetIdiom.Tablet) {
+                y1 = 6;
+                y2 = 13;
+            }
             if (index == 0) {
                 col = 2;
-                row = 6;
+                row = y1;
             } else if (index == 1) {
                 col = 5;
-                row = 6;
+                row = y1;
             } else if (index == 2) {
                 col = 2;
-                row = 12;
+                row = y2;
             } else if (index == 3) {
                 col = 5;
-                row = 12;
+                row = y2;
             }
         }
 
@@ -1273,20 +1380,20 @@ namespace ImageImprov {
             string jsonQuery = JsonConvert.SerializeObject(votes);
             string origText = challengeLabelP.Text;
             challengeLabelP.Text = "Vote submitted, loading new ballot";
-            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+            GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
             ClearContent(selectionId);
             string result = await requestVoteAsync(jsonQuery);
             if (result.Equals("fail")) {
                 // @todo This fail case is untested code. Does the UI come back?
                 challengeLabelP.Text = "Connection failed. Please revote";
-                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                 AdjustContentToRotation();
                 //} else ("no ballot created") { 
             } else {
                 // only clear on success
                 ClearContent();
                 challengeLabelP.Text = origText;
-                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                 processBallotString(result);
             }
         }
@@ -1467,7 +1574,7 @@ namespace ImageImprov {
                     string jsonQuery = JsonConvert.SerializeObject(votes);
                     string origText = challengeLabelP.Text;
                     challengeLabelP.Text = "Vote submitted, loading new ballot";
-                    GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                    GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
 
                     UpdateUIForFinalVote(votes.votes, selectionId, getIndexOfBid(vote.bid));
                     /* the result of this is there is no ui update. that's because need to update what the ui elements point to
@@ -1508,7 +1615,7 @@ namespace ImageImprov {
                             // @todo This fail case is untested code. Does the UI come back?
                             if (preloadedBallots.Count == 0) {
                                 challengeLabelP.Text = "No connection. Awaiting connection for more ballots.";
-                                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/10.0);
+                                GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                                 AdjustContentToRotation();
                             }
                         } else {

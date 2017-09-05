@@ -81,6 +81,8 @@ namespace ImageImprov {
         }
 
         private void addImage(int index, int col, int row) {
+            // having a weird device issue where the bmps are not copied over.
+            // put fault tolerance in here.
             portraitView.Children.Add(imgs[index], col, row);
             Grid.SetColumnSpan(imgs[index], 4);
             Grid.SetRowSpan(imgs[index], 4);

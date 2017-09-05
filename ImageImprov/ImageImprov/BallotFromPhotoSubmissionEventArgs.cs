@@ -9,7 +9,7 @@ namespace ImageImprov {
     /// Created by CameraPage and passed to JudingPage when a photo for a new 
     /// category is successfully submitted.
     /// </summary>
-    class BallotFromPhotoSubmissionEventArgs : EventArgs {
+    public class BallotFromPhotoSubmissionEventArgs : EventArgs {
         public string ballotString { get; set; }
     }
 }

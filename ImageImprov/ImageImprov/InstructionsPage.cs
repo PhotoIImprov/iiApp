@@ -13,7 +13,7 @@ namespace ImageImprov {
 
         Image gotoVotingImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png") };
         //Image goHomeImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.home.png") };
-        Image gotoCameraImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png") };
+        Image gotoCameraImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.play.png") };
         Image gotoLeaderboardImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png") };
         Image gotoSettingsImgButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png") };
 
@@ -57,7 +57,7 @@ namespace ImageImprov {
 
         Label cameraLabelP = new Label
         {
-            Text = "Goto the camera page.\nEnter contests here!\nSquare images only.",
+            Text = "Enter contests here!\nSquare images only.",
             HorizontalOptions = LayoutOptions.StartAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
             HorizontalTextAlignment = TextAlignment.Start,

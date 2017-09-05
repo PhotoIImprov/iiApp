@@ -110,6 +110,9 @@ namespace ImageImprov {
         public void gotoCameraPage() {
             thePages.gotoCameraPage();
         }
+        public void gotoCreateCategoryPage() {
+            thePages.cameraPage.switchToCreateCategoryView();
+        }
         public void gotoHamburgerPage() {
             thePages.gotoHamburgerPage();
         }

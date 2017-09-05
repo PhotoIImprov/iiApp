@@ -25,11 +25,15 @@ namespace ImageImprov {
         iiBitmapView img8;
 
         public LeaderboardCell() {
+            double gridHeightForImages = 2;
+            if (Device.Idiom == TargetIdiom.Tablet) {
+                gridHeightForImages = 4;
+            }
             myView = new Grid { ColumnSpacing = 1, RowSpacing = 1, };
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
-            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
-            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });
+            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(gridHeightForImages, GridUnitType.Star) });
+            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(gridHeightForImages, GridUnitType.Star) });
+            myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(gridHeightForImages, GridUnitType.Star) });
             myView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(.25, GridUnitType.Star) });
             myView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             myView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });

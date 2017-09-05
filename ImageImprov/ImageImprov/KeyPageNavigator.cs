@@ -106,8 +106,8 @@ namespace ImageImprov {
             gotoLeaderboardImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.leaderboard.png", assembly));
             gotoLeaderboardImgButtonOn.IsVisible = false;
 
-            gotoCameraImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.camera_inactive.png", assembly));
-            gotoCameraImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.camera.png", assembly));
+            gotoCameraImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.play_inactive.png", assembly));
+            gotoCameraImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.play.png", assembly));
             gotoCameraImgButtonOn.IsVisible = false;
 
             gotoHamburgerImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Hamburger_inactive.png", assembly));
@@ -165,10 +165,11 @@ namespace ImageImprov {
             Children.Add(gotoHamburgerImgButtonOff, 3, 2);
             Children.Add(gotoHamburgerImgButtonOn, 3, 2);
 
+            // We now have a play button.
             // This object should always be created AFTER the judging page, so this should exist...
-            if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
-                GlobalStatusSingleton.ptrToJudgingPageLoadCategory += new CategoryLoadSuccessEventHandler(OnCategoryLoad);
-            }
+            //if (GlobalStatusSingleton.ptrToJudgingPageLoadCategory != null) {
+            //    GlobalStatusSingleton.ptrToJudgingPageLoadCategory += new CategoryLoadSuccessEventHandler(OnCategoryLoad);
+            //}
         }
 
         public void OnClicked(object sender, EventArgs e) {
@@ -203,8 +204,8 @@ namespace ImageImprov {
             }
         }
 
-        public virtual void OnCategoryLoad(object sender, EventArgs e) {
-            categoryLabel.Text = GlobalSingletonHelpers.getUploadingCategoryDesc();
-        }
+        //public virtual void OnCategoryLoad(object sender, EventArgs e) {
+        //    categoryLabel.Text = GlobalSingletonHelpers.getUploadingCategoryDesc();
+        //}
     }
 }

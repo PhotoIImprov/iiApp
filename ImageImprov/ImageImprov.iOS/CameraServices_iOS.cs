@@ -67,12 +67,13 @@ namespace ImageImprov.iOS {
 
             var label = new UILabel();
             //label.MinimumFontSize = 40;
-            label.Text = GlobalStatusSingleton.uploadingCategories[0].description;
+            // should never be null. CameraContentPage responsible for keeping this set properly.
+            label.Text = CameraContentPage.activeCameraCategory.description;
             label.TextAlignment = UITextAlignment.Center;
             label.TextColor = UIColor.White;
             //label.ToggleBoldface(null);  hmm. this blows up.
             //Debug.WriteLine("DHB:CameraServices_iOS:ViewDidLoad font name: " + label.Font.ToString());  //.SFUIText 17
-            label.Font = UIFont.FromName(".SFUIText-Bold", 30);
+            label.Font = UIFont.FromName(".SFUIText-Bold", (float)CameraContentPage.bestFontSize);
             label.BackgroundColor = new UIColor(252.0f / 255.0f, 213.0f / 255.0f, 21.0f / 255.0f, 1.0f);
             label.Frame = new CGRect(0, 30, View.Bounds.Width, 50);
             View.AddSubview(label);
@@ -89,7 +90,9 @@ namespace ImageImprov.iOS {
             flashOnImg = UIImage.FromFile("flash.png");
             flashButton.SetImage(flashOffImg, UIControlState.Normal);
             flashButton.SetImage(flashOnImg, UIControlState.Selected);
-            flashButton.Frame = new CGRect(30, 470, 74, 74);
+            //flashButton.Frame = new CGRect(30, 470, 74, 74);
+            //flashButton.Frame = new CGRect(48, 470, 37, 37);
+            flashButton.Frame = new CGRect(30, 488, 37, 37);
             flashButton.TouchUpInside += toggleFlash;
             View.AddSubview(flashButton);
         }
@@ -161,7 +164,7 @@ namespace ImageImprov.iOS {
             var dictionary = new NSMutableDictionary();
             dictionary[AVVideo.CodecKey] = new NSNumber((int)AVVideoCodec.JPEG);
             stillImageOutput = new AVCaptureStillImageOutput() {
-                OutputSettings = new NSDictionary()
+                OutputSettings = new NSDictionary(), HighResolutionStillImageOutputEnabled=true,
             };
 
             captureSession.AddOutput(stillImageOutput);
