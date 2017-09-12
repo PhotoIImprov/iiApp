@@ -88,7 +88,7 @@ namespace ImageImprov {
             this.PaintSurface += OnCanvasViewPaintSurface;
         }
 
-        public void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e) {
+        public virtual void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e) {
             if (Bitmap != null) {
                 SKSurface vSurface = e.Surface;
                 var surfaceWidth = e.Info.Width;

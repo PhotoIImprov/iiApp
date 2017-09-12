@@ -46,7 +46,8 @@ namespace ImageImprov {
         Button submitCurrentPictureP;
 
         iiBitmapView backButton = null;
-        iiBitmapView bulb = new iiBitmapView() { IsVisible = false, HorizontalOptions = LayoutOptions.End, };
+        LightbulbProgessBar bulb = new LightbulbProgessBar { IsVisible = false, HorizontalOptions = LayoutOptions.End, Margin = 3, };
+        iiBitmapView alertBulb;
 
         // filepath to the latest taken img
         string latestTakenPath = "";
@@ -64,9 +65,15 @@ namespace ImageImprov {
             // the above is not working on ios and it makes no sense as it works in Android. grrrr.
             // this didn't help.
             //if (Device.OS == TargetPlatform.iOS) {
-              //  challengeLabelP.GestureRecognizers.Add(backTap);
+            //  challengeLabelP.GestureRecognizers.Add(backTap);
             //}
             //Debug.WriteLine("DHB:CameraEnterPhotoView:CameraEnterPhotoView in ctor ok");
+
+            alertBulb = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.alert.png", assembly)) {
+                HorizontalOptions = LayoutOptions.End,
+                Margin = 4,
+                IsVisible = false,
+            };
 
             this.cameraPage = parent;
             submitCurrentPictureP = new Button {
@@ -116,6 +123,10 @@ namespace ImageImprov {
             Grid.SetRowSpan(submitCurrentPictureP, 2);
             //portraitView.Children.Add(lastActionResultLabelP, 0, 9);
 
+            portraitView.Children.Add(bulb, 0, 14);
+            Grid.SetRowSpan(bulb, 2);
+            portraitView.Children.Add(alertBulb, 0, 14);
+            Grid.SetRowSpan(alertBulb, 2);
             Content = portraitView;
             return 1;
         }
@@ -147,6 +158,8 @@ namespace ImageImprov {
         // click handler for SubmitCurrentPicture.
         protected async virtual void OnSubmitCurrentPicture(object sender, EventArgs e) {
             Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture start");
+            alertBulb.IsVisible = false;
+
             // check that button is enabled... xamarin has weak-fu here.
             if (((Button)sender).IsEnabled == false) { return; }
 
@@ -167,22 +180,32 @@ namespace ImageImprov {
             try {
                 BallotJSON response = JsonConvert.DeserializeObject<BallotJSON>(result);
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture post json deserialize");
-                //if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
-                // success. update the UI
-                submitCurrentPictureP.Text = "Congratulations, you're in!";
-                //submitCurrentPictureL.Text = "Congratulations, you're in!";
+                if (response.ballots != null) {
+                    //if (response.message.Equals(PhotoSubmitResponseJSON.SUCCESS_MSG)) {
+                    // success. update the UI
+                    submitCurrentPictureP.Text = "Congratulations, you're in!";
+                    //submitCurrentPictureL.Text = "Congratulations, you're in!";
 
-                buildUI();
-                //setView();
-                Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture end");
-                cameraPage.switchToSelectView();
-                BallotFromPhotoSubmissionEventArgs ballotEvt = new BallotFromPhotoSubmissionEventArgs { ballotString = result, };
-                cameraPage.fireLoadBallotFromPhotoSubmission(ballotEvt);
+                    buildUI();
+                    //setView();
+                    Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture end");
+                    cameraPage.switchToSelectView();
+                    BallotFromPhotoSubmissionEventArgs ballotEvt = new BallotFromPhotoSubmissionEventArgs { ballotString = result, };
+                    cameraPage.fireLoadBallotFromPhotoSubmission(ballotEvt);
+                } else {
+                    // try a photo deserialize. no ballot was returned, so probably no enough pics!
+                    // actually... we already processed the fail case in submitAsync... so here we are good.
+                    submitCurrentPictureP.Text = "Congratulations, you're in!";
+                    cameraPage.switchToSelectView();
+                }
             } catch (Exception err) {
                 Debug.WriteLine("DHB:CameraContentPage:OnSubmitCurrentPicture invalid response json: " + result);
                 Debug.WriteLine(err.ToString());
                 submitCurrentPictureP.Text = "Entry failed - try again";
                 submitCurrentPictureP.IsEnabled = true;
+                bulb.IsVisible = false;
+                active = false;
+                alertBulb.IsVisible = true;
                 buildUI();
             }
 
@@ -290,17 +313,12 @@ namespace ImageImprov {
 
         public async void AnimationEvent(object sender, EventArgs args) {
             active = true;  // need to reset when coming back in.
-            Assembly assembly = this.GetType().GetTypeInfo().Assembly;
-            SKBitmap offBulb = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.reward_inactive.png", assembly);
-            SKBitmap onBulb = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.reward.png", assembly);
+            bulb.IsVisible = true;
 
-            double pct = 0.0;
-            while (this.active) {
-                bulb.Bitmap = GlobalSingletonHelpers.combineLightbulbs(onBulb, offBulb, pct);
-                bulb.IsVisible = true;
-                pct += 0.05;
-                if (pct > 1.0) pct = 0.0;
-                await Task.Delay(500);
+            while (active) {
+                bulb.InvalidateSurface();
+                bulb.pct += 0.025;
+                await Task.Delay(250);
             }
             bulb.IsVisible = false;
         }

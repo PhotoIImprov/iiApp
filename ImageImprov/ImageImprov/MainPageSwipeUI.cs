@@ -179,7 +179,8 @@ namespace ImageImprov
             if (GlobalStatusSingleton.firstTimePlaying == true) {
                 // need to goto instructions page!
                 playerPage.Content = playerPage.CenterConsole.InstructionsPage;
-                GlobalStatusSingleton.firstTimePlaying = false;
+                // dont set to false here. still need to pop the help page on category load.
+                //GlobalStatusSingleton.firstTimePlaying = false;
             } else {
                 gotoJudgingPage();
             }

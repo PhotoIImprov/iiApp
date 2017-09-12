@@ -38,13 +38,27 @@ namespace ImageImprov {
         private string _accessKey;
         public string accessKey {
             get {
-                return "Join phrase: " + _accessKey;
+                string result = "Join phrase: " + _accessKey;
+                if (!stillUploading) result += "; voting only";
+                return result;
             }
             set {
                 _accessKey = value;
                 OnPropertyChanged(this, "accessKey");
             }
         }
+
+        private bool _stillUploading = true;
+        public bool stillUploading {
+            get {
+                return _stillUploading;
+            }
+            set {
+                _stillUploading = value;
+                OnPropertyChanged(this, "accessKey");
+            }
+        }
+
         public long eventId { get; set; }
 
         public int CompareTo(CameraEventTitleElement b) {

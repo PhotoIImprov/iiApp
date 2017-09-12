@@ -703,18 +703,6 @@ namespace ImageImprov {
             return (int)result;
         }
 
-        public static SKBitmap combineLightbulbs(SKBitmap lowerImage, SKBitmap upperImage, double pctScale) {
-            SKBitmap outputBmp = new SKBitmap(lowerImage.Height, upperImage.Width);
-            using (var canvas = new SKCanvas(outputBmp)) {
-                int y = (int)(pctScale * (double)lowerImage.Height);
-                SKRect lwrRegion = new SKRect(0, 0, lowerImage.Width, y);
-                canvas.DrawBitmap(lowerImage, lwrRegion, lwrRegion);
-                SKRect uprRegion = new SKRect(0, y, upperImage.Width, upperImage.Height - y);
-                canvas.DrawBitmap(upperImage, uprRegion, uprRegion);
-            }
-            return outputBmp;
-        }
-
         //
         //
         //   END IMAGE PROCESSING HELPERS

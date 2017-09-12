@@ -720,6 +720,11 @@ namespace ImageImprov {
             // Time to post the notifications
             postCategoryNotifications();
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName posted a notification");
+            if ((ballot.ballots != null) && (GlobalStatusSingleton.firstTimePlaying == true)) {
+                OnHelpTapped(this, new EventArgs());
+                GlobalStatusSingleton.firstTimePlaying = false;
+            }
+
             Debug.WriteLine("DHB:JudgingContentPage:OnLoadChallengeName end");
         }
 
@@ -736,22 +741,28 @@ namespace ImageImprov {
             }
             Device.BeginInvokeOnMainThread(() =>
             {
-                //lock (ballot) {
-                    ClearContent();
-                    try {
-                        if (portraitView == null) {
-                            this.buildUI();
-                        }
-                        processBallotString(preloadedBallots.Dequeue());
-                    } catch (Exception ex) {
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
-                        Debug.WriteLine(ex.ToString());
+                ClearContent();
+                try {
+                    if (portraitView == null) {
+                        this.buildUI();
                     }
-                //}
+                    processBallotString(preloadedBallots.Dequeue());
+                    // can't place this here as this code is called prior to registration as part of pre-loading.
+                    // does mean i can fire off the help sooner though!
+                    /*
+                    if ((ballot.ballots != null) && (GlobalStatusSingleton.firstTimePlaying == true)) {
+                        OnHelpTapped(this, new EventArgs());
+                        GlobalStatusSingleton.firstTimePlaying = false;
+                    }
+                    */
+                } catch (Exception ex) {
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                    Debug.WriteLine("DHB:JudgingContentPage:OnDequeueBallotRequest wtf. dequeing from empty queue. how???");
+                    Debug.WriteLine(ex.ToString());
+                }
             });
             // should be ok at this point. however, sometimes an invalid status gets saved.
             // this is how I pick that up and prevent it.

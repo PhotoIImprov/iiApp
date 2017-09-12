@@ -45,6 +45,7 @@ namespace ImageImprov {
         string scope_google = "https://www.googleapis.com/auth/games https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/plus.me "  // leave the space here!
             + "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email";
 
+        //private Uri facebookAuthorizeUrl = new Uri("https://www.facebook.com/connect/login_success.html");
         private Uri facebookAuthorizeUrl = new Uri("https://m.facebook.com/dialog/oauth/");
         private Uri facebookAccessTokenUrl = new Uri("https://graph.facebook.com/oauth/access_token");
         //private Uri facebookRedirectUrl = new Uri(GlobalStatusSingleton.activeURL);
@@ -120,12 +121,13 @@ namespace ImageImprov {
             this.navigation = navigation;
 
             if (authorizeUrl == null) {
-                // default to google
-                configForGoogle();
+                // default to facebook as google doesn't work on all platforms.
+                configForFacebook();
             }
             
             /*
             if (Device.OS == TargetPlatform.iOS) {
+                // clientId; clientSecret; permissionsRequest; authorizeUrl; redirectUrl; accessTokenUrl; username; isNativeUI
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
             } else if (Device.OS == TargetPlatform.Android) {
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);

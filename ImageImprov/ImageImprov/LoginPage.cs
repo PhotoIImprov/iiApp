@@ -940,6 +940,7 @@ namespace ImageImprov {
             // right now, do nothing.
             // now we goto the instructions page.
             //this.Content = CenterConsole.InstructionsPage;
+            //GlobalStatusSingleton.firstTimePlaying = true;
         }
 
 
@@ -968,6 +969,7 @@ namespace ImageImprov {
                 if (result.StatusCode == System.Net.HttpStatusCode.Created) {
                     Debug.WriteLine("DHB:LoginPage:requestRegistrationAsync success");
                     // @todo on switch to oauth/jwt uncomment the token code (it currently is called after the login).
+                    GlobalStatusSingleton.firstTimePlaying = true;
                     resultMsg = await requestTokenAsync();
                     /* a or b
                     bool okToken = await requestToken(client, jsonQuery);

@@ -264,12 +264,17 @@ namespace ImageImprov {
             CameraEventTitleElement cete = new CameraEventTitleElement() { eventName = evt.eventName, accessKey = evt.accessKey, eventId = evt.eventId, };
             openCategorys.Add(cete);
             // now the categories for this event.
+            int uploadCategoryCount = 0;
             foreach (CategoryJSON category in evt.categories) {
-                CameraClosedCategoryElement ccce = new CameraClosedCategoryElement(category);
-                if (!hasCategory(ccce)) {
-                    openCategorys.Add(ccce);
+                if (category.state == CategoryJSON.UPLOAD) {
+                    CameraClosedCategoryElement ccce = new CameraClosedCategoryElement(category);
+                    if (!hasCategory(ccce)) {
+                        openCategorys.Add(ccce);
+                        uploadCategoryCount++;
+                    }
                 }
             }
+            if (uploadCategoryCount == 0) cete.stillUploading = false;
         }
     }
 }
