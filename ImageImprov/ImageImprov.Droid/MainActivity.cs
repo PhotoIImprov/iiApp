@@ -18,6 +18,8 @@ using Xamarin.Forms.Platform.Android;
 using CarouselView.FormsPlugin.Android;
 
 using System.Diagnostics;
+using Xamarin.Facebook;
+using Xamarin.Facebook.Login;
 
 namespace ImageImprov.Droid {
     [Activity(Label = "ImageImprov", 
@@ -40,19 +42,26 @@ namespace ImageImprov.Droid {
             System.Console.WriteLine(e.ToString());
         }
 
+        int CAMERA_REQUEST_CODE = 77;
+
         /// <summary>
         /// Saved for later retrieval and use by other activities. First instance was OAuth.
         /// </summary>
-        public Bundle bundle;
+        //public Bundle bundle;
 
         FileServices fs = new FileServices();
         //AuthServices authSvcs = new AuthServices();
+        FacebookLogin_Droid fbLogin = new FacebookLogin_Droid();
 
         Notifications ns;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+
+            FacebookSdk.SdkInitialize(this.ApplicationContext);
+            fbLogin.Init();
+            global::Xamarin.Auth.Presenters.XamarinAndroid.AuthenticationConfiguration.Init(this, savedInstanceState);
 
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += HandleExceptions;
@@ -105,7 +114,7 @@ namespace ImageImprov.Droid {
                 intent.PutExtra("android.intent.extra.quickCapture", true);
                 intent.PutExtra(MediaStore.ExtraOutput, Android.Net.Uri.FromFile(file));
                 //StartActivityForResult(intent, 0);  */
-                StartActivityForResult(typeof(CameraServices_Droid), 1);
+                StartActivityForResult(typeof(CameraServices_Droid), CAMERA_REQUEST_CODE);
                 //StartActivity(typeof(CameraServices_Droid));
             };
             //> OnCreate
@@ -116,27 +125,38 @@ namespace ImageImprov.Droid {
         {
             base.OnActivityResult(requestCode, resultCode, data);
             System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult");
-            //< OnActivityResult
-            // Activity no longer saves the file so I have to do it.
-            try {
-                /* nope.
-                FileWriter fw = new FileWriter(file);
-                BufferedWriter bw = new BufferedWriter(fw);
-                char[] asChar = System.Text.Encoding.Unicode.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
-                //.UTF8.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
-                bw.Write(asChar);
-                bw.Close(); */
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.Write(GlobalStatusSingleton.mostRecentImgBytes);
-                fos.Close();
-                System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult should have written to: " +file.Path);
-            } catch (Exception e) {
-                System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult exception:" + e.ToString());
-            }
+
+            if (requestCode == CAMERA_REQUEST_CODE) {
+                //< OnActivityResult
+                // Activity no longer saves the file so I have to do it.
+                try {
+                    /* nope.
+                    FileWriter fw = new FileWriter(file);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    char[] asChar = System.Text.Encoding.Unicode.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
+                    //.UTF8.GetString(GlobalStatusSingleton.mostRecentImgBytes).ToCharArray();
+                    bw.Write(asChar);
+                    bw.Close(); */
+                    FileOutputStream fos = new FileOutputStream(file);
+                    fos.Write(GlobalStatusSingleton.mostRecentImgBytes);
+                    fos.Close();
+                    System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult should have written to: " + file.Path);
+                } catch (Exception e) {
+                    System.Diagnostics.Debug.WriteLine("DHB:MainActivity:OnActivityResult exception:" + e.ToString());
+                }
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(file.Path, null);
 
-            GlobalStatusSingleton.imgsTakenTracker++;
-            //> OnActivityResult
+                GlobalStatusSingleton.imgsTakenTracker++;
+                //> OnActivityResult
+            } else {
+                // should be facebook...
+                fbLogin.OnActivityResult(requestCode, resultCode, data);
+                if (fbLogin.loginCheck()) {
+                    System.Diagnostics.Debug.WriteLine("need to figure out how to kick to app");
+                } else {
+                    System.Diagnostics.Debug.WriteLine("epic fail");
+                }
+            }
         }
 
         /* the camera2 code
@@ -152,7 +172,7 @@ namespace ImageImprov.Droid {
                 System.Diagnostics.Debug.WriteLine("DHB:Droid:MainActivity:cameraSetup camera exception. " + e.ToString());
             }
         }
-        */
+        
         private void cameraSetup() {
             Camera c = null;
             int largestSquare = 0;
@@ -190,7 +210,7 @@ namespace ImageImprov.Droid {
                 System.Diagnostics.Debug.WriteLine("DHB:MainActivity:CameraSetup exception:" +e.ToString());
             }
             System.Diagnostics.Debug.WriteLine("Do I have a camera obj?");
-        }
+        } */
     }
 }
 

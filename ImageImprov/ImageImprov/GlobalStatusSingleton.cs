@@ -168,6 +168,8 @@ namespace ImageImprov
         /// </summary>
         public static byte[] mostRecentImgBytes;
         public static SkiaSharp.SKBitmap latestImg;
+
+        public static string keyhash;
     }
 }
 

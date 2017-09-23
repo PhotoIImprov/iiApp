@@ -18,6 +18,9 @@ namespace ImageImprov {
             // Save that height. 
             TextHeight = sizeRequest.Request.Height;
         }
+
+        public static string TEST_TEXT = "abcdefghijklmnopqrstuvwxyz";
+
         public double FontSize { private set; get; }
         public double TextHeight { private set; get; }
     }

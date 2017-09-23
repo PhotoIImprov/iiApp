@@ -20,6 +20,7 @@ using System.IO;
 using System.Net;
 using CarouselView.FormsPlugin.iOS;
 using SkiaSharp;
+using Facebook.CoreKit;
 
 namespace ImageImprov.iOS
 {
@@ -48,6 +49,7 @@ namespace ImageImprov.iOS
         private FileServices fs = new FileServices();
         private AuthServices authSvcs = new AuthServices();
         private Notifications notify = new ImageImprov.iOS.Notifications();
+        private FacebookLogin_iOS fbLogin = new FacebookLogin_iOS();
 
         public static NSData snappedImgData = null;
 
@@ -85,7 +87,8 @@ namespace ImageImprov.iOS
             //notificationTest();
             notify.RequestAuthorization();
 
-
+            fbLogin.Init();
+            FacebookLogin_iOS.uiApplication = uiApplication;
             CameraServices_iOS myCamera = new CameraServices_iOS();
 
             ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShouldTakePicture += () => {
@@ -149,14 +152,38 @@ namespace ImageImprov.iOS
             return base.FinishedLaunching(uiApplication, launchOptions);
         }
 
+        // Called by ThirdParty Authentication login.
         public override bool OpenUrl(UIApplication app, NSUrl url, NSDictionary options) {
-            // convert NSUrl to Uri
-            var uri = new Uri(url.AbsoluteString);
-            // Load redirectUrl page from OAuth.
+            if (ImageImprov.ThirdPartyAuthenticator.authenticator == null) {
+                // This case occurs when using FBook sdk rather than Xamarin.Auth
+                // bleh. no easy cast...
+                var keys = options.Keys;
+                var keys2 = new NSString[keys.Length];
+                int i = 0;
+                foreach (NSObject k in keys) {
+                    keys2[i] = (NSString)k;
+                    i++;
+                }
+                var values = options.Values;
 
-            ImageImprov.ThirdPartyAuthenticator.authenticator.OnPageLoading(uri);
+                NSDictionary<NSString, NSObject> copy2 = NSDictionary<NSString, NSObject>.FromObjectsAndKeys(values,keys2);
+
+                ApplicationDelegate.SharedInstance.OpenUrl(app, url, copy2);
+            } else {
+                // convert NSUrl to Uri
+                var uri = new Uri(url.AbsoluteString);
+                // Load redirectUrl page from OAuth.
+
+                ImageImprov.ThirdPartyAuthenticator.authenticator.OnPageLoading(uri);
+            }
             return true;
         }
+
+        // called by fbook login
+        // This is what fbook asks for, but does not exist.
+        //public override bool OpenUrl(UIApplication app, NSUrl url, string sourceApplication, NSDictionary options) {
+          //  return ApplicationDelegate.SharedInstance.OpenUrl(app, url, sourceApplication, options);
+        //}
 
         protected void notificationTest() {
             notify.RequestAuthorization();

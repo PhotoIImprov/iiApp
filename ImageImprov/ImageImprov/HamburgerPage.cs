@@ -25,22 +25,17 @@ namespace ImageImprov {
         // Settings
         Image instructionsButton;
         Label instructionsLabel;
-        Image votingButton;
-        Label votingLabel;
-        Image homeButton;
-        Label homeLabel;
-        Image cameraButton;
-        Label cameraLabel;
-        Image leaderboardButton;
-        Label leaderboardLabel;
+
+        //Image leaderboardButton;
+        //Label leaderboardLabel;
         //Image medalsButton;
         Label medalsLabel;
         Image mySubmissionsButton;
         Label mySubmissionsLabel;
         //Image myFavoritesButton;
         Label myFavsLabel;
-        Image storeButton;
-        Label storeLabel;
+        //Image storeButton;
+        //Label storeLabel;
         Image settingsButton;
         Label settingsLabel;
 
@@ -117,72 +112,6 @@ namespace ImageImprov {
             } else {
                 loggedInLabel.Text = "Logged in anonymously";
             }
-            /*
-            TapGestureRecognizer voteClick = new TapGestureRecognizer();
-            votingButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.vote.png"), BackgroundColor = GlobalStatusSingleton.highlightColor, };
-            votingLabel = new Label {
-                Text = "Vote for your favorites!",
-                //HorizontalOptions = LayoutOptions.StartAndExpand,
-                BackgroundColor = GlobalStatusSingleton.highlightColor,
-                TextColor = Color.Black, };
-            StackLayout votingRow = new StackLayout
-            {
-                Orientation = StackOrientation.Horizontal,
-                Children = { votingButton, votingLabel, },
-                BackgroundColor= GlobalStatusSingleton.highlightColor,
-            };
-            votingButton.GestureRecognizers.Add(voteClick);
-            votingLabel.GestureRecognizers.Add(voteClick);
-            voteClick.Tapped += (sender, args) => {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoJudgingPage();
-            };
-
-            TapGestureRecognizer homeClick = new TapGestureRecognizer();
-            homeButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.home.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-            homeLabel = new Label { Text = "Show me the home feed!", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor=Color.Black,};
-            StackLayout homeRow = new StackLayout
-            {
-                Orientation = StackOrientation.Horizontal,
-                Children = { homeButton, homeLabel, }
-            };
-            homeButton.GestureRecognizers.Add(homeClick);
-            homeLabel.GestureRecognizers.Add(homeClick);
-            homeClick.Tapped += (sender, args) => {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHomePage();
-            };
-
-
-            TapGestureRecognizer cameraClick = new TapGestureRecognizer();
-            cameraButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.camera.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-            cameraLabel = new Label { Text = "Your pictures shall rule!", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            StackLayout cameraRow = new StackLayout
-            {
-                Orientation = StackOrientation.Horizontal,
-                Children = { cameraButton, cameraLabel, }
-            };
-            cameraButton.GestureRecognizers.Add(cameraClick);
-            cameraLabel.GestureRecognizers.Add(cameraClick);
-            cameraClick.Tapped += (sender, args) => {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
-            };
-
-
-            TapGestureRecognizer leaderboardClick = new TapGestureRecognizer();
-            leaderboardButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.leaderboard.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
-            leaderboardLabel= new Label { Text = "See the best images!", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
-            StackLayout leaderboardRow = new StackLayout
-            {
-                Orientation = StackOrientation.Horizontal,
-                Children = { leaderboardButton, leaderboardLabel, }
-            };
-            leaderboardButton.GestureRecognizers.Add(leaderboardClick);
-            leaderboardLabel.GestureRecognizers.Add(leaderboardClick);
-            leaderboardClick.Tapped += (sender, args) => {
-                Debug.WriteLine("DHB:HamburgerPage:buildUI leaderboardClick. pre move");
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
-                Debug.WriteLine("DHB:HamburgerPage:buildUI leaderboardClick. post move");
-            };
-            */
 
             TapGestureRecognizer mySubmissionsClick = new TapGestureRecognizer();
             mySubmissionsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.contests_inactive.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
@@ -197,6 +126,17 @@ namespace ImageImprov {
             mySubmissionsClick.Tapped += (sender, args) => {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoMySubmissionsPage();
             };
+
+            TapGestureRecognizer myLikesClick = new TapGestureRecognizer();
+            myFavsLabel = new Label {
+                Text = "   My favorites/likes/bookmarks",
+                BackgroundColor = GlobalStatusSingleton.backgroundColor,
+                TextColor = Color.Black, };
+            myFavsLabel.GestureRecognizers.Add(myLikesClick);
+            myLikesClick.Tapped += (sender, args) => {
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLikesPage();
+            };
+
 
             TapGestureRecognizer settingsClick = new TapGestureRecognizer();
             settingsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.settings.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
@@ -215,7 +155,6 @@ namespace ImageImprov {
             Label comingSoon = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             Label medals = new Label { Text = "   My medals", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
 
-            Label myfavs = new Label { Text = "   My favorites", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
             //Label purchases = new Label { Text = "Coming soon:", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
 
             if (termsOfServiceLabel == null) {
@@ -231,12 +170,12 @@ namespace ImageImprov {
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8, GridUnitType.Star) });
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             }
-            portraitView.Children.Add(instructionsRow, 1, 4);
-            portraitView.Children.Add(submissionsRow, 1, 6);
+            portraitView.Children.Add(instructionsRow, 1, 2);
+            portraitView.Children.Add(submissionsRow, 1, 4);
+            portraitView.Children.Add(myFavsLabel, 1, 6);
             portraitView.Children.Add(settingsRow, 1, 8);
-            portraitView.Children.Add(comingSoon, 1, 10);
-            portraitView.Children.Add(medals, 1, 11);
-            portraitView.Children.Add(myfavs, 1, 12);
+            portraitView.Children.Add(comingSoon, 1, 11);
+            portraitView.Children.Add(medals, 1, 12);
             portraitView.Children.Add(versionLabel, 1, 13);
             portraitView.Children.Add(loggedInLabel, 1, 14);
             portraitView.Children.Add(termsOfServiceLabel, 1, 15);

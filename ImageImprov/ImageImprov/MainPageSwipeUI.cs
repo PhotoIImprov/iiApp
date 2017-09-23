@@ -65,6 +65,7 @@ namespace ImageImprov
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(cameraPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnCategoryLoad);
+            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.LikesPage.OnCategoryLoad);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(judgingPage.OnLoadBallotFromSubmission);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnPhotoSubmit);
 
@@ -119,6 +120,10 @@ namespace ImageImprov
         public void gotoSettingsPage() {
             playerPage.Content = playerPage.CenterConsole.SettingsPage;
             //this.CurrentPage = playerPage;
+            this.Position = 3;
+        }
+        public void gotoLikesPage() {
+            playerPage.Content = playerPage.CenterConsole.LikesPage;
             this.Position = 3;
         }
 

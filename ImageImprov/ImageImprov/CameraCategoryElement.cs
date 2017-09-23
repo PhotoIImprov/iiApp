@@ -24,6 +24,8 @@ namespace ImageImprov {
     }
 
     public class CameraEventTitleElement : CameraCategoryElement, IComparable<CameraEventTitleElement> {
+        public EventJSON rawEvent { get; set; }
+
         private string _eventName;
         public string eventName {
             get {

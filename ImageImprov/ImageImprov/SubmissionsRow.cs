@@ -12,7 +12,7 @@ namespace ImageImprov {
     /// <summary>
     /// Parent designed to provide a commonality between title row, image row, and spacer(blank) rows in the submissions page.
     /// </summary>
-    class SubmissionsRow : INotifyPropertyChanged {
+    public class SubmissionsRow : INotifyPropertyChanged {
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(object sender, string propertyName) {
             if (this.PropertyChanged != null) {
@@ -21,12 +21,12 @@ namespace ImageImprov {
         }
     }
 
-    class SubmissionsTitleRow : SubmissionsRow {
+    public class SubmissionsTitleRow : SubmissionsRow {
         public string title { get; set; }
         public long categoryId { get; set; }
     }
 
-    class SubmissionsImageRow : SubmissionsRow {
+    public class SubmissionsImageRow : SubmissionsRow {
         /// <summary>
         /// Need to know with whom I am associated, so added images can join
         /// the correct place.
@@ -100,5 +100,5 @@ namespace ImageImprov {
         }
     }
 
-    class SubmissionsBlankRow : SubmissionsRow { }
+    public class SubmissionsBlankRow : SubmissionsRow { }
 }

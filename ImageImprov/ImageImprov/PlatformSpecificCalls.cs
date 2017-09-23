@@ -46,5 +46,29 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:PlatformSpecificCalls setupNotification sent.");
             }
         }
+
+        public static void SetLoginCallback(LoginPage callback) {
+            I_ii_FacebookLogin iFB = DependencyService.Get<I_ii_FacebookLogin>();
+            if (iFB != null) {
+                iFB.SetLoginCallback(callback);
+            }
+        }
+
+        public static void startFacebookLogin() {
+            I_ii_FacebookLogin iFB = DependencyService.Get<I_ii_FacebookLogin>();
+            if (iFB != null) {
+                iFB.startFacebookLogin();
+            }
+        }
+
+        public static bool loginCheck() {
+            bool result = false;
+            I_ii_FacebookLogin iFB = DependencyService.Get<I_ii_FacebookLogin>();
+            if (iFB != null) {
+                result = iFB.loginCheck();
+            }
+            return result;
+        }
+
     }
 }

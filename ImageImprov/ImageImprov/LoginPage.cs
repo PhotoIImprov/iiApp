@@ -85,6 +85,7 @@ namespace ImageImprov {
             BackgroundColor = Color.White,
             HorizontalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
             Margin = 1,
         };
         Entry passwordEntry = new Entry
@@ -97,8 +98,23 @@ namespace ImageImprov {
             BackgroundColor = Color.White,
             HorizontalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
             Margin = 1,
         };
+        Entry passwordConfirmEntry = new Entry {
+            Placeholder = "Confirm Password",
+            PlaceholderColor = Color.Gray,
+            IsPassword = true,
+            TextColor = Color.Black,
+            FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
+            BackgroundColor = Color.White,
+            HorizontalTextAlignment = TextAlignment.Center,
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
+            Margin = 1,
+        };
+        bool unameFirstEntryCheck = true;
+        bool pwdFirstEntryCheck = true;
 
         //iiBitmapView signupBackground;
         iiBitmapView forgotButton;
@@ -114,6 +130,7 @@ namespace ImageImprov {
 
         /// <summary>
         /// Button that triggers the facebook oauth login process.
+        /// Unfortunately, since this is portable code, we can't put the FacebookSDK button here.
         /// </summary>
         Image facebookLogin;
         /// <summary>
@@ -125,8 +142,10 @@ namespace ImageImprov {
         Button logoutButton;
 
         Button gotoRegistrationButton;
-        Button registerButton;
-        Button cancelRegistrationButton;
+        //Button registerButton;
+        //Button cancelRegistrationButton;
+        Label registerButton;
+        Label cancelRegistrationButton;
 
         Label termsOfServiceLabel;
         iiWebPage tosPage;
@@ -242,6 +261,9 @@ namespace ImageImprov {
                     Content = createNewDeviceLayout();
                 }
             }
+
+            usernameEntry.SizeChanged += CheckTextSize;
+            passwordEntry.SizeChanged += CheckTextSize;
         }
 
         private void setVersionLabelText() {
@@ -464,6 +486,8 @@ namespace ImageImprov {
             portraitView.Children.Add(facebookLogin, 1, 12);
             Grid.SetColumnSpan(facebookLogin, 6);
             if (Device.OS == TargetPlatform.iOS) {
+                // check https://stackoverflow.com/questions/44838262/xamarin-auth-android-native-ui-not-working
+                // to see if functional on droid yet.
                 portraitView.Children.Add(googleLogin,1,13);
                 Grid.SetColumnSpan(googleLogin, 6);
             }
@@ -486,7 +510,7 @@ namespace ImageImprov {
             portraitView.Children.Add(forgotPassword, 0, 15);
             Grid.SetColumnSpan(forgotPassword, 4);
             Label registerLabel = new Label {
-                Text = "New? Enter an email, password above \n then tap here to play",
+                Text = "New? Register \n here",
                 TextColor =Color.Blue,
                 HorizontalTextAlignment = TextAlignment.Center,
                 VerticalTextAlignment = TextAlignment.Start,
@@ -497,13 +521,16 @@ namespace ImageImprov {
             regTap.Tapped += async (sender, args) => {
                 await registerLabel.FadeTo(0, 175);
                 await registerLabel.FadeTo(1, 175);
-                loggedInLabel.Text = "Registering...";
+                loggedInLabel.Text = "Registration:";
+                /*
                 GlobalStatusSingleton.username = usernameEntry.Text;
                 GlobalStatusSingleton.password = passwordEntry.Text;
                 // call the event handler that manages the communication with server for registration.
                 if (RegisterNow != null) {
                     RegisterNow(this, eDummy);
                 }
+                */
+                Content = createRegistrationLayout();
             };
             registerLabel.GestureRecognizers.Add(regTap);
 
@@ -516,6 +543,7 @@ namespace ImageImprov {
             Grid.SetColumnSpan(privacyPolicyLabel, 4);
             //layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             //return layoutP;
+            loggedInLabel.Text = GlobalStatusSingleton.keyhash;
             return portraitView;
         }
 
@@ -641,16 +669,55 @@ namespace ImageImprov {
             if (registerButton == null) {
                 createRegisterButton();
             }
-
-            cancelRegistrationButton = new Button {
+            cancelRegistrationButton = new Label {
                 Text = "Never mind; I'll register later",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                TextColor = Color.White,
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                HorizontalTextAlignment = TextAlignment.Center,
                 BackgroundColor = GlobalStatusSingleton.ButtonColor,
+                FontSize = Device.GetNamedSize(NamedSize.Medium, typeof(Label)),
             };
-            cancelRegistrationButton.Clicked += (sender, args) => {
-                Content = anonLoggedInLayout;
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += async (sender, args) => {
+                //Content = anonLoggedInLayout;
+                await cancelRegistrationButton.FadeTo(0, 175);
+                await cancelRegistrationButton.FadeTo(1, 175);
+                Content = createCommonLayout();
             };
+            cancelRegistrationButton.GestureRecognizers.Add(tap);
 
+            Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
+            for (int i = 0; i < 20; i++) {
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            int colsWide = 8;
+            for (int j = 0; j < colsWide; j++) {
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+
+            portraitView.Children.Add(backgroundImgP, 0, 0);
+            Grid.SetColumnSpan(backgroundImgP, colsWide);
+            Grid.SetRowSpan(backgroundImgP, 20);
+
+            portraitView.Children.Add(loggedInLabel, 0, 6);
+            Grid.SetColumnSpan(loggedInLabel, colsWide);
+            //portraitView.Children.Add(signupBackground, 1, 7);
+            //Grid.SetColumnSpan(signupBackground, 6);
+            //Grid.SetRowSpan(signupBackground, 2);
+            portraitView.Children.Add(usernameEntry, 1, 7);
+            Grid.SetColumnSpan(usernameEntry, 6);
+            portraitView.Children.Add(passwordEntry, 1, 8);
+            Grid.SetColumnSpan(passwordEntry, 6);
+
+            portraitView.Children.Add(passwordConfirmEntry, 1, 9);
+            Grid.SetColumnSpan(passwordConfirmEntry, 6);
+
+            portraitView.Children.Add(registerButton, 1, 11);
+            Grid.SetColumnSpan(registerButton, 6);
+            portraitView.Children.Add(cancelRegistrationButton, 1, 15);
+            Grid.SetColumnSpan(cancelRegistrationButton, 6);
+            //Grid.SetRowSpan(cancelRegistrationButton, 2);
+            /*
             registrationLayout = new StackLayout {
                 BackgroundColor = GlobalStatusSingleton.backgroundColor,
                 VerticalOptions = LayoutOptions.Center,
@@ -665,8 +732,10 @@ namespace ImageImprov {
                     cancelRegistrationButton,
                 }
             };
-            usernameEntry.Text = "";
-            return registrationLayout;
+            */
+            //usernameEntry.Text = "";
+            //return registrationLayout;
+            return portraitView;
         }
 
         protected StackLayout usernameRow() {
@@ -691,20 +760,46 @@ namespace ImageImprov {
             };
         }
 
-        protected void createRegisterButton() {
-            registerButton = new Button {
-                Text = "Register",
-                HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            };
-            registerButton.Clicked += (sender, args) => {
-                GlobalStatusSingleton.username = usernameEntry.Text;
-                GlobalStatusSingleton.password = passwordEntry.Text;
-                // call the event handler that manages the communication with server for registration.
-                if (RegisterNow != null) {
-                    RegisterNow(this, eDummy);
+        protected StackLayout passwordConfirmRow() {
+            return new StackLayout {
+                Orientation = StackOrientation.Horizontal,
+                VerticalOptions = LayoutOptions.Center,
+                Children = {
+                    new Label { Text = "Confirm Password",TextColor = Color.Black, BackgroundColor = GlobalStatusSingleton.backgroundColor, },
+                    passwordEntry,
                 }
             };
+        }
+
+        protected void createRegisterButton() {
+            registerButton = new Label {
+                Text = "Register",
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                HorizontalTextAlignment = TextAlignment.Center,
+                BackgroundColor = GlobalStatusSingleton.ButtonColor,
+                TextColor = Color.White,
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+            };
+            TapGestureRecognizer tap = new TapGestureRecognizer();
+            tap.Tapped += async (sender, args) => {
+                await registerButton.FadeTo(0, 175);
+                await registerButton.FadeTo(1, 175);
+                if ((passwordConfirmEntry.Text == null) || (passwordEntry.Text == null)) {
+                    loggedInLabel.Text = "Please enter a password";
+                } else {
+                    if (passwordConfirmEntry.Text.Equals(passwordEntry.Text)) {
+                        GlobalStatusSingleton.username = usernameEntry.Text;
+                        GlobalStatusSingleton.password = passwordEntry.Text;
+                        // call the event handler that manages the communication with server for registration.
+                        if (RegisterNow != null) {
+                            RegisterNow(this, eDummy);
+                        }
+                    } else {
+                        loggedInLabel.Text = "Passwords do not match";
+                    }
+                }
+            };
+            registerButton.GestureRecognizers.Add(tap);
         }
 
         View returnLayout;
@@ -721,8 +816,10 @@ namespace ImageImprov {
             };
             TapGestureRecognizer tap = new TapGestureRecognizer();
             termsOfServiceLabel.GestureRecognizers.Add(tap);
-            tap.Tapped += (sender, args) => {
+            tap.Tapped += async (sender, args) => {
                 //boom.
+                await termsOfServiceLabel.FadeTo(0, 175);
+                await termsOfServiceLabel.FadeTo(1, 175);
                 returnLayout = Content;
                 iiWebPage newPage = iiWebPage.getInstance(GlobalStatusSingleton.TERMS_OF_SERVICE_URL, this, Content);
                 Content = newPage;
@@ -1175,8 +1272,11 @@ namespace ImageImprov {
             tap.Tapped += async (sender, EventArgs) => {
                 await facebookLogin.FadeTo(0.25, 175);
                 await facebookLogin.FadeTo(1, 175);
-                oauthManager.configForFacebook();
-                oauthManager.startAuthentication(Navigation);
+                //oauthManager.configForFacebook();
+                //oauthManager.startAuthentication(Navigation);
+                Debug.WriteLine("DHB:LoginPage:createFacebookButton clicked.");
+                PlatformSpecificCalls.SetLoginCallback(this);
+                PlatformSpecificCalls.startFacebookLogin();
             };
             facebookLogin.GestureRecognizers.Add(tap);
         }
@@ -1236,6 +1336,33 @@ namespace ImageImprov {
             }
             return result;
         }
+
+        public void CheckTextSize(object sender, EventArgs args) {
+            // check that text size fits in the area available for the entry boxes.
+            //if ((unameFirstEntryCheck)&& (sender == usernameEntry)) {
+            double h = Height / 20.0;
+            if ((usernameEntry.Height > -1) && (usernameEntry.Height < h)) h = usernameEntry.Height;
+            double origFontSize = loggedInLabel.FontSize;
+            string origText = loggedInLabel.Text;
+            loggedInLabel.Text = FontCalc.TEST_TEXT;
+            if ((unameFirstEntryCheck) && (sender == usernameEntry)) { 
+                // Entry does not play nice with the measure function and has limited capabilities.
+                // cheat and use a label instead to determine appropriate height.
+                GlobalSingletonHelpers.fixLabelHeight(loggedInLabel, Width *0.8, h, 5, (int)usernameEntry.FontSize);
+                //GlobalSingletonHelpers.fixLabelHeight(usernameEntry, Width * 0.8, h, 5);
+                //GlobalSingletonHelpers.fixLabelHeight(usernameEntry, Width, h, 5, 14);
+                usernameEntry.FontSize = loggedInLabel.FontSize;
+                unameFirstEntryCheck = false;
+            }
+            if ((pwdFirstEntryCheck) &&(sender==passwordEntry)){
+                GlobalSingletonHelpers.fixLabelHeight(loggedInLabel, Width * 0.8, h, 5, (int)passwordEntry.FontSize);
+                passwordEntry.FontSize = loggedInLabel.FontSize;
+                pwdFirstEntryCheck = false;
+            }
+            loggedInLabel.FontSize = origFontSize;
+            loggedInLabel.Text = origText;
+        }
+
         /// 
         // @todo Refactoring Question.  Do we still need the goHome function?
         // What calls it?

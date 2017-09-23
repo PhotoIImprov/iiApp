@@ -128,10 +128,13 @@ namespace ImageImprov {
         }
 
         //public void gotoMedalsPage();
-        //public void gotoMyFavoritesPage();
         public void gotoMySubmissionsPage() {
             thePages.gotoMySubmissionsPage();
         }
+        public void gotoLikesPage() {
+            thePages.gotoLikesPage();
+        }
+
         //public void gotoPurchasePage();
 
         ContentView overlay = null;

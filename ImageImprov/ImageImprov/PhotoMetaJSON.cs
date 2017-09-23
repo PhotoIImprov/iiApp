@@ -34,16 +34,28 @@ namespace ImageImprov {
         [JsonProperty("votes")]
         public long votes { get; set; }
 
+        //
+        //
+        // END SUBMISSIONS SECTION. Supplements below
+        //
+        //
+
         /// <summary>
         /// regularly not included.
         /// </summary>
-        [JsonProperty("category_id")]
-        public long categoryId { get; set; }
+        //[JsonProperty("category_id")]
+        //public long categoryId { get; set; }
 
         /// <summary>
-        /// regularly not included, e.g. for retrieving my own images.
+        /// Not included in submissions. Used by likes.
         /// </summary>
-        [JsonProperty("photographer")]
-        public string photographer { get; set; }
+        [JsonProperty("username")]
+        public string user { get; set; }
+
+        /// <summary>
+        /// Not included in submissions. Used by likes.
+        /// </summary>
+        [JsonProperty("isfriend")]
+        public bool isFriend { get; set; }
     }
 }

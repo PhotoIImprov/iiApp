@@ -40,7 +40,9 @@ namespace ImageImprov {
 
         public ILeaveZoomCallback PreviousContent { get; set; }
         public bool saveDataOnExit { get; set; } = false;
-        Button backButton = null;
+        //Button backButton = null;
+
+        iiBitmapView backCaret = null;
 
         // this points back to the original calling ballot.
         // this MUST be set by the pushing page!!!
@@ -77,6 +79,7 @@ namespace ImageImprov {
                 ActiveMetaBallot.isLiked = true;
                 unlikedImg.IsVisible = false;
                 likedImg.IsVisible = true;
+                saveDataOnExit = true;
             };
             unlikedImg.GestureRecognizers.Add(ulTap);
 
@@ -85,6 +88,7 @@ namespace ImageImprov {
                 ActiveMetaBallot.isLiked = false;
                 likedImg.IsVisible = false;
                 unlikedImg.IsVisible = true;
+                saveDataOnExit = true;
             };
             likedImg.GestureRecognizers.Add(lTap);
 
@@ -93,6 +97,7 @@ namespace ImageImprov {
                 ActiveMetaBallot.isFlagged = true;
                 unflaggedImg.IsVisible = false;
                 flaggedImg.IsVisible = true;
+                saveDataOnExit = true;
             };
             unflaggedImg.GestureRecognizers.Add(ufTap);
 
@@ -101,9 +106,11 @@ namespace ImageImprov {
                 ActiveMetaBallot.isFlagged = false;
                 flaggedImg.IsVisible = false;
                 unflaggedImg.IsVisible = true;
+                saveDataOnExit = true;
             };
             flaggedImg.GestureRecognizers.Add(fTap);
 
+            /*
             backButton = new Button {
                 //Text = buttonText,
                 Text = "Back",
@@ -130,10 +137,19 @@ namespace ImageImprov {
                     Debug.WriteLine("DHB:ZoomPage:buildMetaButtons:backButtonClickedAnon this should print first");
                 }
                 PreviousContent.returnToCaller();
+            };*/
+
+            backCaret = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
+                Margin = 4,
+                HorizontalOptions = LayoutOptions.Start,
             };
+            TapGestureRecognizer back = new TapGestureRecognizer();
+            back.Tapped += OnBack;
+            backCaret.GestureRecognizers.Add(back);
         }
 
         public int buildZoomView() {
+            saveDataOnExit = false;  // reset.
             int result = 1;
             if (zoomView == null) {
                 zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
@@ -154,19 +170,20 @@ namespace ImageImprov {
             //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
 
             zoomView.Children.Clear();
-            zoomView.Children.Add(MainImage, 0, 0);
+            zoomView.Children.Add(backCaret, 0, 0);
+            zoomView.Children.Add(MainImage, 0, 1);
             Grid.SetRowSpan(MainImage, 12);
             Grid.SetColumnSpan(MainImage, 2);
-            zoomView.Children.Add(unlikedImg, 0, 12);
-            zoomView.Children.Add(likedImg, 0, 12);
-            zoomView.Children.Add(unflaggedImg, 1, 12);
-            zoomView.Children.Add(flaggedImg, 1, 12);
-            zoomView.Children.Add(tagEntry, 0, 13);
+            zoomView.Children.Add(unlikedImg, 0, 13);
+            zoomView.Children.Add(likedImg, 0, 13);
+            zoomView.Children.Add(unflaggedImg, 1, 13);
+            zoomView.Children.Add(flaggedImg, 1, 13);
+            zoomView.Children.Add(tagEntry, 0, 14);
             Grid.SetColumnSpan(tagEntry, 2);
-            zoomView.Children.Add(backButton, 0, 14);
+            //zoomView.Children.Add(backButton, 0, 15);
 
-            Grid.SetColumnSpan(backButton, 2);
-            Grid.SetRowSpan(backButton, 2);
+            //Grid.SetColumnSpan(backButton, 2);
+            //Grid.SetRowSpan(backButton, 2);
 
             Content = zoomView;
             return result;
@@ -196,7 +213,8 @@ namespace ImageImprov {
             //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
 
             zoomView.Children.Clear();
-            zoomView.Children.Add(MainImage, 0, 0);
+            zoomView.Children.Add(backCaret, 0, 0);
+            zoomView.Children.Add(MainImage, 0, 1);
             Grid.SetRowSpan(MainImage, 12);
             Grid.SetColumnSpan(MainImage, 2);
 
@@ -215,18 +233,18 @@ namespace ImageImprov {
                     Orientation = StackOrientation.Horizontal,
                     Children = { new Label { Text = "Score: ", TextColor = Color.Black, FontSize = 18, }, score, }
                 };
-                zoomView.Children.Add(likeRow, 0, 12);
+                zoomView.Children.Add(likeRow, 0, 13);
                 Grid.SetColumnSpan(likeRow, 2);
-                zoomView.Children.Add(scoreRow, 0, 13);
+                zoomView.Children.Add(scoreRow, 0, 14);
                 Grid.SetColumnSpan(scoreRow, 2);
                 //Label temp = new Label { Text = "Votes:" + photoMeta.votes, TextColor = Color.Black };
                 //zoomView.Children.Add(temp, 1, 13);
             }
             //// Unique to Photo Meta
 
-            zoomView.Children.Add(backButton, 0, 14);
-            Grid.SetColumnSpan(backButton, 2);
-            Grid.SetRowSpan(backButton, 2);
+            //zoomView.Children.Add(backButton, 0, 14);
+            //Grid.SetColumnSpan(backButton, 2);
+            //Grid.SetRowSpan(backButton, 2);
 
             Content = zoomView;
             return result;
@@ -238,12 +256,31 @@ namespace ImageImprov {
             PhotoUpdateJSON pJSON = new PhotoUpdateJSON();
             pJSON.flag = saveData.flaggedImg.IsVisible;
             pJSON.like = saveData.likedImg.IsVisible;
-            pJSON.tags = saveData.tagEntry.Text;
+            //pJSON.tags = saveData.tagEntry.Text;   @todo parse and set tags.
             string jsonQuery = JsonConvert.SerializeObject(pJSON);
             if (jsonQuery != null) {
                 string apiCall = "update/photo/" + saveData.pid;
                 string result = await GlobalSingletonHelpers.requestFromServerAsync(HttpMethod.Put, apiCall, jsonQuery);
             }
+        }
+
+        public void OnBack(object sender, EventArgs args) {
+            // Need to return to caller instead.
+            //MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            //await mp.Navigation.PopModalAsync();
+
+            // only bother checking the textentry on exit.
+            if (ActiveMetaBallot != null) {
+                if ((ActiveMetaBallot.tags == null) || (!ActiveMetaBallot.tags.Equals(tagEntry.Text))) {
+                    ActiveMetaBallot.tags = tagEntry.Text;
+                }
+            }
+
+            if (saveDataOnExit) {
+                saveDataOnExitAsync(this);
+                Debug.WriteLine("DHB:ZoomPage:buildMetaButtons:backButtonClickedAnon this should print first");
+            }
+            PreviousContent.returnToCaller();
         }
     }
 }

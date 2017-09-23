@@ -191,7 +191,7 @@ namespace ImageImprov {
 
         public void OnRowTapped(object sender, SelectedItemChangedEventArgs args) {
             if (args.SelectedItem is CameraEventTitleElement) {
-
+                cameraPage.eventDrillDown((CameraEventTitleElement)args.SelectedItem);
             } else if (args.SelectedItem is CameraOpenCategoryElement) {
                 CameraContentPage.activeCameraCategory = ((CameraOpenCategoryElement)args.SelectedItem).category;
                 cameraPage.startCamera();
@@ -261,12 +261,19 @@ namespace ImageImprov {
 
         public void AddEvent(EventJSON evt) {
             // title row here.
-            CameraEventTitleElement cete = new CameraEventTitleElement() { eventName = evt.eventName, accessKey = evt.accessKey, eventId = evt.eventId, };
+            CameraEventTitleElement cete = new CameraEventTitleElement() {
+                eventName = evt.eventName, accessKey = evt.accessKey, eventId = evt.eventId, rawEvent = evt, };
             openCategorys.Add(cete);
             // now the categories for this event.
             int uploadCategoryCount = 0;
             foreach (CategoryJSON category in evt.categories) {
                 if (category.state == CategoryJSON.UPLOAD) {
+                    CameraClosedCategoryElement ccce = new CameraClosedCategoryElement(category);
+                    if (!hasCategory(ccce)) {
+                        openCategorys.Add(ccce);
+                        uploadCategoryCount++;
+                    }
+                } else if (category.state == CategoryJSON.PENDING) {
                     CameraClosedCategoryElement ccce = new CameraClosedCategoryElement(category);
                     if (!hasCategory(ccce)) {
                         openCategorys.Add(ccce);

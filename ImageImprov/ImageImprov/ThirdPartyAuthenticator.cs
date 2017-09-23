@@ -8,6 +8,7 @@ using System.Diagnostics;  // for debug assertions.
 
 using Xamarin.Forms;
 using Xamarin.Auth;
+
 using Newtonsoft.Json;
 
 namespace ImageImprov {
@@ -30,8 +31,8 @@ namespace ImageImprov {
         private string scope = "";
         private string method = "";
 
-        private const string METHOD_FACEBOOK = "Facebook";
-        private const string METHOD_GOOGLE = "Google";
+        public const string METHOD_FACEBOOK = "Facebook";
+        public const string METHOD_GOOGLE = "Google";
 
 
         //private string accessToken = "";
@@ -46,17 +47,21 @@ namespace ImageImprov {
             + "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email";
 
         //private Uri facebookAuthorizeUrl = new Uri("https://www.facebook.com/connect/login_success.html");
-        private Uri facebookAuthorizeUrl = new Uri("https://m.facebook.com/dialog/oauth/");
-        private Uri facebookAccessTokenUrl = new Uri("https://graph.facebook.com/oauth/access_token");
+        //private Uri facebookAuthorizeUrl = new Uri("https://m.facebook.com/dialog/oauth");
+        private static Uri facebookAuthorizeUrl = new Uri("https://www.facebook.com/v2.10/dialog/oauth/");
+        private static Uri facebookAccessTokenUrl = new Uri("https://graph.facebook.com/oauth/access_token");
         //private Uri facebookRedirectUrl = new Uri(GlobalStatusSingleton.activeURL);
-        private Uri facebookRedirectUrl = new Uri("https://www.imageimprov.com/static/ii_logo.png");
+        private static Uri facebookRedirectUrl = new Uri("https://www.imageimprov.com/static/ii_logo.png");
+        //private Uri facebookRedirectUrl = new Uri("https://www.facebook.com/connect/login_success.html");
         //https://developers.facebook.com/docs/facebook-login/permissions/
-        private string scope_facebook = "public_profile,user_friends,email";
+        private static string scope_facebook = "public_profile,user_friends,email";
         //private string scope_facebook = "email";
+        //private static string scope_facebook = "";
 
 
         public static string FACEBOOK_APP_ID = "1475439292494090";
-        public static string FACEBOOK_SECRET = "98b1d958d200717f6b8f69a170309bf6";
+        //public static string FACEBOOK_SECRET = "98b1d958d200717f6b8f69a170309bf6";
+        public static string FACEBOOK_SECRET = null;
         public static string GOOGLE_ANDROID_ID = "198313221875-k1je9v2ccjvnfk4ae8v8pdmcras8isua.apps.googleusercontent.com";
         public static Uri GOOGLE_ANDROID_REDIRECT = new Uri("com.googleusercontent.apps.198313221875-k1je9v2ccjvnfk4ae8v8pdmcras8isua:/ii_oauth2redirect");
         public static string GOOGLE_IOS_ID = "198313221875-3999a4ev376dplugmig89thjffq34ai8.apps.googleusercontent.com";
@@ -136,8 +141,14 @@ namespace ImageImprov {
             }
             */
             if (method == METHOD_FACEBOOK) {
-                authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
+                //authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
+                //authenticator = new OAuth2Authenticator(clientId, null, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, false);
                 //authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
+                //authenticator = new OAuth2Authenticator(clientId, scope, authorizeUrl, redirectYrl, usernameAsync, isUsingNativeUI);
+                //authenticator = new OAuth2Authenticator(clientId, scope, authorizeUrl, redirectUrl, null, false);
+                //authenticator = new OAuth2Authenticator(clientId, scope, authorizeUrl, redirectUrl, null, true);
+                authenticator = new OAuth2Authenticator(clientId, scope, authorizeUrl, redirectUrl);
+                //authenticator.Scheme = 
             } else if (method == METHOD_GOOGLE) {
                 authenticator = new OAuth2Authenticator(clientId, clientSecret, scope, authorizeUrl, redirectUrl, accessTokenUrl, null, true);
             } else {
@@ -158,8 +169,27 @@ namespace ImageImprov {
                 },
                 Android: () =>
                 {
-                    navigation.PushModalAsync(new OAuthLoginPage());
+                    // why does this work??? there's no tie to the authenticator...
+                    // Note: According to facebook docs, this only works if fbook installed on the device (have not tested).
+                    //navigation.PushModalAsync(new OAuthLoginPage());
+                    
+                    //navigation.PushModalAsync(new Xamarin.Auth.XamarinForms.AuthenticatorPage()); fail
+
+                    var presenter = new Xamarin.Auth.Presenters.OAuthLoginPresenter();
+                    presenter.Login(authenticator);
+
                     //PlatformSpecificCalls.authInit();
+
+                    /* This produces a blank page...   */
+                    /*
+                    Xamarin.Auth.XamarinForms.AuthenticatorPage ap;
+                    ap = new Xamarin.Auth.XamarinForms.AuthenticatorPage() {
+                        Authenticator = authenticator,
+                    };
+                    NavigationPage np = new NavigationPage(ap);
+                    navigation.PushModalAsync(np);
+                    //navigation.PushAsync(np);
+                    // */
                 }
             );
             Debug.WriteLine("DHB:ThirdPartyAuthentiator:startAuthentication end");
@@ -271,7 +301,7 @@ namespace ImageImprov {
 
             // this is the success case.
             parent.Content = parent.createPreConnectAutoLoginLayout();
-            Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
+            //Device.OnPlatform(Android: () => { navigation.PopModalAsync(); });  // check and see if this line is actually needed... yes it is.
             //await navigation.PopModalAsync();
 
             // and now returning to our regularly scheduled programming
@@ -317,11 +347,12 @@ namespace ImageImprov {
 
         /// <summary>
         /// This is where we get a JWT token for image improv services.
+        /// Public so that the separate FBook process can get token and go.
         /// </summary>
         /// <param name="method"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        protected static async Task<string> requestTokenAsync(string method, string token) {
+        public static async Task<string> requestTokenAsync(string method, string token) {
             string result = "Perfect";
             //OAUTHTokenRequestJSON loginInfo = new OAUTHTokenRequestJSON();
             //loginInfo.method = method;
@@ -373,5 +404,10 @@ namespace ImageImprov {
             // sometimes I get a fail and a successful login.
             // if that occurs, the success process will just carry me forward.
         }
+
+        public static void CreateAuthenticator() {
+            authenticator = new OAuth2Authenticator(FACEBOOK_APP_ID, scope_facebook, facebookAuthorizeUrl, facebookRedirectUrl);
+        }
     }
 }
+

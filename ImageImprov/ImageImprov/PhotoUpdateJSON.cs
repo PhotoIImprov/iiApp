@@ -15,6 +15,6 @@ namespace ImageImprov {
         public bool like { get; set; } = false;
 
         [JsonProperty("tags")]
-        public string tags { get; set; }
+        public List<string> tags { get; set; }
     }
 }

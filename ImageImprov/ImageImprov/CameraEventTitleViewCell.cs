@@ -63,6 +63,7 @@ namespace ImageImprov {
             Grid.SetColumnSpan(accesskeyLabel, 10);
             rowSplitter.HeightRequest = 72;
             this.View = rowSplitter;
+
         }
 
     }

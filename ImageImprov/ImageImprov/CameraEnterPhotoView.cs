@@ -55,6 +55,7 @@ namespace ImageImprov {
         public CameraEnterPhotoView(CameraContentPage parent) {
             if (Device.Idiom == TargetIdiom.Tablet) heightAdjustment = 20.0;
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
+            /* try in buildUI to see if that makes a difference for ios...
             backButton = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
                 HorizontalOptions = LayoutOptions.Start,
                 Margin = 4,
@@ -62,6 +63,7 @@ namespace ImageImprov {
             TapGestureRecognizer backTap = new TapGestureRecognizer();
             backTap.Tapped += OnBackPressed;
             backButton.GestureRecognizers.Add(backTap);
+            */
             // the above is not working on ios and it makes no sense as it works in Android. grrrr.
             // this didn't help.
             //if (Device.OS == TargetPlatform.iOS) {
@@ -98,6 +100,17 @@ namespace ImageImprov {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                Assembly assembly = this.GetType().GetTypeInfo().Assembly;
+                backButton = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
+                    HorizontalOptions = LayoutOptions.Start,
+                    Margin = 4,
+                };
+                TapGestureRecognizer backTap = new TapGestureRecognizer();
+                backTap.Tapped += OnBackPressed;
+                backButton.GestureRecognizers.Add(backTap);
+                //challengeLabelP.GestureRecognizers.Add(backTap);
+
             } else {
                 // flush the old children.
                 portraitView.Children.Clear();
@@ -114,8 +127,8 @@ namespace ImageImprov {
             //portraitView.Children.Add(contestStackP, 0, 0);
             //Grid.SetRowSpan(contestStackP, 4);
             if (latestTakenImgP != null) {
-                portraitView.Children.Add(latestTakenImgP, 0, 0);
-                Grid.SetRowSpan(latestTakenImgP, 14);
+                portraitView.Children.Add(latestTakenImgP, 0, 1);
+                Grid.SetRowSpan(latestTakenImgP, 12);
             }
             //Label dummy = new Label { Text = "You are on camera page", TextColor=Color.Black };
             //portraitView.Children.Add(dummy, 0, 8);

@@ -159,6 +159,12 @@ namespace ImageImprov.iOS {
             captureDevice = AVCaptureDevice.GetDefaultDevice(AVMediaType.Video);
             ConfigureCameraForDevice(captureDevice);
             captureDeviceInput = AVCaptureDeviceInput.FromDevice(captureDevice);
+            if (captureDeviceInput == null) {
+                //NSError err;
+                //captureDeviceInput = new AVCaptureDeviceInput(captureDevice, out err);
+                ExitWithoutPhoto(this, new EventArgs());
+                return;
+            }
             captureSession.AddInput(captureDeviceInput);
 
             var dictionary = new NSMutableDictionary();

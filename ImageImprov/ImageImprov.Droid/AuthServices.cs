@@ -37,6 +37,12 @@ namespace ImageImprov.Droid {
             activity.StartActivity(ThirdPartyAuthenticator.authenticator.GetUI(activity));
         }
 
+        public void Init() {
+            // moved to mainactivity.
+            //global::Xamarin.Auth.Presenters.XamarinAndroid.AuthenticationConfiguration.Init(this, bundle);
+        }
+
+
         //public void Init() {
         //global::Android.Content.Intent ui_obj = ThirdPartyAuthenticator.authenticator.GetUI(this);
         //StartActivity(ui_obj);

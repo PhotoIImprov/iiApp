@@ -31,6 +31,7 @@ namespace ImageImprov {
         CameraCategorySelectionView selectionView;
         CameraCreateCategoryView createView;
         CameraEnterPhotoView submitView;
+        EventDetailPage eventView;
 
         // To get img bytes we have to use native Android and iOS code.
         // Consequently, I pass the bytes back from the Android and iOS projects
@@ -66,6 +67,7 @@ namespace ImageImprov {
             selectionView = new CameraCategorySelectionView(this);
             createView = new CameraCreateCategoryView(this);
             submitView = new CameraEnterPhotoView(this);
+            eventView = new EventDetailPage(this);
             Debug.WriteLine("DHB:CameraContentPage:CameraContentPage post view creation.");
 
             buildUI();
@@ -129,7 +131,10 @@ namespace ImageImprov {
             switchToSubmitView();
             ShouldTakePicture.Invoke();
         }
-
+        public void eventDrillDown(CameraEventTitleElement cete) {
+            eventView.SetUIData(cete);
+            switchToEventView();
+        }
 
 
 
@@ -156,6 +161,10 @@ namespace ImageImprov {
 
         public void switchToCreateCategoryView() {
             Content = createView.Content;
+        }
+
+        public void switchToEventView() {
+            Content = eventView.Content;
         }
 
         public void AddEvent(EventJSON cerj) {
