@@ -14,7 +14,7 @@ using ExifLib;
 namespace ImageImprov {
     public delegate void LoadBallotFromPhotoSubmissionEventHandler(object sender, EventArgs e);
 
-    public class CameraContentPage : ContentView, ICamera, IManageCategories {
+    public class CameraContentPage : ContentView, ICamera, IManageCategories, ILeaveZoomCallback {
         public event LoadBallotFromPhotoSubmissionEventHandler LoadBallotFromPhotoSubmission;
         public const string PHOTO = "photo";
 
@@ -32,6 +32,7 @@ namespace ImageImprov {
         CameraCreateCategoryView createView;
         CameraEnterPhotoView submitView;
         EventDetailPage eventView;
+        EventCategoryImagesPage eventCategoryImgsView;
 
         // To get img bytes we have to use native Android and iOS code.
         // Consequently, I pass the bytes back from the Android and iOS projects
@@ -68,6 +69,7 @@ namespace ImageImprov {
             createView = new CameraCreateCategoryView(this);
             submitView = new CameraEnterPhotoView(this);
             eventView = new EventDetailPage(this);
+            eventCategoryImgsView = new EventCategoryImagesPage(this);
             Debug.WriteLine("DHB:CameraContentPage:CameraContentPage post view creation.");
 
             buildUI();
@@ -167,6 +169,11 @@ namespace ImageImprov {
             Content = eventView.Content;
         }
 
+        public void switchToCategoryImgView(CategoryJSON category) {
+            eventCategoryImgsView.ActiveCategory = category;
+            Content = eventCategoryImgsView.Content;
+        }
+
         public void AddEvent(EventJSON cerj) {
             selectionView.AddEvent(cerj);
         }
@@ -176,5 +183,9 @@ namespace ImageImprov {
                 LoadBallotFromPhotoSubmission(this, ballotEvt);
             }
         }
+        public void returnToCaller() {
+            Content = eventCategoryImgsView.Content;
+        }
+
     }
 }

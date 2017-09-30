@@ -91,6 +91,7 @@ namespace ImageImprov {
         }
 
         private int buildPortraitView() {
+            /*
             TapGestureRecognizer instructionsClick = new TapGestureRecognizer();
             instructionsButton = new Image { Source = ImageSource.FromResource("ImageImprov.IconImages.Help.png"), BackgroundColor = GlobalStatusSingleton.backgroundColor, };
             instructionsLabel = new Label { Text = "Show me how to play!", BackgroundColor = GlobalStatusSingleton.backgroundColor, TextColor = Color.Black, };
@@ -185,6 +186,7 @@ namespace ImageImprov {
             //portraitView.Children.Add(hamburger, 1, 1);
             //portraitView.Children.Add(defaultNavigationButtons, 0, 2);
             //Grid.SetColumnSpan(defaultNavigationButtons, 3);
+            */
             return 1;
         }
 

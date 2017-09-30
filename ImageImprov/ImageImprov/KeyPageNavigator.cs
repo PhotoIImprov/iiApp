@@ -110,8 +110,8 @@ namespace ImageImprov {
             gotoCameraImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.play.png", assembly));
             gotoCameraImgButtonOn.IsVisible = false;
 
-            gotoHamburgerImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Hamburger_inactive.png", assembly));
-            gotoHamburgerImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.Hamburger.png", assembly));
+            gotoHamburgerImgButtonOff = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.profile_inactive.png", assembly));
+            gotoHamburgerImgButtonOn = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.profile.png", assembly));
             gotoHamburgerImgButtonOn.IsVisible = false;
 
             categoryLabel = new Label {
@@ -182,7 +182,8 @@ namespace ImageImprov {
                 // want to go instantly to this...
                 //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
             } else if (sender == gotoHamburgerImgButtonOff) {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
+                //((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoProfilePage();
             } else if (sender == gotoLeaderboardImgButtonOff) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLeaderboardPage();
             } else {
@@ -200,7 +201,8 @@ namespace ImageImprov {
             } else if (sender == gotoCameraImgButtonOn) {
                 ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoCameraPage();
             } else if (sender == gotoHamburgerImgButtonOn) {
-                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
+                //((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoHamburgerPage();
+                ((IProvideNavigation)Xamarin.Forms.Application.Current.MainPage).gotoProfilePage();
             }
         }
 

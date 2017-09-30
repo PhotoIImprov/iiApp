@@ -57,5 +57,13 @@ namespace ImageImprov {
         /// </summary>
         [JsonProperty("isfriend")]
         public bool isFriend { get; set; }
+
+        /// <summary>
+        /// Used by get.photo.
+        /// </summary>
+        [JsonProperty("active")]
+        public bool active { get; set; }
+        [JsonProperty("offensive")]
+        public bool offensive { get; set; }
     }
 }

@@ -63,6 +63,7 @@ namespace ImageImprov {
         public override async Task processImageLoadAsync(long lookupId) {
             loadingMoreCategories = true;
 
+            /*
             string result = "fail";
             while (result.Equals("fail")) {
                 result = await requestApiCallAsync(lookupId, activeApiCall);
@@ -71,6 +72,9 @@ namespace ImageImprov {
                     await Task.Delay(10000);
                 }
             }
+            */
+            string result = await failProcessing(lookupId);
+
             Debug.WriteLine("DHB:MySubmissionsPage:processImageLoadAsync through request call");
 
             if (result.Equals(EMPTY)) {

@@ -7,9 +7,8 @@ using Newtonsoft.Json;
 
 namespace ImageImprov {
     [JsonObject]
-    class LikesResponseJSON  {
-
-        [JsonProperty("likes")]
-        public List<LikesJSON> likes { get; set; }  // IList is not sortable... List is.
+    class PhotosResponseJSON {
+        [JsonProperty()]
+        public List<PhotoMetaJSON> photos { get; set; }  // IList is not sortable... List is.
     }
 }

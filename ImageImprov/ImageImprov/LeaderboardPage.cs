@@ -56,6 +56,7 @@ namespace ImageImprov {
         //
         //   END Variables related/needed for images to place background on screen.
         // 
+        public View PreviousView { get; set; }
 
         public LeaderboardPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;

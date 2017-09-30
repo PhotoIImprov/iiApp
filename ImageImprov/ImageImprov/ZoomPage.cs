@@ -280,7 +280,9 @@ namespace ImageImprov {
                 saveDataOnExitAsync(this);
                 Debug.WriteLine("DHB:ZoomPage:buildMetaButtons:backButtonClickedAnon this should print first");
             }
-            PreviousContent.returnToCaller();
+            Device.BeginInvokeOnMainThread(() => {
+                PreviousContent.returnToCaller();
+            });
         }
     }
 }

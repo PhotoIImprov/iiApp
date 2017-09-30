@@ -460,7 +460,7 @@ namespace ImageImprov {
                 };
             }*/
             Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 40; i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             int colsWide = 8;

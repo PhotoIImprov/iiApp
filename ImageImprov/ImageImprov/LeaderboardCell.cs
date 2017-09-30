@@ -111,7 +111,9 @@ namespace ImageImprov {
                 mp.zoomPage.MainImage = taggedImg;
                 mp.zoomPage.buildZoomView();
                 mp.zoomPage.PreviousContent = mp.thePages.leaderboardPage;
-                mp.thePages.leaderboardPage.Content = mp.zoomPage.Content;
+                Device.BeginInvokeOnMainThread(() => {
+                    mp.thePages.leaderboardPage.Content = mp.zoomPage.Content;
+                });
             }
         }
     }

@@ -13,6 +13,11 @@ namespace ImageImprov
     // this is the main page when we are using the carousel to manage the ui.
     public class MainPageSwipeUI : CarouselViewControl, IExposeCamera, IProvideNavigation
     {
+        public const int JUDGING_PAGE = 0;
+        public const int LEADERS_PAGE = 1;
+        public const int CAMERA_PAGE = 2;
+        public const int PROFILE_PAGE = 3;
+
         List<View> _children = new List<View> { };
         public List<View> Children {
             get { return _children; }
@@ -27,7 +32,7 @@ namespace ImageImprov
         // public so that i can implement zoom callback.
         public LeaderboardPage leaderboardPage;
         public CameraContentPage cameraPage;
-        public PlayerContentPage playerPage;
+        public ProfilePage profilePage;
 
         // Listed as a reference to highlight I no longer own the lifecycle of this page.
         LoginPage refToLoginPage;
@@ -49,14 +54,13 @@ namespace ImageImprov
             cameraPage = new CameraContentPage();
             Debug.WriteLine("DHB:MainPageSwipeUI:ctor cameraPage created.");
 
-            //hamburgerPage = new HamburgerPage(); // owned by player page; subordinate to playerPage.
-            playerPage = new PlayerContentPage();  // now on the carousel stack.
+            profilePage = new ProfilePage();
             
 
             // TokenReceived is my successful login event.
             loginPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
             loginPage.TokenReceived += new TokenReceivedEventHandler(judgingPage.TokenReceived);
-            loginPage.TokenReceived += new TokenReceivedEventHandler(playerPage.CenterConsole.HamburgerPage.TokenReceived);
+            loginPage.TokenReceived += new TokenReceivedEventHandler(profilePage.coreProfile.TokenReceived);
             loginPage.LogoutClicked += new LogoutClickedEventHandler(this.OnLogoutClicked);
 
             // These lines enable another page to process a first page's events.
@@ -64,10 +68,10 @@ namespace ImageImprov
             // is categoryLoad?
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(cameraPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
-            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnCategoryLoad);
-            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(playerPage.CenterConsole.LikesPage.OnCategoryLoad);
+            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(profilePage.MySubmissionsPage.OnCategoryLoad);
+            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(profilePage.LikesPage.OnCategoryLoad);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(judgingPage.OnLoadBallotFromSubmission);
-            cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(playerPage.CenterConsole.MySubmissionsPage.OnPhotoSubmit);
+            cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(profilePage.MySubmissionsPage.OnPhotoSubmit);
 
             // Change behavior. Don't want to be able to do stuff prior to successful login...
             // Easiest to add these pages POST login.
@@ -75,7 +79,7 @@ namespace ImageImprov
             Children.Add(judgingPage);
             Children.Add(leaderboardPage);
             Children.Add(cameraPage);
-            Children.Add(playerPage);
+            Children.Add(profilePage);
 
             Debug.WriteLine("DHB:MainPageSwipeUI:MainPageSwipeUI Children count is:" + Children.Count);
 
@@ -92,30 +96,38 @@ namespace ImageImprov
 
         public void gotoJudgingPage() {
             //this.CurrentPage = judgingPage;
-            this.Position = 0;
+            this.Position = JUDGING_PAGE;
             //Debug.WriteLine("DHB:MainPageSwipeUI:gotoJudgingPage: Position:" + Position);
             //Debug.WriteLine("DHB:MainPageSwipeUI:gotoJudgingPage: Content:" + this.Item.ToString());
         }
         public void gotoJudgingPageHome() {
             judgingPage.goHome();
         }
+        public void gotoLeaderboardPage() {
+            Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage");
+            leaderboardPage.returnToCaller();
+            this.Position = LEADERS_PAGE;
+        }
+        public void gotoCameraPage() {
+            //this.CurrentPage = cameraPage;
+            this.Position = CAMERA_PAGE;
+            // no switching of current scene occurs.
+            // this moves into the click observer for category selection
+            //cameraPage.startCamera();
+        }
+
+        /*
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {
-            playerPage.goHome();
+            //playerPage.goHome();
             //this.CurrentPage = playerPage;
+            // do anything more here?
             this.Position = 3;
         }
         public void gotoInstructionsPage() {
-            playerPage.Content = playerPage.CenterConsole.InstructionsPage;
+            profilePage.gotoInstructionsPage();
             //this.CurrentPage = playerPage;
             this.Position = 3;
-        }
-        public void gotoLeaderboardPage() {
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoLeaderboardPage");
-            //playerPage.Content = playerPage.CenterConsole.LeaderboardPage;
-            //this.CurrentPage = playerPage;
-            leaderboardPage.returnToCaller();
-            this.Position = 1;
         }
         public void gotoSettingsPage() {
             playerPage.Content = playerPage.CenterConsole.SettingsPage;
@@ -126,50 +138,25 @@ namespace ImageImprov
             playerPage.Content = playerPage.CenterConsole.LikesPage;
             this.Position = 3;
         }
-
         public void gotoMySubmissionsPage() {
             playerPage.Content = playerPage.CenterConsole.MySubmissionsPage;
             //this.CurrentPage = playerPage;
             this.Position = 3;
         }
 
-        public void gotoCameraPage() {
-            //this.CurrentPage = cameraPage;
-            this.Position = 2;
-            // no switching of current scene occurs.
-            // this moves into the click observer for category selection
-            //cameraPage.startCamera();
-        }
 
         public void gotoHamburgerPage() {
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage");
-            // debugging code
-            foreach (View cp in Children) {
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage child:" +cp.ToString());
-            }
-            // end debugging.
+            
+            gotoProfilePage();
+        }
+        */
 
-            if ((Children[Position] == playerPage) && (playerPage.Content == playerPage.CenterConsole.HamburgerPage)) {
-                // always set the last view, as hamburger changes it.
-                playerPage.Content = lastView;
-                //this.CurrentPage = lastPage;
-                Position = lastPage;
-            } else {
-                lastPage = Position;
-                // always set the last view, as hamburger changes it. (see following line!)
-                lastView = playerPage.Content;
-                // I'm crashing here alot.
-                //playerPage.Content = playerPage.CenterConsole.HamburgerPage;
-                // test invoking on ui thread.  Nope.
-                try { 
-                    playerPage.Content = playerPage.CenterConsole.HamburgerPage;
-                } catch (NullReferenceException e) {
-                    Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage wtf err: " + e.ToString());
-                }
-                Position = 3;
-                Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburgerPage not hamburger. becoming");
-            }
-            Debug.WriteLine("DHB:MainPageSwipeUI:gotoHamburderPage finished TWEAK4");
+        public void gotoProfilePage() {
+            Debug.WriteLine("DHB:MainPageSwipeUI:gotoProfilePage");
+            profilePage.gotoSubmissionsPage();
+            Position = PROFILE_PAGE;
+            
         }
 
         public virtual void TokenReceived(object sender, EventArgs e) {
@@ -183,7 +170,7 @@ namespace ImageImprov
 
             if (GlobalStatusSingleton.firstTimePlaying == true) {
                 // need to goto instructions page!
-                playerPage.Content = playerPage.CenterConsole.InstructionsPage;
+                profilePage.gotoInstructionsPage();
                 // dont set to false here. still need to pop the help page on category load.
                 //GlobalStatusSingleton.firstTimePlaying = false;
             } else {

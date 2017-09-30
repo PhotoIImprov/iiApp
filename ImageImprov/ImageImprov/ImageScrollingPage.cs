@@ -71,6 +71,28 @@ namespace ImageImprov {
         public abstract /* async */ Task processImageLoadAsync(long lookupId);
 
         /// <summary>
+        /// Need a better name for this function.
+        /// Essentially, it repeats loading until I get a good load.
+        /// </summary>
+        /// <param name="lookupId"></param>
+        /// <returns></returns>
+        protected virtual async Task<string> failProcessing(long lookupId) {
+            string result = "fail";
+            while (result.Equals("fail")) {
+                result = await requestApiCallAsync(lookupId, activeApiCall);
+                if (result == null) result = "fail";
+                if (result.Equals(EMPTY) && lookupId > 0) {
+                    lookupId -= 5;
+                    result = "fail";
+                }
+                if (result.Equals("fail")) {
+                    await Task.Delay(10000);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Get the entries whenever categories are loaded.
         /// </summary>
         /// <param name="sender"></param>
@@ -94,7 +116,7 @@ namespace ImageImprov {
             await processImageLoadAsync(lookupId);
         }
 
-        protected void OnNewCategoryAppearing(object sender, ItemVisibilityEventArgs args) {
+        protected virtual void OnNewCategoryAppearing(object sender, ItemVisibilityEventArgs args) {
             if (loadingMoreCategories || submissions.Count == 0) {
                 return;  // already getting more.
             }

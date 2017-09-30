@@ -65,8 +65,30 @@ namespace ImageImprov {
                 mp.zoomPage.MainImage = taggedImg;
                 //mp.zoomPage.buildZoomView();
                 mp.zoomPage.buildZoomFromUserPhotoMeta(activeImg.PhotoMeta);
-                mp.zoomPage.PreviousContent = mp.thePages.playerPage;
-                mp.thePages.playerPage.Content = mp.zoomPage.Content;
+                // ahh.... there's 2 pieces of info needed now.  The parent page and subpage.
+                // eg profile/subs; profile/likes; eventPage/categories
+                /*
+                mp.zoomPage.PreviousContent = mp.thePages.profilePage;
+                //mp.zoomPage.PreviousView = mp.thePages.profilePage.Content;
+                mp.thePages.profilePage.PreviousView = mp.thePages.profilePage.Content;
+                Device.BeginInvokeOnMainThread(() => {
+                    mp.thePages.profilePage.Content = mp.zoomPage.Content;
+                });
+                */
+                ContentView active = null;
+                if (mp.thePages.Position == MainPageSwipeUI.CAMERA_PAGE) {
+                    mp.zoomPage.PreviousContent = mp.thePages.cameraPage;
+                    //mp.thePages.cameraPage.PreviousView = mp.thePages.cameraPage.Content;
+                    active = mp.thePages.cameraPage;
+                } else if (mp.thePages.Position == MainPageSwipeUI.PROFILE_PAGE) {
+                    active = mp.thePages.profilePage;
+                    mp.zoomPage.PreviousContent = mp.thePages.profilePage;
+                    //mp.zoomPage.PreviousView = mp.thePages.profilePage.Content;
+                    mp.thePages.profilePage.PreviousView = active.Content;
+                }
+                Device.BeginInvokeOnMainThread(() => {
+                    active.Content = mp.zoomPage.Content;
+                });
             }
             Debug.WriteLine("DHB:SubmissionsImageRowViewCell:OnImgTapped: " + Height);
         }

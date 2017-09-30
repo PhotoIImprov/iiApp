@@ -34,6 +34,8 @@ namespace ImageImprov {
             // bind the footer to the current position on the list view
             Binding binding = new Binding { Source = thePages, Path = "Position" };
             defaultNavigation.SetBinding(KeyPageNavigator.HighlightedButton, binding);
+            Binding headerBinding = new Binding { Source = thePages, Path = "Position" };
+            header.SetBinding(PageHeader.HighlightedButton, headerBinding);
 
             zoomPage = new ZoomPage();
 
@@ -103,9 +105,8 @@ namespace ImageImprov {
         public void gotoJudgingPageHome() {
             thePages.gotoJudgingPageHome();
         }
-        // This takes the user to the PlayerContentPage.
-        public void gotoHomePage() {
-            thePages.gotoHomePage();
+        public void gotoLeaderboardPage() {
+            thePages.gotoLeaderboardPage();
         }
         public void gotoCameraPage() {
             thePages.gotoCameraPage();
@@ -113,15 +114,20 @@ namespace ImageImprov {
         public void gotoCreateCategoryPage() {
             thePages.cameraPage.switchToCreateCategoryView();
         }
+        public void gotoProfilePage() {
+            thePages.gotoProfilePage();
+        }
+        /*
+        // This takes the user to the PlayerContentPage.
+        public void gotoHomePage() {
+            thePages.gotoHomePage();
+        }
         public void gotoHamburgerPage() {
             thePages.gotoHamburgerPage();
         }
 
         public void gotoInstructionsPage() {
             thePages.gotoInstructionsPage();
-        }
-        public void gotoLeaderboardPage() {
-            thePages.gotoLeaderboardPage();
         }
         public void gotoSettingsPage() {
             thePages.gotoSettingsPage();
@@ -134,8 +140,8 @@ namespace ImageImprov {
         public void gotoLikesPage() {
             thePages.gotoLikesPage();
         }
-
         //public void gotoPurchasePage();
+        */
 
         ContentView overlay = null;
         public void pushOverlay(ContentView overlay) {

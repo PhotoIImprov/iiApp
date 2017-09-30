@@ -11,19 +11,20 @@ namespace ImageImprov {
     public interface IProvideNavigation {
         void gotoJudgingPage();
         void gotoJudgingPageHome();
-        // This takes the user to the PlayerContentPage.
-        void gotoHomePage();
-        void gotoCameraPage();
-        void gotoHamburgerPage();
-
-        void gotoInstructionsPage();
         void gotoLeaderboardPage();
-        void gotoSettingsPage();
+        void gotoCameraPage();
+        void gotoProfilePage();
 
+        /* These are now part of IProvideProfileNavigation
+        void gotoHomePage();  // this is now a pseudonumn for gotoProfilePage();
+        void gotoHamburgerPage();  // this is a pseudonymn for gotoProfilePage();
+        void gotoInstructionsPage();   // this page no longer exists..., wait what?
+        void gotoSettingsPage();
         //void gotoMedalsPage();
         void gotoLikesPage();
         void gotoMySubmissionsPage();
         //void gotoPurchasePage();
+        */
     }
 }
 

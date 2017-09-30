@@ -144,6 +144,8 @@ namespace ImageImprov {
 
         VotingInstructionsOverlay helpPage;
 
+        public View PreviousView { get; set; }
+
         public JudgingContentPage() {
             assembly = this.GetType().GetTypeInfo().Assembly;
             if (Device.Idiom == TargetIdiom.Tablet) heightAdjustment = 20.0;
@@ -1645,7 +1647,19 @@ namespace ImageImprov {
                     int row = 0;
                     Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot updating selection:" + selectionId);
                     // removing and adding the voteBox is for apple as the topmost widget always consumes a tap, even if they do nothing with it.
-                    portraitView.Children.Remove(voteBoxes[selectionId]);
+                    try {  // something in here is blowing up. but not persistently. let's try and catch it to see what's happening.
+                        portraitView.Children.Remove(voteBoxes[selectionId]);
+                    } catch (Exception ex) {
+                        Debug.WriteLine("Active Elements:");
+                        foreach (View v in portraitView.Children) {
+                            Debug.WriteLine("    " + v.ToString());
+                        }
+                        Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot exception: " + ex.ToString());
+                        // What I know so far:
+                        // Definitely happens in the caught line.
+                        // Dont know if it happens in iOS
+                        // All elements appear to not be null
+                    }
                     determineColAndRowFromIndex(selectionId, ref col, ref row);
                     portraitView.Children.Add(rankImages[vote.vote - 1], col, row);
                     Grid.SetRowSpan(rankImages[vote.vote - 1], 2);

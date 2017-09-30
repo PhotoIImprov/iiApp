@@ -88,6 +88,8 @@ namespace ImageImprov {
 
         ListView eventCategories;
         private ObservableCollection<string> catNames = new ObservableCollection<string>();
+        IList<CategoryJSON> categories = new List<CategoryJSON>();
+
         //DataTemplate myDataTemplate = new DataTemplate(typeof(string));
 
         public EventDetailPage(CameraContentPage parent) {
@@ -112,6 +114,7 @@ namespace ImageImprov {
                     catNames.Clear();
                     foreach (CategoryJSON category in evt.categories) {
                         catNames.Add(category.description);
+                        categories.Add(category);
                     }
                 });
             }
@@ -137,6 +140,7 @@ namespace ImageImprov {
 
                 //eventCategories = new ListView { ItemsSource = catNames, ItemTemplate = myDataTemplate, };
                 eventCategories = new ListView { ItemsSource = catNames, };
+                eventCategories.ItemSelected += OnRowTapped;
             } else {
                 // flush the old children.
                 portraitView.Children.Clear();
@@ -160,6 +164,17 @@ namespace ImageImprov {
             // not working on ios for some reason. am i getting here?
             Debug.WriteLine("DHB:EventDetailPage:OnBackPressed");
             cameraPage.switchToSelectView();
+        }
+
+        public void OnRowTapped(object sender, SelectedItemChangedEventArgs args) {
+            if (args.SelectedItem is string) {
+                //cameraPage.eventDrillDown((CameraEventTitleElement)args.SelectedItem);
+                CategoryJSON theCat = GlobalSingletonHelpers.getCategoryByDescription(categories, (string)args.SelectedItem);
+                if (theCat != null) { 
+                    cameraPage.switchToCategoryImgView(theCat);
+                }
+            }
+            eventCategories.SelectedItem = null;
         }
     }
 }

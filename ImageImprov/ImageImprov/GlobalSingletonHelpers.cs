@@ -807,6 +807,23 @@ namespace ImageImprov {
             return removed;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="theList"></param>
+        /// <param name="description"></param>
+        /// <returns>Null if category description is not present.</returns>
+        public static CategoryJSON getCategoryByDescription(IList<CategoryJSON> theList, string description) {
+            CategoryJSON result = null;
+            foreach(CategoryJSON category in theList) {
+                if (category.description.Equals(description)) {
+                    result = category;
+                    break;
+                }
+            }
+            return result;
+        }
+
         public static async Task<string> requestFromServerAsync(HttpMethod method, string apiCall, string jsonQuery) {
             Debug.WriteLine("DHB:GlobalSingletonHelpers:requestFromServerAsync start");
             string result = "fail";
