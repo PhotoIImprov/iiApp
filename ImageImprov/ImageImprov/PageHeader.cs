@@ -69,12 +69,40 @@ namespace ImageImprov {
                     myObj.settingsButton.IsVisible = true;
                 } else {
                     myObj.settingsButton.IsVisible = false;
+                    myObj.settingsButton_active.IsVisible = false;
                 }
             });
         }
 
         public static readonly BindableProperty HighlightedButton
             = BindableProperty.Create("HighlightedButtonIndex", typeof(int), typeof(PageHeader), 0, BindingMode.Default, null, OnHighlightedButtonChanged);
+
+
+        public int ProfileNavIndex {
+            get { return (int)GetValue(ProfileNav); }
+            set {
+                SetValue(ProfileNav, value);
+            }
+        }
+
+        private static void OnProfileNavChanged(BindableObject bindable, object oldValue, object newValue) {
+            var myObj = bindable as PageHeader;
+            Device.BeginInvokeOnMainThread(() => {
+                // only germane if HighlightedButtonIndex is on ProfilePage...
+                if (myObj.HighlightedButtonIndex == MainPageSwipeUI.PROFILE_PAGE) {
+                    if (myObj.ProfileNavIndex == ProfileNavRow.SETTINGS_INDEX) {
+                        myObj.settingsButton_active.IsVisible = true;
+                        myObj.settingsButton.IsVisible = false;
+                    } else {
+                        myObj.settingsButton_active.IsVisible = false;
+                        myObj.settingsButton.IsVisible = true;
+                    }
+                }
+            });
+        }
+
+        public static readonly BindableProperty ProfileNav
+            = BindableProperty.Create("ProfileNavIndex", typeof(int), typeof(PageHeader), 0, BindingMode.Default, null, OnProfileNavChanged);
 
     }
 }

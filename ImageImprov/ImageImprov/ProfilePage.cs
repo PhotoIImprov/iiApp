@@ -12,7 +12,7 @@ namespace ImageImprov {
         bool profileDisplayStatus = true;
         Grid portraitView;
         public UpperProfileSection coreProfile;
-        ProfileNavRow navRow;
+        public ProfileNavRow navRow;  // so master page can access and bind for settings on/off.
         ContentView mainBody;
         int numGridRows = 16;
 

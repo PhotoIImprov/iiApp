@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Xamarin.Forms;
 
 namespace ImageImprov {
-    class ProfileNavRow : Grid {  // as a grid to enable binding.
+    public class ProfileNavRow : Grid {  // as a grid to enable binding.
         public const int SETTINGS_INDEX = 3;
         //
         // Nav Portion Widgets

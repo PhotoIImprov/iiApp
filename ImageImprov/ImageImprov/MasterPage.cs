@@ -37,6 +37,9 @@ namespace ImageImprov {
             Binding headerBinding = new Binding { Source = thePages, Path = "Position" };
             header.SetBinding(PageHeader.HighlightedButton, headerBinding);
 
+            Binding settingsOnOffBinding = new Binding { Source = thePages.profilePage.navRow, Path = "HighlightedButtonIndex" };
+            header.SetBinding(PageHeader.ProfileNav, settingsOnOffBinding);
+
             zoomPage = new ZoomPage();
 
 
