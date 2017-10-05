@@ -18,7 +18,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.imageimprov</string>
 	<key>CFBundleVersion</key>
-	<string>0.0</string>
+	<string>1.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -27,9 +27,9 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.198313221875-3999a4ev376dplugmig89thjffq34ai8</string>
-        <string>fb1475439292494090</string>
-        <string>xamarin-auth</string>
-      </array>
+				<string>fb1475439292494090</string>
+				<string>xamarin-auth</string>
+			</array>
 			<key>CFBundleURLTypes</key>
 			<string>Viewer</string>
 		</dict>
@@ -52,21 +52,20 @@
 	<string>1.0.9</string>
 	<key>UIRequiresFullScreen</key>
 	<true/>
-	<key>XSLaunchImageAssets</key>
-	<string>Resources/Media.xcassets/LaunchImages.launchimage</string>
+  <key>XSLaunchImageAssets</key>
+  <string>Resources/Media.xcassets/LaunchImages.launchimage</string>
 	<key>XSAppIconAssets</key>
 	<string>Resources/Media.xcassets/AppIcons.appiconset</string>
-
-  <key>FacebookAppID</key>
-  <string>1475439292494090</string>
-  <key>FacebookDisplayName</key>
-  <string>Image Improv</string>
-  <key>LSApplicationQueriesSchemes</key>
-  <array>
-    <string>fbapi</string>
-    <string>fb-messenger-api</string>
-    <string>fbauth2</string>
-    <string>fbshareextension</string>
-  </array>
+	<key>FacebookAppID</key>
+	<string>1475439292494090</string>
+	<key>FacebookDisplayName</key>
+	<string>Image Improv</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
+	</array>
 </dict>
 </plist>
