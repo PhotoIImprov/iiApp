@@ -24,11 +24,12 @@ namespace ImageImprov {
         //IDictionary<CategoryJSON, Button> categorys = new Dictionary<CategoryJSON, Button>();
 
         ObservableCollection<CameraCategoryElement> openCategorys = new ObservableCollection<CameraCategoryElement>();
+        Frame categoryFrame = new Frame() { OutlineColor = Color.Black, };
         ListView openCategorysView;
         //DataTemplate myDataTemplate = new DataTemplate(typeof(CameraCategorySelectionCell));
         DataTemplateSelector dts = new CameraDataTemplateSelector();
 
-        Label categoryCreationButton = new Label {
+        /*Label categoryCreationButton = new Label {
             BackgroundColor = GlobalStatusSingleton.ButtonColor,
             Text = "Create an event!",
             HorizontalOptions = LayoutOptions.FillAndExpand,
@@ -41,10 +42,12 @@ namespace ImageImprov {
             FontAttributes = FontAttributes.Bold,
         };
         iiBitmapView categoryCreationImageStart;
-        iiBitmapView categoryCreationImageEnd;
+        iiBitmapView categoryCreationImageEnd;*/
+        iiBitmapView categoryCreationButton;
 
+        Frame joinPassphraseFrame = new Frame() { OutlineColor = Color.Black, };
         Entry joinPassphrase = new Entry {
-            Placeholder = "Enter join phrase then tap join to join an event",
+            Placeholder = "Type your join phrase then tap play\n to join your event",
             PlaceholderColor = Color.Gray,
             TextColor = Color.Black,
             FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
@@ -53,6 +56,7 @@ namespace ImageImprov {
             HorizontalOptions = LayoutOptions.FillAndExpand,
             Margin = 2,
         };
+        /*
         Label joinLabel = new Label {
             BackgroundColor = GlobalStatusSingleton.ButtonColor,
             Text = "Join",
@@ -66,6 +70,7 @@ namespace ImageImprov {
             FontAttributes = FontAttributes.Bold,
         };
         iiBitmapView joinImageStart;
+        */
         iiBitmapView joinImageEnd;
 
         // events
@@ -75,12 +80,11 @@ namespace ImageImprov {
             cameraPage = parent;
 
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
-            categoryCreationImageStart = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.contests_inactive.png", assembly)) {
-                HorizontalOptions = LayoutOptions.Start,
-                Margin = 3,
-            };
-            categoryCreationImageEnd = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.contests_inactive.png", assembly)) {
-                HorizontalOptions = LayoutOptions.End,
+            categoryCreationButton = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.createaneventbutton.png", assembly)) {
+                Scaling = false,
+                //MinimumHeightRequest = 80,
+                //MinimumWidthRequest = .8*360,
+                //HorizontalOptions = LayoutOptions.CenterAndExpand,
                 Margin = 3,
             };
 
@@ -89,28 +93,32 @@ namespace ImageImprov {
             categoryCreationButton.GestureRecognizers.Add(tap);
 
 
-            joinImageStart = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.profile_inactive.png", assembly)) {
-                HorizontalOptions = LayoutOptions.Start,
-                Margin = 3,
-            };
-            joinImageEnd = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.profile_inactive.png", assembly)) {
+            //joinPassphraseFrame.Content = joinPassphrase;
+            joinImageEnd = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.play.png", assembly)) {
                 HorizontalOptions = LayoutOptions.End,
                 Margin = 3,
             };
             TapGestureRecognizer joinTap = new TapGestureRecognizer();
             joinTap.Tapped += OnJoinClicked;
-            joinLabel.GestureRecognizers.Add(joinTap);
+            //joinLabel.GestureRecognizers.Add(joinTap);
+            joinImageEnd.GestureRecognizers.Add(joinTap);
 
             LoadEventsRequest += new EventHandler(OnEventsLoadRequest);
         }
 
         public int buildUI() {
+            int rowSet1 = 12;
             if (portraitView == null) {
                 portraitView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor };
-                for (int i = 0; i < 16; i++) {
+                for (int i = 0; i < rowSet1; i++) {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
-                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
+
+                for (int i = 0; i < 8; i++) {
+                    portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                }
             } else {
                 // flush the old children.
                 portraitView.Children.Clear();
@@ -128,17 +136,26 @@ namespace ImageImprov {
             };
             openCategorysView.ItemSelected += OnRowTapped;
 
+            portraitView.Children.Add(categoryFrame, 0, 0);
+            Grid.SetRowSpan(categoryFrame, rowSet1);
+            Grid.SetColumnSpan(categoryFrame, 8);
             portraitView.Children.Add(openCategorysView, 0, 0);
-            Grid.SetRowSpan(openCategorysView, 10);
-            
-            portraitView.Children.Add(joinPassphrase, 0, 11);
-            portraitView.Children.Add(joinLabel, 0, 12);
-            portraitView.Children.Add(joinImageStart, 0, 12);
-            portraitView.Children.Add(joinImageEnd, 0, 12);
+            Grid.SetRowSpan(openCategorysView, rowSet1);
+            Grid.SetColumnSpan(openCategorysView, 8);
 
-            portraitView.Children.Add(categoryCreationButton, 0, 14);
-            portraitView.Children.Add(categoryCreationImageStart, 0, 14);
-            portraitView.Children.Add(categoryCreationImageEnd, 0, 14);
+            portraitView.Children.Add(joinPassphraseFrame, 0, rowSet1);
+            Grid.SetColumnSpan(joinPassphraseFrame, 8);
+            portraitView.Children.Add(joinPassphrase, 0, rowSet1);
+            Grid.SetColumnSpan(joinPassphrase, 8);
+            portraitView.Children.Add(joinImageEnd, 7, rowSet1);
+            
+
+
+            portraitView.Children.Add(categoryCreationButton, 1, rowSet1+1);
+            Grid.SetColumnSpan(categoryCreationButton, 6);
+            //Grid.SetRowSpan(categoryCreationButton, 2);
+            //portraitView.Children.Add(categoryCreationImageStart, 0, 14);
+            //portraitView.Children.Add(categoryCreationImageEnd, 0, 14);
 
             Content = portraitView;
             return 1;
@@ -231,9 +248,9 @@ namespace ImageImprov {
 
         public async void OnJoinClicked(object sender, EventArgs args) {
             await joinPassphrase.FadeTo(0, 175);
-            await joinLabel.FadeTo(0, 175);
+            await joinImageEnd.FadeTo(0, 175);
             await joinPassphrase.FadeTo(1, 175);
-            await joinLabel.FadeTo(1, 175);
+            await joinImageEnd.FadeTo(1, 175);
             if ((joinPassphrase.Text!=null)&&(!joinPassphrase.Text.Equals(""))) {
                 string query = "joinevent?accesskey=" + joinPassphrase.Text;
                 string result = await GlobalSingletonHelpers.requestFromServerAsync(HttpMethod.Post, query, "");

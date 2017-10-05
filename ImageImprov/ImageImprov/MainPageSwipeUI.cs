@@ -60,7 +60,7 @@ namespace ImageImprov
             // TokenReceived is my successful login event.
             loginPage.TokenReceived += new TokenReceivedEventHandler(this.TokenReceived);
             loginPage.TokenReceived += new TokenReceivedEventHandler(judgingPage.TokenReceived);
-            loginPage.TokenReceived += new TokenReceivedEventHandler(profilePage.coreProfile.TokenReceived);
+            loginPage.TokenReceived += new TokenReceivedEventHandler(profilePage.TokenReceived);
             loginPage.LogoutClicked += new LogoutClickedEventHandler(this.OnLogoutClicked);
 
             // These lines enable another page to process a first page's events.
@@ -70,6 +70,7 @@ namespace ImageImprov
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(leaderboardPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(profilePage.MySubmissionsPage.OnCategoryLoad);
             judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(profilePage.LikesPage.OnCategoryLoad);
+            judgingPage.CategoryLoadSuccess += new CategoryLoadSuccessEventHandler(profilePage.EventsPage.OnCategoryLoad);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(judgingPage.OnLoadBallotFromSubmission);
             cameraPage.LoadBallotFromPhotoSubmission += new LoadBallotFromPhotoSubmissionEventHandler(profilePage.MySubmissionsPage.OnPhotoSubmit);
 
@@ -155,6 +156,7 @@ namespace ImageImprov
         public void gotoProfilePage() {
             Debug.WriteLine("DHB:MainPageSwipeUI:gotoProfilePage");
             profilePage.gotoSubmissionsPage();
+            //profilePage.gotoEventsHistoryPage();
             Position = PROFILE_PAGE;
             
         }

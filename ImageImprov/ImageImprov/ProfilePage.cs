@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
 using Xamarin.Forms;
+using Newtonsoft.Json;
 
 namespace ImageImprov {
     public class ProfilePage : ContentView, IProvideProfileNavigation, ILeaveZoomCallback {
-        public delegate void gotoPage();
+        const string BADGES = "badges";
 
         bool profileDisplayStatus = true;
         Grid portraitView;
@@ -41,9 +45,14 @@ namespace ImageImprov {
             get { return likesPage; }
         }
 
-        MedalsPage medalsPage;
-        public MedalsPage MedalsPage {
-            get { return medalsPage; }
+        EventsHistory_Profile eventsPage;
+        public EventsHistory_Profile EventsPage {
+            get { return eventsPage; }
+        }
+
+        BadgesPage badgesPage;
+        public BadgesPage BadgesPage {
+            get { return badgesPage; }
         }
 
         public View PreviousView { get; set; }
@@ -55,10 +64,12 @@ namespace ImageImprov {
             instructionsPage = new InstructionsPage();
             mySubmissionsPage = new MySubmissionsPage();
             likesPage = new LikesPage();
-            medalsPage = new MedalsPage();
+            eventsPage = new EventsHistory_Profile();
+            badgesPage = new BadgesPage();
 
             mainBody = new ContentView();
             mainBody.Content = MySubmissionsPage;
+
             buildUI();
         }
 
@@ -97,14 +108,22 @@ namespace ImageImprov {
 
         public void gotoSubmissionsPage() {
             mainBody.Content = MySubmissionsPage;
+            navRow.HighlightedButtonIndex = 0;
         }
 
         public void gotoLikesPage() {
             mainBody.Content = LikesPage;
+            navRow.HighlightedButtonIndex = 1;
         }
 
-        public void gotoMedalsPage() {
-            mainBody.Content = MedalsPage;
+        public void gotoEventsHistoryPage() {
+            mainBody.Content = EventsPage;
+            navRow.HighlightedButtonIndex = 2;
+        }
+
+        public void gotoBadgesPage() {
+            mainBody.Content = BadgesPage;
+            navRow.HighlightedButtonIndex = 3;
         }
 
         public void flipShowProfile() {
@@ -140,6 +159,27 @@ namespace ImageImprov {
             } else {
                 gotoSubmissionsPage();
             }*/
+        }
+
+        public virtual async void TokenReceived(object sender, EventArgs e) {
+            //coreProfile.usernameLabel.Text = GlobalStatusSingleton.username;
+            string jsonQuery = "";
+            string result = "fail";
+            while (result.Equals("fail")) {
+                result = await GlobalSingletonHelpers.requestFromServerAsync(HttpMethod.Get, BADGES, jsonQuery);
+                if (result.Equals("fail")) {
+                    await Task.Delay(10000);
+                }
+            }
+            if (!result.Equals("fail")) {
+                BadgesResponseJSON badges = JsonConvert.DeserializeObject<BadgesResponseJSON>(result);
+                if (badges != null) {
+                    coreProfile.SetBadgesData(badges);
+                    badgesPage.SetBadgesData(badges);
+                }
+            } else {
+                Debug.WriteLine("DHB:CameraCategorySelectionView:OnEventsLoadRequest event apicall failed!");
+            }
         }
 
     }

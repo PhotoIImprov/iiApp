@@ -7,19 +7,23 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Xamarin.Forms;
+using SkiaSharp;
 
 namespace ImageImprov {
     // This controls profile pic, friends, lightbulbs, etc.
     public class UpperProfileSection : ContentView {
+        const string MOST_BULBS = "Most bulbs in one day: ";
+
         Grid portraitView;
 
-        iiBitmapView profilePic;
+        SKBitmap profilePicBitmap;
+        iiBitmapView profilePic = new iiBitmapView() { HorizontalOptions = LayoutOptions.FillAndExpand, VerticalOptions = LayoutOptions.FillAndExpand };
         iiBitmapView lightbulbs;
         Label lightbulbCount = new Label {
-            Text = "Full count coming soon",
+            Text = "Loading",
             HorizontalOptions = LayoutOptions.CenterAndExpand,
             VerticalOptions = LayoutOptions.CenterAndExpand,
-            BackgroundColor = Color.White,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
             //IsVisible = false,
         };
@@ -42,6 +46,16 @@ namespace ImageImprov {
         };
         //iiBitmapView gotoSettingsButton;
 
+        Label mostBulbsInOneDay = new Label {
+            Text = MOST_BULBS + "Loading",
+            HorizontalOptions = LayoutOptions.CenterAndExpand,
+            VerticalOptions = LayoutOptions.CenterAndExpand,
+            BackgroundColor = GlobalStatusSingleton.backgroundColor,
+            TextColor = Color.Black,
+            //IsVisible = false,
+        };
+
+
         public UpperProfileSection() {
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             lightbulbs = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.reward.png", assembly));
@@ -63,6 +77,10 @@ namespace ImageImprov {
                 portraitView.Children.Clear();
             }
 
+            portraitView.Children.Add(profilePic, 0, 0);
+            Grid.SetRowSpan(profilePic, 4);
+            Grid.SetColumnSpan(profilePic, 2);
+
             StackLayout sl = new StackLayout {
                 Orientation = StackOrientation.Horizontal,
                 Children = { lightbulbs, lightbulbCount, },
@@ -71,15 +89,25 @@ namespace ImageImprov {
             Grid.SetColumnSpan(usernameLabel, 2);
             portraitView.Children.Add(sl, 2, 1);
             Grid.SetColumnSpan(sl, 2);
-            portraitView.Children.Add(friendInfo, 2, 0);
+            portraitView.Children.Add(mostBulbsInOneDay, 2, 2);
+            Grid.SetColumnSpan(mostBulbsInOneDay, 2);
+            portraitView.Children.Add(friendInfo, 2, 3);
             Grid.SetColumnSpan(friendInfo, 2);
 
             Content = portraitView;
             return 1;
         }
 
-        public virtual void TokenReceived(object sender, EventArgs e) {
+        public async void SetBadgesData(BadgesResponseJSON badges) {
+            Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             usernameLabel.Text = GlobalStatusSingleton.username;
+            lightbulbCount.Text = badges.totalBulbs.ToString();
+            mostBulbsInOneDay.Text = MOST_BULBS + badges.maxDailyBulbs.ToString();
+
+            if (badges.pid != -1) {
+                profilePicBitmap = await GlobalSingletonHelpers.loadBitmapAsync(assembly, badges.pid);
+                profilePic.Bitmap = profilePicBitmap;
+            }
         }
 
     }

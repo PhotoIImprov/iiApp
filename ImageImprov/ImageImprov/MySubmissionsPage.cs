@@ -39,10 +39,17 @@ namespace ImageImprov {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            }
-            myListView = new ListView { ItemsSource = submissions, ItemTemplate = dts, HasUnevenRows = true, SeparatorVisibility=SeparatorVisibility.None, Margin=0, };
-            myListView.ItemAppearing += OnNewCategoryAppearing;
 
+                myListView = new ListView(ListViewCachingStrategy.RecycleElement) {
+                    ItemsSource = submissions,
+                    ItemTemplate = dts,
+                    HasUnevenRows = true,
+                    SeparatorVisibility = SeparatorVisibility.None,
+                    Margin = 0,
+                };
+                myListView.ItemAppearing += OnNewCategoryAppearing;
+            }
+            portraitView.Children.Clear();
             portraitView.Children.Add(myListView, 0, 0);
             Grid.SetRowSpan(myListView, numGridRows);
             Content = portraitView;
@@ -149,6 +156,9 @@ namespace ImageImprov {
                     nextLookupId = mySubs.submissions[mySubs.submissions.Count - 1].category.categoryId;
                 }
             }
+            // this did not fix the problem.
+            //myListView.ItemsSource = null;  // testing whether this clears up my observable collection changed issue.
+            //myListView.ItemsSource = submissions;  // testing whether this clears up my observable collection changed issue.
             Debug.WriteLine("DHB:MySubmissionsPage:processSubmissionsLoadAsync  complete.");
             loadingMoreCategories = false;
         }

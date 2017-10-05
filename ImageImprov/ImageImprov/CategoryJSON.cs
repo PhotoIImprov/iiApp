@@ -37,6 +37,12 @@ namespace ImageImprov
         [JsonProperty("state")]
         public string state { get; set; }
 
+        /// <summary>
+        /// Optional field returned by events.
+        /// </summary>
+        [JsonProperty("photos")]
+        public List<PhotoMetaJSON> photos { get; set; }
+
         public override bool Equals(System.Object obj) {
             if (obj==null) { return false; }
             CategoryJSON y = obj as CategoryJSON;

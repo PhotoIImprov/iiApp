@@ -49,7 +49,7 @@
 	<key>NSCalendarsUsageDescription</key>
 	<string>Image Improv does not use your calendar.</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.8</string>
+	<string>1.0.9</string>
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>XSLaunchImageAssets</key>

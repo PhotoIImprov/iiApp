@@ -86,6 +86,9 @@ namespace ImageImprov {
             HorizontalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.FillAndExpand,
             VerticalOptions = LayoutOptions.FillAndExpand,
+            //VerticalOptions = LayoutOptions.EndAndExpand,
+            //VerticalOptions = LayoutOptions.Fill,
+            //VerticalOptions = LayoutOptions.Center,
             Margin = 1,
         };
         Entry passwordEntry = new Entry
@@ -460,8 +463,19 @@ namespace ImageImprov {
                 };
             }*/
             Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            for (int i = 0; i < 40; i++) {
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            for (int i = 0; i < 20; i++) {
+                // I use this approach everywhere else, except this page as it fuxors the entry size on some devices 
+                // This stackoverflow is what suggested to me to try this:
+                //    https://stackoverflow.com/questions/43772019/entry-height-not-working-on-xamarin-forms
+                // Then this explains why auto works (it sizes according to the child widget, rather than the screen)
+                //    https://forums.xamarin.com/discussion/19635/when-to-use-gridunittypestar-vs-auto
+                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                if (i < 7 || i > 8) {  // Ignore the usernameEntry and passwordEntry rows
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                } else {
+                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                }
             }
             int colsWide = 8;
             for (int j = 0; j < colsWide; j++) {
@@ -1341,7 +1355,11 @@ namespace ImageImprov {
             // check that text size fits in the area available for the entry boxes.
             //if ((unameFirstEntryCheck)&& (sender == usernameEntry)) {
             double h = Height / 20.0;
-            if ((usernameEntry.Height > -1) && (usernameEntry.Height < h)) h = usernameEntry.Height;
+            double m = usernameEntry.Margin.Top+usernameEntry.Margin.Bottom;
+            if ((usernameEntry.Height > -1) && ((usernameEntry.Height-m) < h)) h = (usernameEntry.Height-m);
+            m = passwordEntry.Margin.Top + passwordEntry.Margin.Bottom;
+            if ((passwordEntry.Height > -1) && ((passwordEntry.Height - m) < h)) h = (passwordEntry.Height - m);
+
             double origFontSize = loggedInLabel.FontSize;
             string origText = loggedInLabel.Text;
             loggedInLabel.Text = FontCalc.TEST_TEXT;
@@ -1353,6 +1371,7 @@ namespace ImageImprov {
                 //GlobalSingletonHelpers.fixLabelHeight(usernameEntry, Width, h, 5, 14);
                 usernameEntry.FontSize = loggedInLabel.FontSize;
                 unameFirstEntryCheck = false;
+                
             }
             if ((pwdFirstEntryCheck) &&(sender==passwordEntry)){
                 GlobalSingletonHelpers.fixLabelHeight(loggedInLabel, Width * 0.8, h, 5, (int)passwordEntry.FontSize);

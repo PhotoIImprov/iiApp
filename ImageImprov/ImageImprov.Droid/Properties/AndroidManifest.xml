@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.imageimprov" android:versionName="1.0.8.0" android:installLocation="preferExternal" android:versionCode="22">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.imageimprov" android:versionName="1.0.9.0" android:installLocation="preferExternal" android:versionCode="23">
 	<uses-sdk android:minSdkVersion="16" />
 	<!-- package android:name="com.imageimprov" / -->
 	<!-- application android:label="Image Improv" android:icon="@drawable/ii_mainLogo" -->

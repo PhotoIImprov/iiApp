@@ -11,7 +11,7 @@ using Xamarin.Forms;
 
 namespace ImageImprov {
     public class EventDetailPage : ContentView {
-        CameraContentPage cameraPage;
+        IProvideEventDrillDown callingPage;
 
         private Grid portraitView;
         private iiBitmapView backButton;
@@ -92,8 +92,8 @@ namespace ImageImprov {
 
         //DataTemplate myDataTemplate = new DataTemplate(typeof(string));
 
-        public EventDetailPage(CameraContentPage parent) {
-            this.cameraPage = parent;
+        public EventDetailPage(IProvideEventDrillDown parent) {
+            this.callingPage = parent;
             buildUI();
         }
 
@@ -163,7 +163,7 @@ namespace ImageImprov {
             // that's where i want to return.
             // not working on ios for some reason. am i getting here?
             Debug.WriteLine("DHB:EventDetailPage:OnBackPressed");
-            cameraPage.switchToSelectView();
+            callingPage.switchToSelectView();
         }
 
         public void OnRowTapped(object sender, SelectedItemChangedEventArgs args) {
@@ -171,7 +171,7 @@ namespace ImageImprov {
                 //cameraPage.eventDrillDown((CameraEventTitleElement)args.SelectedItem);
                 CategoryJSON theCat = GlobalSingletonHelpers.getCategoryByDescription(categories, (string)args.SelectedItem);
                 if (theCat != null) { 
-                    cameraPage.switchToCategoryImgView(theCat);
+                    callingPage.switchToCategoryImgView(theCat);
                 }
             }
             eventCategories.SelectedItem = null;

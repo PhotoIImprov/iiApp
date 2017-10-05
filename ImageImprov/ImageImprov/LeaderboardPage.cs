@@ -284,7 +284,7 @@ namespace ImageImprov {
             }
             // want to fill a listview instead of a scroller holding a stack.
             myListView = new ListView { RowHeight = deviceDependentRowHeight, ItemsSource = leaderboards, ItemTemplate = myDataTemplate,  };
-
+            
             portraitView.Children.Add(myListView, 0, 0);
             Grid.SetRowSpan(myListView, 16);
 

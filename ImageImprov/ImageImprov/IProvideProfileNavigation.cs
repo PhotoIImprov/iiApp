@@ -8,7 +8,8 @@ namespace ImageImprov {
     public interface IProvideProfileNavigation {
         void gotoSubmissionsPage();
         void gotoLikesPage();
-        void gotoMedalsPage();
+        void gotoEventsHistoryPage();
+        void gotoBadgesPage();
         void flipShowProfile();
 
         void gotoSettingsPage();

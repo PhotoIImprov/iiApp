@@ -127,7 +127,7 @@ namespace ImageImprov {
             }
         }
 
-        protected static async Task<byte[]> requestImageAsync(long pid) {
+        public static async Task<byte[]> requestImageAsync(long pid) {
             Debug.WriteLine("DHB:ImageScrollingPage:requestImageAsync start pid:" + pid);
             byte[] result = null;// "fail";
 
@@ -157,6 +157,13 @@ namespace ImageImprov {
             return result;
         }
 
+        /// <summary>
+        /// created an instance in globalsingletonhelpers.
+        /// @deprecated
+        /// </summary>
+        /// <param name="pid"></param>
+        /// <param name="attempt"></param>
+        /// <returns></returns>
         protected async Task<SKBitmap> loadBitmapAsync(long pid, int attempt = 0) {
             Debug.WriteLine("DHB:ImageScrollingPage:loadBitmapAsync depth:" + attempt);
             SKBitmap output = null;

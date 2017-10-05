@@ -1,6 +1,6 @@
 <XamlCompilerSaveState>
   <ReferenceAssemblyList>
-    <ReferenceAssembly PathName="c:\vsproj\imageimprov\imageimprov\imageimprov\bin\debug\imageimprov.dll" HashGuid="af0f62e2-7889-d4a8-0436-cd3312de83dd" />
+    <ReferenceAssembly PathName="c:\vsproj\imageimprov\imageimprov\imageimprov\bin\debug\imageimprov.dll" HashGuid="8a2ae6d2-3f37-446a-fd54-ce3cae3011e6" />
     <ReferenceAssembly PathName="c:\vsproj\imageimprov\packages\xamarin.forms.2.3.3.180\lib\wpa81\xamarin.forms.core.dll" HashGuid="c782f70f-077f-7e2d-5bd4-f6b5da067f8a" />
     <ReferenceAssembly PathName="c:\vsproj\imageimprov\packages\xamarin.forms.2.3.3.180\lib\wpa81\xamarin.forms.platform.dll" HashGuid="6b938cd4-44c0-2618-7eb6-4caa3f482076" />
     <ReferenceAssembly PathName="c:\vsproj\imageimprov\packages\xamarin.forms.2.3.3.180\lib\wpa81\xamarin.forms.platform.winrt.dll" HashGuid="fe4acc44-27ba-0e4e-a08b-26ae7dccb678" />

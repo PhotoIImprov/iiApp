@@ -14,7 +14,7 @@ using ExifLib;
 namespace ImageImprov {
     public delegate void LoadBallotFromPhotoSubmissionEventHandler(object sender, EventArgs e);
 
-    public class CameraContentPage : ContentView, ICamera, IManageCategories, ILeaveZoomCallback {
+    public class CameraContentPage : ContentView, ICamera, IManageCategories, ILeaveZoomCallback, IProvideEventDrillDown {
         public event LoadBallotFromPhotoSubmissionEventHandler LoadBallotFromPhotoSubmission;
         public const string PHOTO = "photo";
 
@@ -166,7 +166,8 @@ namespace ImageImprov {
         }
 
         public void switchToEventView() {
-            Content = eventView.Content;
+            Content = eventView.Content;  // periodic crashes.
+            //Content = eventView; //.Content; also crashes.
         }
 
         public void switchToCategoryImgView(CategoryJSON category) {

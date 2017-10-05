@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 namespace ImageImprov {
     class EventCategoryImagesPage : ImageScrollingPage {
         readonly static string PHOTO = "photo";
-        CameraContentPage cameraPage;
+        IProvideEventDrillDown callingPage;
 
         // Want to keep photos in memory so that we don't implode when we switch between categories.
         // need submissions too...
@@ -43,8 +43,8 @@ namespace ImageImprov {
 
         iiBitmapView backCaret = null;
 
-        public EventCategoryImagesPage(CameraContentPage parent) : base() {
-            cameraPage = parent;
+        public EventCategoryImagesPage(IProvideEventDrillDown parent) : base() {
+            callingPage = parent;
             activeApiCall = PHOTO;
         }
 
@@ -75,7 +75,7 @@ namespace ImageImprov {
             };
             TapGestureRecognizer back = new TapGestureRecognizer();
             back.Tapped += (e, a) => {
-                cameraPage.switchToEventView();
+                callingPage.switchToEventView();
             };
             backCaret.GestureRecognizers.Add(back);
         }

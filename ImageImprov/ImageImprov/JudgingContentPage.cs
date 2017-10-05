@@ -644,7 +644,9 @@ namespace ImageImprov {
                 mp.zoomPage.ActiveMetaBallot = votedOnCandidate;
                 mp.zoomPage.buildZoomView();
                 mp.zoomPage.PreviousContent = this;
-                Content = mp.zoomPage.Content;
+                //Content.IsVisible = false;
+                //Content = null;  // if uncommented, this would be the crash point.
+                Content = mp.zoomPage.Content; // breakage.
                 Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick Content==zoomView");
             });
             /*
@@ -1646,9 +1648,16 @@ namespace ImageImprov {
                     int col = 0;
                     int row = 0;
                     Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot updating selection:" + selectionId);
+                    //Currently crashing.
+                    // Failed test: My guess is that i'm hitting this fcn in a non-thread safe manner. let's see if it goes away.
+                    // Failed test: checking the contains for the element to remove.
+                    // longer term: start tracking the selection id incase there's a pattern
                     // removing and adding the voteBox is for apple as the topmost widget always consumes a tap, even if they do nothing with it.
                     try {  // something in here is blowing up. but not persistently. let's try and catch it to see what's happening.
-                        portraitView.Children.Remove(voteBoxes[selectionId]);
+                        if (portraitView.Children.Contains(voteBoxes[selectionId])) {
+                            Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot - contains passed");
+                            portraitView.Children.Remove(voteBoxes[selectionId]);
+                        }
                     } catch (Exception ex) {
                         Debug.WriteLine("Active Elements:");
                         foreach (View v in portraitView.Children) {

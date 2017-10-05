@@ -19,6 +19,8 @@ using Newtonsoft.Json;
 namespace ImageImprov {
     // a collection of static helper functions that are used throughout the app.
     public static class GlobalSingletonHelpers {
+        public const string EMPTY = "EMPTY";
+
         public static string imageToByteArray(Image img) {
             var file = img.Source;
             return "hai";
@@ -851,6 +853,8 @@ namespace ImageImprov {
                 if ((response.StatusCode == System.Net.HttpStatusCode.OK) || (response.StatusCode == System.Net.HttpStatusCode.Created)) {
                     // do I need these?
                     result = await response.Content.ReadAsStringAsync();
+                } else if ((response.StatusCode == System.Net.HttpStatusCode.NoContent) || (response.StatusCode == System.Net.HttpStatusCode.NotFound)) {
+                    result = EMPTY;
                 } else {
                     // pooh. what do i do here?
                     //result = "internal fail; why?";
@@ -875,6 +879,36 @@ namespace ImageImprov {
             return result;
         }
 
+        public static async Task<SKBitmap> loadBitmapAsync(Assembly assembly, long pid, int attempt = 0) {
+            Debug.WriteLine("DHB:GlobalSingletonHelpers:loadBitmapAsync depth:" + attempt);
+            SKBitmap output = null;
+            byte[] result = await ImageScrollingPage.requestImageAsync(pid);
+            if (result != null) {
+                try {
+                    /*
+                    PreviewResponseJSON resp = JsonConvert.DeserializeObject<PreviewResponseJSON>(result);
+                    if (resp != null) {
+                        output = GlobalSingletonHelpers.SKBitmapFromBytes(resp.imgStr);
+                    }
+                    */
+                    //output = SKBitmap.Decode(result);
+                    output = GlobalSingletonHelpers.SKBitmapFromBytes(result);
+                } catch (Exception e) {
+                    Debug.WriteLine("DHB:GlobalSingletonHelpers:loadBitmapAsync err:" + e.ToString());
+                }
+            }
+            if (output == null) {
+                //output = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.alert.png", assembly);
+                if (attempt < 10) {  // fail after 10 attempts.
+                    await Task.Delay(3000);
+                    await loadBitmapAsync(assembly, pid, attempt + 1);  // will recurse down till we get it.  
+                } else {
+                    Debug.WriteLine("DHB:GlobalSingletonHelpers:loadBitmapAsync MaxDepth hit");
+                    output = GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.alert.png", assembly);
+                }
+            }
+            return output;
+        }
         public static void SortAndReverse<T>(this ObservableCollection<T> observable) where T : IComparable<T>, IEquatable<T> {
             List<T> sorted = observable.OrderBy(x => x).ToList();
             sorted.Reverse();
