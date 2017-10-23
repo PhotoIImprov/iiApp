@@ -48,6 +48,7 @@ namespace ImageImprov {
                     Margin = 0,
                 };
                 myListView.ItemAppearing += OnNewCategoryAppearing;
+                
             }
             portraitView.Children.Clear();
             portraitView.Children.Add(myListView, 0, 0);

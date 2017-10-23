@@ -81,12 +81,14 @@ namespace ImageImprov {
 
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             categoryCreationButton = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.createaneventbutton.png", assembly)) {
-                Scaling = false,
+                Scaling = true,
+                EnsureSquare = false,
                 //MinimumHeightRequest = 80,
                 //MinimumWidthRequest = .8*360,
                 //HorizontalOptions = LayoutOptions.CenterAndExpand,
-                Margin = 3,
+                //Margin = 3,
             };
+            categoryCreationButton.SizeChanged += CheckCatButton;
 
             TapGestureRecognizer tap = new TapGestureRecognizer();
             tap.Tapped += OnCategoryCreateClicked;
@@ -114,7 +116,9 @@ namespace ImageImprov {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
-                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
+                //portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
                 for (int i = 0; i < 8; i++) {
                     portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -143,17 +147,17 @@ namespace ImageImprov {
             Grid.SetRowSpan(openCategorysView, rowSet1);
             Grid.SetColumnSpan(openCategorysView, 8);
 
+            
             portraitView.Children.Add(joinPassphraseFrame, 0, rowSet1);
             Grid.SetColumnSpan(joinPassphraseFrame, 8);
             portraitView.Children.Add(joinPassphrase, 0, rowSet1);
             Grid.SetColumnSpan(joinPassphrase, 8);
             portraitView.Children.Add(joinImageEnd, 7, rowSet1);
-            
-
 
             portraitView.Children.Add(categoryCreationButton, 1, rowSet1+1);
             Grid.SetColumnSpan(categoryCreationButton, 6);
-            //Grid.SetRowSpan(categoryCreationButton, 2);
+            
+            Grid.SetRowSpan(categoryCreationButton, 2);
             //portraitView.Children.Add(categoryCreationImageStart, 0, 14);
             //portraitView.Children.Add(categoryCreationImageEnd, 0, 14);
 
@@ -299,6 +303,12 @@ namespace ImageImprov {
                 }
             }
             if (uploadCategoryCount == 0) cete.stillUploading = false;
+        }
+
+        public void CheckCatButton(object sender, EventArgs args) {
+            Debug.WriteLine("DHB:CameraCategorySelectionView:CheckCatButton - well?");
+            //categoryCreationButton.testRedraw(); // fail.
+            portraitView.RaiseChild(categoryCreationButton);
         }
     }
 }

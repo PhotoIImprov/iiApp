@@ -171,11 +171,11 @@ namespace ImageImprov {
                             //submissions.Add(blank);  // causing issues at this row. skip for now.
                         }
                         Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync  category: " + _ActiveCategory.description + " complete.");
-                        nextLookupId = catImages.photos[catImages.photos.Count - 1].pid;                            
                     }
                 } catch (Exception ex) {
                     Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync PhotosResponseJSON crash");
                     Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync input json:" + result);
+                    Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync ex:" + ex.ToString());
                     Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync PhotosResponseJSON crash Done.");
                 }
             }

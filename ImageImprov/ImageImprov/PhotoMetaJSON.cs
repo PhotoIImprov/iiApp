@@ -12,7 +12,7 @@ namespace ImageImprov {
     /// @see PhotoUpdateJSON for the meta data a user can share with us about a photo.
     /// </summary>
     [JsonObject]
-    public class PhotoMetaJSON {
+    public class PhotoMetaJSON : IComparable<PhotoMetaJSON> {
         [JsonProperty("likes")]
         public long likes { get; set; }
 
@@ -65,5 +65,11 @@ namespace ImageImprov {
         public bool active { get; set; }
         [JsonProperty("offensive")]
         public bool offensive { get; set; }
+
+        public int CompareTo(PhotoMetaJSON b) {
+            if (this.pid > b.pid) return 1;
+            else if (this.pid < b.pid) return -1;
+            else return 0;
+        }
     }
 }

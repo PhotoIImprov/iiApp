@@ -17,6 +17,7 @@ namespace ImageImprov {
         EventsResponseJSON eventHistory;
 
         Grid portraitView;
+        Grid historyView;
         ObservableCollection<CameraCategoryElement> events = new ObservableCollection<CameraCategoryElement>();
         DataTemplate myDataTemplate = new DataTemplate(typeof(CameraEventTitleViewCell));
         ListView myEvents;
@@ -55,18 +56,33 @@ namespace ImageImprov {
             buildUI();
         }
 
-        protected int buildUI() {
-            if (portraitView == null) {
-                portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+        protected int buildHistoryView() {
+            if (historyView == null) {
+                historyView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
                 for (int i = 0; i < 12; i++) {
-                    portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                    historyView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
             }
-            portraitView.Children.Clear();
-            portraitView.Children.Add(myEvents, 0, 0);
+            historyView.Children.Clear();
+            historyView.Children.Add(myEvents, 0, 0);
             Grid.SetRowSpan(myEvents, 12);
-            portraitView.Children.Add(noEvents, 0, 4);
+            historyView.Children.Add(noEvents, 0, 4);
             Grid.SetRowSpan(noEvents, 4);
+            Content = historyView;
+            return 1;
+        }
+
+        protected int buildUI() {
+            if (portraitView == null) {
+                portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+            buildHistoryView();
+            portraitView.Children.Add(historyView);
+            portraitView.Children.Add(eventView);
+            portraitView.Children.Add(eventCategoryImgsView);
+            switchToSelectView();
             Content = portraitView;
             return 1;
         }
@@ -116,20 +132,30 @@ namespace ImageImprov {
         public void OnRowTapped(Object sender, SelectedItemChangedEventArgs args) {
             if (args.SelectedItem is CameraEventTitleElement) {
                 eventView.SetUIData((CameraEventTitleElement)args.SelectedItem);
-                Content = eventView.Content;
+                //Content = eventView.Content;
+                switchToEventView();
             }
         }
         public void switchToSelectView() {
-            Content = portraitView;
+            //Content = portraitView;
+            historyView.IsVisible = true;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = false;
+        }
+
+        public void switchToEventView() {
+            //Content = eventView.Content;  // periodic crashes.
+            historyView.IsVisible = false;
+            eventView.IsVisible = true;
+            eventCategoryImgsView.IsVisible = false;
         }
 
         public void switchToCategoryImgView(CategoryJSON category) {
             eventCategoryImgsView.ActiveCategory = category;
-            Content = eventCategoryImgsView.Content;
-        }
-
-        public void switchToEventView() {
-            Content = eventView.Content;  // periodic crashes.
+            //Content = eventCategoryImgsView.Content;
+            historyView.IsVisible = false;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = true;
         }
 
     }

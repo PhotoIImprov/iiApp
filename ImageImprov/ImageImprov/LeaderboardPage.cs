@@ -442,6 +442,7 @@ namespace ImageImprov {
         // the zoom callback.
         public void returnToCaller() {
             Content = portraitView;
+            //((MasterPage)Application.Current.MainPage).thePages.Position = MainPageSwipeUI.LEADERS_PAGE;
         }
 
         /*private void printOrder() {

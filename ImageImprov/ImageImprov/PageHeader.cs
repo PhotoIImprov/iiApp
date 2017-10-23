@@ -22,6 +22,12 @@ namespace ImageImprov {
                 Margin = 4, 
                 IsVisible = false, // starts invis.
             };
+            settingsButton_active = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.settings.png", assembly)) {
+                HorizontalOptions = LayoutOptions.End,
+                Margin = 4,
+                IsVisible = false, // starts invis.
+            };
+
             TapGestureRecognizer tapped = new TapGestureRecognizer();
             tapped.Tapped += ((e,s) => {
                 MasterPage mp = ((MasterPage)Application.Current.MainPage);
@@ -30,12 +36,6 @@ namespace ImageImprov {
                 mp.thePages.profilePage.gotoSettingsPage();
             });
             settingsButton.GestureRecognizers.Add(tapped);
-
-            settingsButton_active = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.settings.png", assembly)) {
-                HorizontalOptions = LayoutOptions.End,
-                Margin = 4,
-                IsVisible = false, // starts invis.
-            };
 
             this.Content = buildTextLogo();
         }

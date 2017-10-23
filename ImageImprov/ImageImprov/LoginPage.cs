@@ -43,6 +43,7 @@ namespace ImageImprov {
 
         public static string REGISTRATION_FAILURE = "Registration failure";
         public static string BAD_PASSWORD_LOGIN_FAILURE = "Sorry, invalid username/password";
+        public static string BAD_CONNECTION = "Bad connection";
         public static string ANON_REGISTRATION_FAILURE = "Sorry, only one anonymous registration per device is supported.";
 
         //< loggedInLabel
@@ -557,7 +558,7 @@ namespace ImageImprov {
             Grid.SetColumnSpan(privacyPolicyLabel, 4);
             //layoutP.Children.Add(portraitView, new Rectangle(0, 0, 1, 1), AbsoluteLayoutFlags.All);
             //return layoutP;
-            loggedInLabel.Text = GlobalStatusSingleton.keyhash;
+            //loggedInLabel.Text = GlobalStatusSingleton.keyhash;
             return portraitView;
         }
 
@@ -902,9 +903,12 @@ namespace ImageImprov {
                 bool nologin = true;
                 while (nologin) {
                     loginResult = await requestTokenAsync();
-                    if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
+                    if ((loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
                         loggedInLabel.Text = loginResult + "(" + loginAttemptCounter + ")";
+                    } else if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_CONNECTION))) {
+                        loggedInLabel.Text = "Please check your internet connection and try again.";
                     } else {
+                        loggedInLabel.Text = "Login Failure";
                         nologin = false;
                     }
                 }
@@ -921,7 +925,8 @@ namespace ImageImprov {
                 loginAttemptCounter++;
                 string loginResult = await requestTokenAsync();
                 Debug.WriteLine("DHB:LoginPage:OnMyLogin requestToken result:" + loginResult);
-                if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))) {
+                if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE)) 
+                    || (loginResult.Equals(BAD_CONNECTION))) {
                     handleLoginFail(loginResult);
                 } else {
                     LoginSuccess();
@@ -1150,6 +1155,10 @@ namespace ImageImprov {
                     result = "Success";
                     Debug.WriteLine("DHB:LoginPage:requestTokenAsync good end.");
                     await requestBaseURLAsync();
+                } else if (tokenResult.StatusCode == System.Net.HttpStatusCode.BadGateway) {
+                    result = BAD_CONNECTION; 
+                } else {
+                    result = BAD_CONNECTION;
                 }
             } catch (System.Net.WebException err) {
                 // The server was down last time this happened.  Is that the case now, when you are rereading this?

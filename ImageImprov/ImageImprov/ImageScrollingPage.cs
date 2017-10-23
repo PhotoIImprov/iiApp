@@ -31,7 +31,7 @@ namespace ImageImprov {
         protected bool loadingMoreCategories = false;
         protected long nextLookupId;
 
-        public struct PhotoLoad {
+        public class PhotoLoad {
             public long pid;
             public SubmissionsImageRow drawRow;
             public int index;

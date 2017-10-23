@@ -102,17 +102,22 @@ namespace ImageImprov {
 
         public void OnImgTapped(object sender, EventArgs args) {
             if (((iiBitmapView)sender) != null) {
-                MasterPage mp = ((MasterPage)Application.Current.MainPage);
-                mp.zoomPage.ActiveMetaBallot = new BallotCandidateJSON(); // nada for now.
+                MasterPage m1 = ((MasterPage)Application.Current.MainPage);
+                MainPageSwipeUI mp = m1.thePages;
+                m1.zoomPage.ActiveMetaBallot = new BallotCandidateJSON(); // nada for now.
 
                 iiBitmapView taggedImg = new iiBitmapView {
                     Bitmap = ((iiBitmapView)sender).Bitmap.Copy()
                 };
-                mp.zoomPage.MainImage = taggedImg;
-                mp.zoomPage.buildZoomView();
-                mp.zoomPage.PreviousContent = mp.thePages.leaderboardPage;
+                m1.zoomPage.MainImage = taggedImg;
+                m1.zoomPage.buildZoomView();
+                //mp.zoomPage.PreviousContent = mp.thePages.leaderboardPage;
+                //m1.zoomPage.PreviousContent = mp.leaderboardPage;
                 Device.BeginInvokeOnMainThread(() => {
-                    mp.thePages.leaderboardPage.Content = mp.zoomPage.Content;
+                    //mp.thePages.leaderboardPage.Content = mp.zoomPage.Content;
+                    //mp.leaderboardPage.Content = m1.zoomPage.Content;
+                    //mp.leaderboardPage.Content = m1.zoomPage;
+                    m1.gotoZoomPage();
                 });
             }
         }

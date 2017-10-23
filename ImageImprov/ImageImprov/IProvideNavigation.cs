@@ -15,6 +15,8 @@ namespace ImageImprov {
         void gotoCameraPage();
         void gotoProfilePage();
 
+        //void gotoZoomPage();
+
         /* These are now part of IProvideProfileNavigation
         void gotoHomePage();  // this is now a pseudonumn for gotoProfilePage();
         void gotoHamburgerPage();  // this is a pseudonymn for gotoProfilePage();

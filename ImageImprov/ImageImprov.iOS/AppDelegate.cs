@@ -53,6 +53,8 @@ namespace ImageImprov.iOS
 
         public static NSData snappedImgData = null;
 
+        UIApplication uiApplication;
+
         //
         // This method is invoked when the application has loaded and is ready to run. In this 
         // method you should instantiate the window, load the UI into it and then make the window
@@ -63,6 +65,7 @@ namespace ImageImprov.iOS
         // @todo Check for camera availability and set in GlobalStatusSingleton
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
+            this.uiApplication = uiApplication;
             Forms.Init();
             CarouselViewRenderer.Init();
             //var cv = typeof(Xamarin.Forms.CarouselView);
@@ -98,50 +101,8 @@ namespace ImageImprov.iOS
             };
 
             //< FinishedPickingMedia
-            myCamera.FinishedPickingMedia += (sender, e) => {
-                /*
-                var filepath = Path.Combine(Environment.GetFolderPath(
-                                   Environment.SpecialFolder.MyDocuments), "tmp.png");
-                                   */
+            myCamera.FinishedPickingMedia += OnCameraFinished;
 
-                InvokeOnMainThread(() => {
-                    Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon");
-                    if (CameraServices_iOS.exitFromPhoto == true) {  // probably better to acheive this by subclassing the event. but i need something quick and dirty.
-                        string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
-                        var filepath = Path.Combine(Environment.GetFolderPath(
-                                           Environment.SpecialFolder.MyDocuments), nextFileName);
-
-                        SKBitmap bitmap = GlobalSingletonHelpers.SKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
-                        if (bitmap != null) {
-                            int degreesToRotate = CameraServices_iOS.calculateRotationDegrees();
-                            Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon time to rotate and crop; degrees:" + degreesToRotate);
-                            SKBitmap finalBmp = GlobalSingletonHelpers.rotateAndCrop(bitmap, degreesToRotate);
-                            //((MainPage)((Xamarin.Forms.Application.Current as App).MainPage)).img.Bitmap = finalBmp;
-                            NSData finalBytes = NSData.FromArray(finalBmp.Bytes);
-                            AppDelegate.snappedImgData = finalBytes;
-                            GlobalStatusSingleton.latestImg = finalBmp;
-                        } else {
-                            Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon bitmap was null");
-                        }
-
-                        if (snappedImgData != null) {
-                            snappedImgData.Save(filepath, false);
-                        }
-
-                        byte[] imgBytes = null;
-                        using (var streamReader = new System.IO.StreamReader(filepath)) {
-                            using (System.IO.MemoryStream memStream = new System.IO.MemoryStream()) {
-                                streamReader.BaseStream.CopyTo(memStream);
-                                imgBytes = memStream.ToArray();
-                            }
-                        }
-
-                    ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(filepath, imgBytes);
-                        GlobalStatusSingleton.imgsTakenTracker++;
-                    }
-                });
-                uiApplication.KeyWindow.RootViewController.DismissViewController(true, null);
-            };
             //> FinishedPickingMedia
 
             //< Canceled
@@ -150,6 +111,51 @@ namespace ImageImprov.iOS
             //> Canceled
 
             return base.FinishedLaunching(uiApplication, launchOptions);
+        }
+
+        public void OnCameraFinished(Object sender, EventArgs e) {
+            /*
+            var filepath = Path.Combine(Environment.GetFolderPath(
+                               Environment.SpecialFolder.MyDocuments), "tmp.png");
+                               */
+
+            InvokeOnMainThread(() => {
+                Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon");
+                if (CameraServices_iOS.exitFromPhoto == true) {  // probably better to acheive this by subclassing the event. but i need something quick and dirty.
+                    string nextFileName = GlobalStatusSingleton.IMAGE_NAME_PREFIX + GlobalStatusSingleton.imgsTakenTracker + ".jpg";
+                    var filepath = Path.Combine(Environment.GetFolderPath(
+                                       Environment.SpecialFolder.MyDocuments), nextFileName);
+
+                    SKBitmap bitmap = GlobalSingletonHelpers.SKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
+                    if (bitmap != null) {
+                        int degreesToRotate = CameraServices_iOS.calculateRotationDegrees();
+                        Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon time to rotate and crop; degrees:" + degreesToRotate);
+                        SKBitmap finalBmp = GlobalSingletonHelpers.rotateAndCrop(bitmap, degreesToRotate);
+                        //((MainPage)((Xamarin.Forms.Application.Current as App).MainPage)).img.Bitmap = finalBmp;
+                        NSData finalBytes = NSData.FromArray(finalBmp.Bytes);
+                        AppDelegate.snappedImgData = finalBytes;
+                        GlobalStatusSingleton.latestImg = finalBmp;
+                    } else {
+                        Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon bitmap was null");
+                    }
+
+                    if (snappedImgData != null) {
+                        snappedImgData.Save(filepath, false);
+                    }
+
+                    byte[] imgBytes = null;
+                    using (var streamReader = new System.IO.StreamReader(filepath)) {
+                        using (System.IO.MemoryStream memStream = new System.IO.MemoryStream()) {
+                            streamReader.BaseStream.CopyTo(memStream);
+                            imgBytes = memStream.ToArray();
+                        }
+                    }
+
+                ((ICamera)(((IExposeCamera)(Xamarin.Forms.Application.Current as App).MainPage).getCamera())).ShowImage(filepath, imgBytes);
+                    GlobalStatusSingleton.imgsTakenTracker++;
+                }
+            });
+            uiApplication.KeyWindow.RootViewController.DismissViewController(true, null);
         }
 
         // Called by ThirdParty Authentication login.

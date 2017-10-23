@@ -25,12 +25,12 @@ namespace ImageImprov {
         iiBitmapView myBadgesOff;
         iiBitmapView myBadgesOn;
 
-        public static readonly BindableProperty HighlightedButton
-            = BindableProperty.Create("HighlightedButtonIndex", typeof(int), typeof(ProfileNavRow), 0, BindingMode.Default, null, OnHighlightedButtonChanged);
-        public int HighlightedButtonIndex {
-            get { return (int)GetValue(HighlightedButton); }
+        public static readonly BindableProperty NavHighlight
+            = BindableProperty.Create("NavHighlightIndex", typeof(int), typeof(ProfileNavRow), 0, BindingMode.Default, null, OnNavHighlightedButtonChanged);
+        public int NavHighlightIndex {
+            get { return (int)GetValue(NavHighlight); }
             set {
-                SetValue(HighlightedButton, value);
+                SetValue(NavHighlight, value);
             }
         }
         
@@ -96,6 +96,7 @@ namespace ImageImprov {
             horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
             horizLine2 = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
             buildUI();
+            NavHighlightIndex = 0;
         }
 
         public int buildUI() {
@@ -127,10 +128,10 @@ namespace ImageImprov {
             return 1;
         }
         
-        private static void OnHighlightedButtonChanged(BindableObject bindable, object oldValue, object newValue) {
+        private static void OnNavHighlightedButtonChanged(BindableObject bindable, object oldValue, object newValue) {
             var myObj = bindable as ProfileNavRow;
             Device.BeginInvokeOnMainThread(() => {
-                if (myObj.HighlightedButtonIndex == 0) {
+                if (myObj.NavHighlightIndex == 0) {
                     myObj.mySubmissionsOff.IsVisible = false;
                     myObj.mySubmissionsOn.IsVisible = true;
                     myObj.myLikesOff.IsVisible = true;
@@ -139,7 +140,7 @@ namespace ImageImprov {
                     myObj.myEventsOn.IsVisible = false;
                     myObj.myBadgesOff.IsVisible = true;
                     myObj.myBadgesOn.IsVisible = false;
-                } else if (myObj.HighlightedButtonIndex == 1) {
+                } else if (myObj.NavHighlightIndex == 1) {
                     myObj.mySubmissionsOff.IsVisible = true;
                     myObj.mySubmissionsOn.IsVisible = false;
                     myObj.myLikesOff.IsVisible = false;
@@ -148,7 +149,7 @@ namespace ImageImprov {
                     myObj.myEventsOn.IsVisible = false;
                     myObj.myBadgesOff.IsVisible = true;
                     myObj.myBadgesOn.IsVisible = false;
-                } else if (myObj.HighlightedButtonIndex == 2) {
+                } else if (myObj.NavHighlightIndex == 2) {
                     myObj.mySubmissionsOff.IsVisible = true;
                     myObj.mySubmissionsOn.IsVisible = false;
                     myObj.myLikesOff.IsVisible = true;
@@ -157,7 +158,7 @@ namespace ImageImprov {
                     myObj.myEventsOn.IsVisible = true;
                     myObj.myBadgesOff.IsVisible = true;
                     myObj.myBadgesOn.IsVisible = false;
-                } else if (myObj.HighlightedButtonIndex == 3) {
+                } else if (myObj.NavHighlightIndex == 3) {
                     myObj.mySubmissionsOff.IsVisible = true;
                     myObj.mySubmissionsOn.IsVisible = false;
                     myObj.myLikesOff.IsVisible = true;
@@ -166,7 +167,7 @@ namespace ImageImprov {
                     myObj.myEventsOn.IsVisible = false;
                     myObj.myBadgesOff.IsVisible = false;
                     myObj.myBadgesOn.IsVisible = true;
-                } else if (myObj.HighlightedButtonIndex == SETTINGS_INDEX) {
+                } else if (myObj.NavHighlightIndex == SETTINGS_INDEX) {
                     myObj.mySubmissionsOff.IsVisible = true;
                     myObj.mySubmissionsOn.IsVisible = false;
                     myObj.myLikesOff.IsVisible = true;
@@ -187,20 +188,20 @@ namespace ImageImprov {
             // From there I vote... (?)
             if (sender == mySubmissionsOff) {
                 //((IProvideProfileNavigation)Xamarin.Forms.Application.Current.MainPage).gotoSubmissionsPage();
-                HighlightedButtonIndex = 0;
+                NavHighlightIndex = 0;
                 parent.gotoSubmissionsPage();
             } else if (sender == myLikesOff) {
                 //((IProvideProfileNavigation)Xamarin.Forms.Application.Current.MainPage).gotoLikesPage();
                 // want to go instantly to this...
                 //((MainPageSwipeUI)Xamarin.Forms.Application.Current.MainPage).getCamera().takePictureP.Clicked;
-                HighlightedButtonIndex = 1;
+                NavHighlightIndex = 1;
                 parent.gotoLikesPage();
             } else if (sender == myEventsOff) {
-                HighlightedButtonIndex = 2;
+                NavHighlightIndex = 2;
                 parent.gotoEventsHistoryPage();
             } else if (sender == myBadgesOff) {
                 //((IProvideProfileNavigation)Xamarin.Forms.Application.Current.MainPage).gotoBadgesPage();
-                HighlightedButtonIndex = 3;
+                NavHighlightIndex = 3;
                 parent.gotoBadgesPage();
             } else if (sender == hideButton) {
                 //((IProvideProfileNavigation)Xamarin.Forms.Application.Current.MainPage).flipShowProfile();

@@ -15,13 +15,14 @@ namespace ImageImprov {
             //DataTemplate dt = new DataTemplate();
             DataTemplate result = null;
             View civ = (View)item;
-            Debug.WriteLine("CarouselTemplateSelector:OnSelectTemplate switch to: " + item.ToString());
+            Debug.WriteLine("DHB:CarouselTemplateSelector:OnSelectTemplate switch to: " + item.ToString());
             if (activeTemplates.ContainsKey(civ)) {
                 result = activeTemplates[civ];
             } else {
                 activeTemplates[civ] = new DataTemplate(() => { return civ; });
                 result = activeTemplates[civ];
             }
+            Debug.WriteLine("DHB:CarouselTemplateSelector:OnSelectTemplate count:" + activeTemplates.Count);
             return result;
         }
     }

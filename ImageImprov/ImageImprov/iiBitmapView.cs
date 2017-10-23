@@ -12,7 +12,9 @@ namespace ImageImprov {
         /// </summary>
         public static SKBitmap BLANK_BITMAP = null; //loadBitmap("ListViewLearning.Images.ImageImprov_2.jpg");
         //public static SKBitmap BLANK_BITMAP = GlobalSingletonHelpers.loadSKBitmapFromResourceName(LOADING_IMG_NAME, DONT have a static way to access assembly);
-        public static PhotoMetaJSON DEFAULT_PHOTO_META = null; // have nada as the default.
+
+        //public static PhotoMetaJSON DEFAULT_PHOTO_META = null; // have nada as the default.
+        public static PhotoMetaJSON DEFAULT_PHOTO_META = new PhotoMetaJSON(); // have nada as the default.
 
 
         public SKBitmap Bitmap {

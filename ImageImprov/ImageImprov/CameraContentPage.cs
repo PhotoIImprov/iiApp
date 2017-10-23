@@ -28,6 +28,7 @@ namespace ImageImprov {
         /// </summary>
         public static double bestFontSize = 24.0;
 
+        Grid portraitView;
         CameraCategorySelectionView selectionView;
         CameraCreateCategoryView createView;
         CameraEnterPhotoView submitView;
@@ -88,6 +89,18 @@ namespace ImageImprov {
         }
 
         protected int buildPortraitView() {
+            if (portraitView == null) {
+                portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+            portraitView.Children.Add(selectionView, 0, 0);
+            portraitView.Children.Add(submitView, 0, 0);
+            portraitView.Children.Add(createView, 0, 0);
+            portraitView.Children.Add(eventView, 0, 0);
+            portraitView.Children.Add(eventCategoryImgsView, 0, 0);
+            Content = portraitView;
+
             switchToSelectView();
             return 1;
         }
@@ -152,27 +165,52 @@ namespace ImageImprov {
         //> ShowImage
         
         public void switchToSelectView() {
-            Content = selectionView.Content;
+            //Content = selectionView.Content;
+            selectionView.IsVisible = true;
+            submitView.IsVisible = false;
+            createView.IsVisible = false;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = false;
         }
         public void switchToSubmitView() {
             if (activeCameraCategory != null) {
                 submitView.setChallengeName(activeCameraCategory.description);
             }
-            Content = submitView.Content;
+            //Content = submitView.Content;
+            selectionView.IsVisible = false;
+            submitView.IsVisible = true;
+            createView.IsVisible = false;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = false;
         }
 
         public void switchToCreateCategoryView() {
-            Content = createView.Content;
+            //Content = createView.Content;
+            selectionView.IsVisible = false;
+            submitView.IsVisible = false;
+            createView.IsVisible = true;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = false;
         }
 
         public void switchToEventView() {
-            Content = eventView.Content;  // periodic crashes.
+            //Content = eventView.Content;  // periodic crashes.
             //Content = eventView; //.Content; also crashes.
+            selectionView.IsVisible = false;
+            submitView.IsVisible = false;
+            createView.IsVisible = false;
+            eventView.IsVisible = true;
+            eventCategoryImgsView.IsVisible = false;
         }
 
         public void switchToCategoryImgView(CategoryJSON category) {
             eventCategoryImgsView.ActiveCategory = category;
-            Content = eventCategoryImgsView.Content;
+            //Content = eventCategoryImgsView.Content;
+            selectionView.IsVisible = false;
+            submitView.IsVisible = false;
+            createView.IsVisible = false;
+            eventView.IsVisible = false;
+            eventCategoryImgsView.IsVisible = true;
         }
 
         public void AddEvent(EventJSON cerj) {
@@ -186,6 +224,7 @@ namespace ImageImprov {
         }
         public void returnToCaller() {
             Content = eventCategoryImgsView.Content;
+            //((MasterPage)Application.Current.MainPage).thePages.Position = MainPageSwipeUI.CAMERA_PAGE;
         }
 
     }

@@ -148,6 +148,47 @@ namespace ImageImprov {
             backCaret.GestureRecognizers.Add(back);
         }
 
+        /*        public int buildZoomView() {
+                    saveDataOnExit = false;  // reset.
+                    int result = 1;
+                    if (zoomView == null) {
+                        zoomView = new Grid { ColumnSpacing = 1, RowSpacing = 1, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                        for (int i = 0; i < 16; i++) {
+                            zoomView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                        }
+                        zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        buildMetaButtons();
+                    } else {
+                        unlikedImg.IsVisible = !ActiveMetaBallot.isLiked;
+                        likedImg.IsVisible = ActiveMetaBallot.isLiked;
+                        unflaggedImg.IsVisible = !ActiveMetaBallot.isFlagged;
+                        flaggedImg.IsVisible = ActiveMetaBallot.isFlagged;
+                        tagEntry.Text = ActiveMetaBallot.tags;
+                    }
+                    MainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
+                    //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
+
+                    zoomView.Children.Clear();
+                    zoomView.Children.Add(backCaret, 0, 0);
+                    zoomView.Children.Add(MainImage, 0, 1);
+                    Grid.SetRowSpan(MainImage, 12);
+                    Grid.SetColumnSpan(MainImage, 2);
+                    zoomView.Children.Add(unlikedImg, 0, 13);
+                    zoomView.Children.Add(likedImg, 0, 13);
+                    zoomView.Children.Add(unflaggedImg, 1, 13);
+                    zoomView.Children.Add(flaggedImg, 1, 13);
+                    zoomView.Children.Add(tagEntry, 0, 14);
+                    Grid.SetColumnSpan(tagEntry, 2);
+                    //zoomView.Children.Add(backButton, 0, 15);
+
+                    //Grid.SetColumnSpan(backButton, 2);
+                    //Grid.SetRowSpan(backButton, 2);
+
+                    Content = zoomView;
+                    return result;
+                    //return Content;
+                }   */
         public int buildZoomView() {
             saveDataOnExit = false;  // reset.
             int result = 1;
@@ -158,7 +199,10 @@ namespace ImageImprov {
                 }
                 zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 zoomView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                buildMetaButtons();
+                //buildMetaButtons(); already called in ctor.
+
+                MainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
+
             } else {
                 unlikedImg.IsVisible = !ActiveMetaBallot.isLiked;
                 likedImg.IsVisible = ActiveMetaBallot.isLiked;
@@ -166,9 +210,6 @@ namespace ImageImprov {
                 flaggedImg.IsVisible = ActiveMetaBallot.isFlagged;
                 tagEntry.Text = ActiveMetaBallot.tags;
             }
-            MainImage.HorizontalOptions = LayoutOptions.FillAndExpand;
-            //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
-
             zoomView.Children.Clear();
             zoomView.Children.Add(backCaret, 0, 0);
             zoomView.Children.Add(MainImage, 0, 1);
@@ -180,10 +221,6 @@ namespace ImageImprov {
             zoomView.Children.Add(flaggedImg, 1, 13);
             zoomView.Children.Add(tagEntry, 0, 14);
             Grid.SetColumnSpan(tagEntry, 2);
-            //zoomView.Children.Add(backButton, 0, 15);
-
-            //Grid.SetColumnSpan(backButton, 2);
-            //Grid.SetRowSpan(backButton, 2);
 
             Content = zoomView;
             return result;
@@ -281,7 +318,9 @@ namespace ImageImprov {
                 Debug.WriteLine("DHB:ZoomPage:buildMetaButtons:backButtonClickedAnon this should print first");
             }
             Device.BeginInvokeOnMainThread(() => {
-                PreviousContent.returnToCaller();
+                //PreviousContent.returnToCaller();
+                MasterPage mp = ((MasterPage)Application.Current.MainPage);
+                mp.returnFromZoom();
             });
         }
     }

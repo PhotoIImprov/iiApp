@@ -62,6 +62,7 @@ namespace ImageImprov
             // This will be a problem that I have to refactor out when we get to PlayerProfile Page.
             // Right now, this is the only page that has a zoom in the center console, so skirting by.
             Content = CenterConsole.MySubmissionsPage;
+            //((MasterPage)Application.Current.MainPage).thePages.Position = MainPageSwipeUI.PROFILE_PAGE;
         }
     }  // class
 

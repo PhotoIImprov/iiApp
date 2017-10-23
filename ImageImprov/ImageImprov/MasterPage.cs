@@ -26,6 +26,7 @@ namespace ImageImprov {
             BackgroundColor = GlobalStatusSingleton.backgroundColor;
 
             thePages = new MainPageSwipeUI(loginPage);
+            zoomPage = new ZoomPage { IsVisible = false, };
             defaultNavigation = new KeyPageNavigator { HighlightedButtonIndex = 0, };
 
             buildUI();  // so it is reader to go!
@@ -37,11 +38,8 @@ namespace ImageImprov {
             Binding headerBinding = new Binding { Source = thePages, Path = "Position" };
             header.SetBinding(PageHeader.HighlightedButton, headerBinding);
 
-            Binding settingsOnOffBinding = new Binding { Source = thePages.profilePage.navRow, Path = "HighlightedButtonIndex" };
+            Binding settingsOnOffBinding = new Binding { Source = thePages.profilePage.navRow, Path = "NavHighlightIndex" };
             header.SetBinding(PageHeader.ProfileNav, settingsOnOffBinding);
-
-            zoomPage = new ZoomPage();
-
 
             Content = loginPage;
             Debug.WriteLine("DHB:MasterPage ctor complete");
@@ -55,6 +53,7 @@ namespace ImageImprov {
 
             portraitView.Children.Add(header, 0, 0);
             portraitView.Children.Add(thePages, 0, 1);
+            portraitView.Children.Add(zoomPage, 0, 1);
             portraitView.Children.Add(defaultNavigation, 0, 2);
 
             //Content = portraitView;
@@ -101,25 +100,47 @@ namespace ImageImprov {
             thePages.FireLoadChallengeName();
         }
 
+        private void zoomVis() {
+            zoomPage.IsVisible = true;
+            thePages.IsVisible = false;
+        }
+        private void pagesVis() {
+            zoomPage.IsVisible = false;
+            thePages.IsVisible = true;
+        }
+        public void returnFromZoom() {
+            pagesVis();
+        }
         /// IProvideNavigation
         public void gotoJudgingPage() {
+            pagesVis();
             thePages.gotoJudgingPage();
         }
         public void gotoJudgingPageHome() {
+            pagesVis();
             thePages.gotoJudgingPageHome();
         }
         public void gotoLeaderboardPage() {
+            pagesVis();
             thePages.gotoLeaderboardPage();
         }
         public void gotoCameraPage() {
+            pagesVis();
             thePages.gotoCameraPage();
         }
         public void gotoCreateCategoryPage() {
+            pagesVis();
             thePages.cameraPage.switchToCreateCategoryView();
         }
         public void gotoProfilePage() {
+            pagesVis();
             thePages.gotoProfilePage();
         }
+
+        public void gotoZoomPage() {
+            zoomVis();
+        }
+        
         /*
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {

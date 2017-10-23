@@ -209,6 +209,7 @@ namespace ImageImprov {
                     VerticalOptions = LayoutOptions.FillAndExpand,
                     MinimumWidthRequest = 60,
                     Margin = 2,
+                    IsVisible = false,  // starts invis and then made vis/invis based on user action.
                 };
                 //img.GestureRecognizers.Add(tap);
                 rankImages.Add(img);
@@ -250,6 +251,7 @@ namespace ImageImprov {
             GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, view.Width, view.Height/heightAdjustment);
         }
 
+        static bool firstRebuild = true;
         /// <summary>
         /// This is called whenever my underlying data for my layout has changed (e.g. for a vote)
         /// This is the only function that updates this.
@@ -263,7 +265,14 @@ namespace ImageImprov {
             //  buildPortraitView();
             //  buildLandscapeView();
             //}
-            buildUI();
+
+            if (firstRebuild) {
+                firstRebuild = false;
+                buildUI();
+            } else {
+                resetBallotImgs();
+            }
+            //Debug.WriteLine("DHB:JudgingContentPage:AdjustContentToRotation - still being called - yes.");  // called from processBallotString. refactor.
             // how does this work with background?
             // what purpose does this fcn serve?
             /*
@@ -278,6 +287,18 @@ namespace ImageImprov {
 
         private void ClearContent() {
             Debug.WriteLine("DHB:JudgingContentPage:ClearContent() start");
+            // force remove from portraitView just in case...
+            if ((portraitView != null) && (ballotImgsP != null)) {
+                foreach (iiBitmapView bmp in ballotImgsP) {
+                    try {
+                        portraitView.Children.Remove(bmp);
+                    } catch (Exception e) {
+                        // this is the fucking null reference still...
+                        Debug.WriteLine("DHB:JudgingContentPage:ClearContent FUCK ");
+                        Debug.WriteLine("DHB:JudgingContentPage:ClearContent    AND YOU");
+                    }
+                }
+            }
             if (ballot != null) {
                 ballot.Clear();
             }
@@ -324,7 +345,7 @@ namespace ImageImprov {
             highlightCorrectImg(ballotImgsP, index);
         }
 
-        public int buildUI() {
+        protected int buildUI() {
             int res = 0;
             Device.BeginInvokeOnMainThread(() => {
                 if (Device.Idiom == TargetIdiom.Phone) {
@@ -475,6 +496,12 @@ namespace ImageImprov {
                 Grid.SetRowSpan(ballotImgsP[3], 7);
                 Grid.SetColumnSpan(ballotImgsP[3], 3);
 
+                // rankImages should all be invis.
+                portraitView.Children.Add(rankImages[0]);
+                portraitView.Children.Add(rankImages[1]);
+                portraitView.Children.Add(rankImages[2]);
+                portraitView.Children.Add(rankImages[3]);
+
                 portraitView.Children.Add(voteBoxes[0], 2, 6);
                 portraitView.Children.Add(voteBoxes[1], 5, 6);
                 portraitView.Children.Add(voteBoxes[2], 2, 13);
@@ -549,11 +576,18 @@ namespace ImageImprov {
             Grid.SetRowSpan(ballotImgsP[3], 6);
             Grid.SetColumnSpan(ballotImgsP[3], 3);
 
+            // rankImages should all be invis.
+            portraitView.Children.Add(rankImages[0]);
+            portraitView.Children.Add(rankImages[1]);
+            portraitView.Children.Add(rankImages[2]);
+            portraitView.Children.Add(rankImages[3]);
+
             portraitView.Children.Add(voteBoxes[0], 2, 6);
             portraitView.Children.Add(voteBoxes[1], 5, 6);
             portraitView.Children.Add(voteBoxes[2], 2, 12);
             portraitView.Children.Add(voteBoxes[3], 5, 12);
             for (int i=0;i<4;i++) {
+                Grid.SetRowSpan(rankImages[i], 2);
                 Grid.SetRowSpan(voteBoxes[i], 2);
             }
 
@@ -580,8 +614,37 @@ namespace ImageImprov {
             portraitView.Children.Add(lightbulbRow, 0, 15);
             Grid.SetColumnSpan(lightbulbRow, 6);  // this this line has to be after adding.
             Grid.SetRowSpan(lightbulbRow, 2);
-
+            debugging_printGridElements();
             return 1;
+        }
+
+        /// <summary>
+        /// Changes the ballot images stored in the grid.
+        /// This function is written for two reasons:
+        /// 1. Cleaner.
+        /// 2. Trying to dodge the weird null reference blowup.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void resetBallotImgs() {
+            debugging_printGridElements();
+            int[] X = { 0, 3, 0, 3 };
+            int[] Y = { 2, 2, 8, 8 };
+            for (int i = 0; i < 4; i++) {
+                // the original ballotImgsP reference is gone...
+                //   maybe that is what is screwing things up and it's just a timing change has 
+                //   brought it forward???
+                //portraitView.Children[i] = ballotImgsP[i];
+                portraitView.Children.Add(ballotImgsP[i]);
+                Grid.SetColumn(ballotImgsP[i], X[i]);
+                Grid.SetRow(ballotImgsP[i], Y[i]);
+                Grid.SetRowSpan(ballotImgsP[i], 6);
+                Grid.SetColumnSpan(ballotImgsP[i], 3);
+                rankImages[i].IsVisible = false;
+                portraitView.RaiseChild(voteBoxes[i]);
+            }
+            debugging_printGridElements();
+            bool block = false;
         }
 
         // image clicks
@@ -614,7 +677,10 @@ namespace ImageImprov {
             Debug.WriteLine("DHB:JudgingContentPage:OnClicked end");
         }
 
-        public async void OnDoubleClick(object sender, EventArgs e) {
+        // if I eleminate my last reference to content, it enters a framework bug with reference counting issues.
+        // to stop that from happening, I create a reference so it doesn't get garbage collected.
+        View holdRef;  
+        public async void OnZoomClick(object sender, EventArgs e) {
             // want to switch to a UI where just the sending image is present.
             // with a like button
             //    a flag button
@@ -643,13 +709,32 @@ namespace ImageImprov {
                 mp.zoomPage.MainImage = taggedImg;
                 mp.zoomPage.ActiveMetaBallot = votedOnCandidate;
                 mp.zoomPage.buildZoomView();
-                mp.zoomPage.PreviousContent = this;
+                
+                //mp.zoomPage.PreviousContent = this;
+
                 //Content.IsVisible = false;
                 //Content = null;  // if uncommented, this would be the crash point.
-                Content = mp.zoomPage.Content; // breakage.
+                // what are the contents I have on this page?  Is it a specific one that is dieing on release?
+                /*
+                Debug.WriteLine("DHB:Judging:OnDoubleClick active content: " + Content.ToString());
+                if (Content is Grid) {
+                    Grid g = (Grid)Content;
+                    while (g.Children.Count > 0) {
+                        foreach (View v in g.Children) {
+                            Debug.WriteLine("DHB:Judging:OnDoubleClick active content: " + v.ToString());
+                        }
+                        Debug.WriteLine("DHB:Judging:OnDoubleClick removing: " + g.Children[g.Children.Count-3].ToString());
+                        g.Children.RemoveAt(g.Children.Count - 3);
+                        Debug.WriteLine("DHB:Judging:OnDoubleClick removed");
+                    }
+                }
+                */
+                //Content = mp.zoomPage.Content; // breakage.
+                mp.gotoZoomPage();
+                //thePages.gotoZoomPage();
                 Debug.WriteLine("DHB:JudgingContentPage:OnDoubleClick Content==zoomView");
             });
-            /*
+            /* Fuck. I don't rememeber what this is commented for.
             MasterPage mp = ((MasterPage)Application.Current.MainPage);
             mp.zoomPage.MainImage = taggedImg;
             mp.zoomPage.ActiveMetaBallot = votedOnCandidate;
@@ -1124,10 +1209,10 @@ namespace ImageImprov {
             // order of addition is immaterial. iOS grabs.
 
             // no longer a double tap
-            TapGestureRecognizer doubleTap = new TapGestureRecognizer();
+            TapGestureRecognizer zoomTap = new TapGestureRecognizer();
             //doubleTap.NumberOfTapsRequired = 2;
-            doubleTap.Tapped += OnDoubleClick;
-            image.GestureRecognizers.Add(doubleTap);
+            zoomTap.Tapped += OnZoomClick;
+            image.GestureRecognizers.Add(zoomTap);
 
             // orientation info is based on the relative w/h of the image.
             // square images are all considered "landscape"
@@ -1301,12 +1386,26 @@ namespace ImageImprov {
             */
             int col =0;
             int row =0;
+
+            /* Now added in buildUI. just adjust visibility now.
             determineColAndRowFromIndex(penultimateSelectedIndex, ref col, ref row);
             portraitView.Children.Add(rankImages[rankImages.Count - 2], col, row);
             Grid.SetRowSpan(rankImages[rankImages.Count - 2], 2);
             determineColAndRowFromIndex(ultimateSelectedIndex, ref col, ref row);
             portraitView.Children.Add(rankImages[rankImages.Count - 1], col, row);
             Grid.SetRowSpan(rankImages[rankImages.Count - 1], 2);
+            */
+            determineColAndRowFromIndex(penultimateSelectedIndex, ref col, ref row);
+            rankImages[rankImages.Count - 2].IsVisible = true;
+            Grid.SetColumn(rankImages[rankImages.Count - 2], col);
+            Grid.SetRow(rankImages[rankImages.Count - 2], row);
+            portraitView.RaiseChild(rankImages[rankImages.Count - 2]);
+
+            determineColAndRowFromIndex(ultimateSelectedIndex, ref col, ref row);
+            rankImages[rankImages.Count - 1].IsVisible = true;
+            Grid.SetColumn(rankImages[rankImages.Count - 1], col);
+            Grid.SetRow(rankImages[rankImages.Count - 1], row);
+            portraitView.RaiseChild(rankImages[rankImages.Count - 1]);
 
             foreach (iiBitmapView img in ballotImgsP) {
                 img.IsEnabled = false;
@@ -1465,7 +1564,9 @@ namespace ImageImprov {
             {
                 // clear off all the old rank images
                 for (int rankImgI = 0; rankImgI < rankImages.Count; rankImgI++) {
-                    portraitView.Children.Remove(rankImages[rankImgI]);
+                    //portraitView.Children.Remove(rankImages[rankImgI]);
+                    // now flipping vis.
+                    rankImages[rankImgI].IsVisible = false;
                 }
 
                 int ballotIndex = 0;
@@ -1477,8 +1578,11 @@ namespace ImageImprov {
                 foreach (BallotCandidateJSON candidate in ballot.ballots) {
                     if (votedOn(candidate.bidId, ref voteNum)) {
                         determineColAndRowFromIndex(ballotIndex, ref col, ref row);
-                        portraitView.Children.Add(rankImages[voteNum], col, row);
-                        Grid.SetRowSpan(rankImages[voteNum],2);
+                        //portraitView.Children.Add(rankImages[voteNum], col, row);
+                        //Grid.SetRowSpan(rankImages[voteNum],2);
+                        rankImages[voteNum].IsVisible = true;
+                        Grid.SetColumn(rankImages[voteNum], col);
+                        Grid.SetRow(rankImages[voteNum], row);
                     } else {
                         // I should already have the image loaded, right?
                         //SKImage img = SKImage.FromBitmap(GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(candidate.imgStr, (ExifOrientation)candidate.orientation));
@@ -1653,6 +1757,9 @@ namespace ImageImprov {
                     // Failed test: checking the contains for the element to remove.
                     // longer term: start tracking the selection id incase there's a pattern
                     // removing and adding the voteBox is for apple as the topmost widget always consumes a tap, even if they do nothing with it.
+                    // So the problem is a framework one that is persistent, but that I'm unable to track down.
+                    // consequently... going the vis/invis route.
+                    /*
                     try {  // something in here is blowing up. but not persistently. let's try and catch it to see what's happening.
                         if (portraitView.Children.Contains(voteBoxes[selectionId])) {
                             Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot - contains passed");
@@ -1668,12 +1775,22 @@ namespace ImageImprov {
                         // Definitely happens in the caught line.
                         // Dont know if it happens in iOS
                         // All elements appear to not be null
-                    }
+                    }*/
+
                     determineColAndRowFromIndex(selectionId, ref col, ref row);
+                    /*
                     portraitView.Children.Add(rankImages[vote.vote - 1], col, row);
                     Grid.SetRowSpan(rankImages[vote.vote - 1], 2);
-                    portraitView.Children.Add(voteBoxes[selectionId], col, row);
+                    portraitView.Children.Add(voteBoxes[selectionId], col, row);  // not sure why this votebox is changing...
                     Grid.SetRowSpan(voteBoxes[selectionId], 2);
+                    */
+                    rankImages[vote.vote - 1].IsVisible = true;
+                    Grid.SetColumn(rankImages[vote.vote - 1], col);
+                    Grid.SetRow(rankImages[vote.vote - 1], row);
+                    debugging_printGridElements();
+                    portraitView.RaiseChild(rankImages[vote.vote - 1]);
+                    portraitView.RaiseChild(voteBoxes[selectionId]);  // no longer have to remove and add. just make sure it's on top.
+                    //Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot rankImage[" +vote.vote-1+ "] is grid element:")
                 }
             }
         }
@@ -1847,6 +1964,17 @@ namespace ImageImprov {
         // the zoom callback.
         public void returnToCaller() {
             Content = portraitView;
+            //((MasterPage)Application.Current.MainPage).thePages.Position = MainPageSwipeUI.JUDGING_PAGE;
+        }
+
+        public void debugging_printGridElements() {
+            if (portraitView != null) {
+                Debug.WriteLine("DHB:Debug:GridElements BEGIN");
+                foreach (View v in portraitView.Children) {
+                    Debug.WriteLine("DHB:Debug:GridElements: " + v.ToString());
+                }
+                Debug.WriteLine("DHB:Debug:GridElements DONE");
+            }
         }
     } // class
 } // namespace

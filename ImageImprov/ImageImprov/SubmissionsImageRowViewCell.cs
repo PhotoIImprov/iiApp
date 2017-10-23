@@ -55,16 +55,17 @@ namespace ImageImprov {
             iiBitmapView activeImg = (iiBitmapView)sender;
             Debug.WriteLine("DHB:SubmissionsImageRowViewCell:OnImgTapped: " + Height + " min height:"+View.MinimumHeightRequest);
             if ((activeImg != null) && (activeImg.Bitmap != null)) {
-                MasterPage mp = ((MasterPage)Application.Current.MainPage);
+                MasterPage m1 = ((MasterPage)Application.Current.MainPage);
+                MainPageSwipeUI mp = m1.thePages;
                 //mp.zoomPage.ActiveMetaBallot = new BallotCandidateJSON(); // nada for now.
 
                 iiBitmapView taggedImg = new iiBitmapView {
                     Bitmap = activeImg.Bitmap.Copy(),
                     HorizontalOptions = LayoutOptions.FillAndExpand,
                 };
-                mp.zoomPage.MainImage = taggedImg;
+                m1.zoomPage.MainImage = taggedImg;
                 //mp.zoomPage.buildZoomView();
-                mp.zoomPage.buildZoomFromUserPhotoMeta(activeImg.PhotoMeta);
+                m1.zoomPage.buildZoomFromUserPhotoMeta(activeImg.PhotoMeta);
                 // ahh.... there's 2 pieces of info needed now.  The parent page and subpage.
                 // eg profile/subs; profile/likes; eventPage/categories
                 /*
@@ -76,18 +77,21 @@ namespace ImageImprov {
                 });
                 */
                 ContentView active = null;
-                if (mp.thePages.Position == MainPageSwipeUI.CAMERA_PAGE) {
-                    mp.zoomPage.PreviousContent = mp.thePages.cameraPage;
+                if (mp.Position == MainPageSwipeUI.CAMERA_PAGE) {
+                    //mp.zoomPage.PreviousContent = mp.thePages.cameraPage;
+                    //m1.zoomPage.PreviousContent = mp.cameraPage;
                     //mp.thePages.cameraPage.PreviousView = mp.thePages.cameraPage.Content;
-                    active = mp.thePages.cameraPage;
-                } else if (mp.thePages.Position == MainPageSwipeUI.PROFILE_PAGE) {
-                    active = mp.thePages.profilePage;
-                    mp.zoomPage.PreviousContent = mp.thePages.profilePage;
+//                    active = mp.thePages.cameraPage;
+                    active = mp.cameraPage;
+                } else if (mp.Position == MainPageSwipeUI.PROFILE_PAGE) {
+                    active = mp.profilePage;
+                    //m1.zoomPage.PreviousContent = mp.profilePage;
                     //mp.zoomPage.PreviousView = mp.thePages.profilePage.Content;
-                    mp.thePages.profilePage.PreviousView = active.Content;
+                    mp.profilePage.PreviousView = active.Content;
                 }
                 Device.BeginInvokeOnMainThread(() => {
-                    active.Content = mp.zoomPage.Content;
+                    //active.Content = m1.zoomPage.Content;
+                    m1.gotoZoomPage();
                 });
             }
             Debug.WriteLine("DHB:SubmissionsImageRowViewCell:OnImgTapped: " + Height);

@@ -17,7 +17,8 @@ namespace ImageImprov {
         Grid portraitView;
         public UpperProfileSection coreProfile;
         public ProfileNavRow navRow;  // so master page can access and bind for settings on/off.
-        ContentView mainBody;
+        //ContentView mainBody;
+        //View mainBody;
         int numGridRows = 16;
 
         SettingsPage settingsPage = null;
@@ -60,18 +61,69 @@ namespace ImageImprov {
         public ProfilePage() {
             coreProfile = new UpperProfileSection();
             navRow = new ProfileNavRow(this);
-            settingsPage = new SettingsPage();
-            instructionsPage = new InstructionsPage();
+            settingsPage = new SettingsPage() { IsVisible = false, };
+            instructionsPage = new InstructionsPage() { IsVisible = false, };
             mySubmissionsPage = new MySubmissionsPage();
-            likesPage = new LikesPage();
-            eventsPage = new EventsHistory_Profile();
-            badgesPage = new BadgesPage();
+            likesPage = new LikesPage() { IsVisible = false, };
+            eventsPage = new EventsHistory_Profile() { IsVisible = false, };
+            badgesPage = new BadgesPage() { IsVisible = false, };
 
-            mainBody = new ContentView();
-            mainBody.Content = MySubmissionsPage;
+            // Going the vis/invis route.
+            //mainBody = new ContentView();
+            //mainBody.Content = MySubmissionsPage;
+            //mainBody = MySubmissionsPage.Content;
 
             buildUI();
         }
+
+        /* public int buildUI() {
+             if (portraitView == null) {
+                 // yes, these are unbalanced for a reason.
+                 portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 2, BackgroundColor = GlobalStatusSingleton.backgroundColor, };
+                 //portraitView.SizeChanged += OnPortraitViewSizeChanged;
+                 for (int i = 0; i < numGridRows; i++) {
+                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                 }
+                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+             } else {
+                 // flush the old children. adjust....
+                 if (portraitView.Children != null) {
+                     portraitView.Children.Clear();
+                 }
+             }
+
+             int rowStart = 6;
+             int rowExtent = 10;
+             if (profileDisplayStatus) {
+                 portraitView.Children.Add(coreProfile, 0, 0);
+                 Grid.SetRowSpan(coreProfile, 4);
+                 portraitView.Children.Add(navRow, 0, 4);
+                 Grid.SetRowSpan(navRow, 2);
+
+                 //portraitView.Children.Add(mainBody, 0, 6);
+                 //Grid.SetRowSpan(mainBody, 10);
+             } else {
+                 portraitView.Children.Add(navRow, 0, 0);
+                 Grid.SetRowSpan(navRow, 2);
+                 rowStart = 2;
+                 rowExtent = 14;
+                 //portraitView.Children.Add(mainBody, 0, 2);
+                 //Grid.SetRowSpan(mainBody, 14);
+             }
+             portraitView.Children.Add(MySubmissionsPage, 0, rowStart);
+             portraitView.Children.Add(LikesPage, 0, rowStart);
+             portraitView.Children.Add(EventsPage, 0, rowStart);
+             portraitView.Children.Add(BadgesPage, 0, rowStart);
+             portraitView.Children.Add(SettingsPage, 0, rowStart);
+
+             Grid.SetRowSpan(MySubmissionsPage, rowExtent);
+             Grid.SetRowSpan(LikesPage, rowExtent);
+             Grid.SetRowSpan(EventsPage, rowExtent);
+             Grid.SetRowSpan(BadgesPage, rowExtent);
+             Grid.SetRowSpan(SettingsPage, rowExtent);
+             Content = portraitView;
+             return 1;
+         }  */
 
         public int buildUI() {
             if (portraitView == null) {
@@ -82,48 +134,113 @@ namespace ImageImprov {
                     portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 }
                 portraitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            } else {
-                // flush the old children.
-                portraitView.Children.Clear();
+
+                placeWidgets();
             }
 
+            int rowStart = 6;
+            int rowExtent = 10;
             if (profileDisplayStatus) {
-                portraitView.Children.Add(coreProfile, 0, 0);
+                //portraitView.Children.Add(coreProfile, 0, 0);
+                coreProfile.IsVisible = true;
+                Grid.SetRow(coreProfile, 0);
+                Grid.SetColumn(coreProfile, 0);
                 Grid.SetRowSpan(coreProfile, 4);
-                portraitView.Children.Add(navRow, 0, 4);
-                Grid.SetRowSpan(navRow, 2);
 
-                portraitView.Children.Add(mainBody, 0, 6);
-                Grid.SetRowSpan(mainBody, 10);
+                //portraitView.Children.Add(navRow, 0, 4);
+                Grid.SetRow(navRow, 4);
+                Grid.SetColumn(navRow, 0);
+                Grid.SetRowSpan(navRow, 2);
             } else {
-                portraitView.Children.Add(navRow, 0, 0);
+                // hmm... and what happens to coreprofile???
+                coreProfile.IsVisible = false;
+                //portraitView.Children.Add(navRow, 0, 0);
+                Grid.SetRow(navRow, 0);
+                Grid.SetColumn(navRow, 0);
                 Grid.SetRowSpan(navRow, 2);
-
-                portraitView.Children.Add(mainBody, 0, 2);
-                Grid.SetRowSpan(mainBody, 14);
+                rowStart = 2;
+                rowExtent = 14;
+                //portraitView.Children.Add(mainBody, 0, 2);
+                //Grid.SetRowSpan(mainBody, 14);
             }
+            //portraitView.Children.Add(MySubmissionsPage, 0, rowStart);
+            Grid.SetRow(MySubmissionsPage, rowStart);
+            Grid.SetColumn(MySubmissionsPage, 0);
+            //portraitView.Children.Add(LikesPage, 0, rowStart);
+            Grid.SetRow(LikesPage, rowStart);
+            Grid.SetColumn(LikesPage, 0);
+
+            //portraitView.Children.Add(EventsPage, 0, rowStart);
+            Grid.SetRow(EventsPage, rowStart);
+            Grid.SetColumn(EventsPage, 0);
+
+            //portraitView.Children.Add(BadgesPage, 0, rowStart);
+            Grid.SetRow(BadgesPage, rowStart);
+            Grid.SetColumn(BadgesPage, 0);
+
+            //portraitView.Children.Add(SettingsPage, 0, rowStart);
+            Grid.SetRow(SettingsPage, rowStart);
+            Grid.SetColumn(SettingsPage, 0);
+
+
+            Grid.SetRowSpan(MySubmissionsPage, rowExtent);
+            Grid.SetRowSpan(LikesPage, rowExtent);
+            Grid.SetRowSpan(EventsPage, rowExtent);
+            Grid.SetRowSpan(BadgesPage, rowExtent);
+            Grid.SetRowSpan(SettingsPage, rowExtent);
             Content = portraitView;
             return 1;
         }
 
+        protected void placeWidgets(int rowStart = 6) {
+            portraitView.Children.Add(coreProfile, 0, 0);
+            portraitView.Children.Add(navRow, 0, 4);
+            portraitView.Children.Add(MySubmissionsPage, 0, rowStart);
+            portraitView.Children.Add(LikesPage, 0, rowStart);
+            portraitView.Children.Add(EventsPage, 0, rowStart);
+            portraitView.Children.Add(BadgesPage, 0, rowStart);
+            portraitView.Children.Add(SettingsPage, 0, rowStart);
+        }
+
         public void gotoSubmissionsPage() {
-            mainBody.Content = MySubmissionsPage;
-            navRow.HighlightedButtonIndex = 0;
+            //mainBody = MySubmissionsPage.Content;
+            navRow.NavHighlightIndex = 0;
+            MySubmissionsPage.IsVisible = true;
+            LikesPage.IsVisible = false;
+            EventsPage.IsVisible = false;
+            BadgesPage.IsVisible = false;
+            SettingsPage.IsVisible = false;
         }
 
         public void gotoLikesPage() {
-            mainBody.Content = LikesPage;
-            navRow.HighlightedButtonIndex = 1;
+            //mainBody.Content = LikesPage;
+            //mainBody = LikesPage.Content;
+            navRow.NavHighlightIndex = 1;
+            MySubmissionsPage.IsVisible = false;
+            LikesPage.IsVisible = true;
+            EventsPage.IsVisible = false;
+            BadgesPage.IsVisible = false;
+            SettingsPage.IsVisible = false;
         }
 
         public void gotoEventsHistoryPage() {
-            mainBody.Content = EventsPage;
-            navRow.HighlightedButtonIndex = 2;
+            //mainBody = EventsPage.Content;
+            navRow.NavHighlightIndex = 2;
+            MySubmissionsPage.IsVisible = false;
+            LikesPage.IsVisible = false;
+            EventsPage.IsVisible = true;
+            BadgesPage.IsVisible = false;
+            SettingsPage.IsVisible = false;
         }
 
         public void gotoBadgesPage() {
-            mainBody.Content = BadgesPage;
-            navRow.HighlightedButtonIndex = 3;
+            //mainBody = BadgesPage.Content;
+            navRow.NavHighlightIndex = 3;
+            MySubmissionsPage.IsVisible = false;
+            LikesPage.IsVisible = false;
+            EventsPage.IsVisible = false;
+            BadgesPage.IsVisible = true;
+            SettingsPage.IsVisible = false;
         }
 
         public void flipShowProfile() {
@@ -132,12 +249,18 @@ namespace ImageImprov {
         }
 
         public void gotoSettingsPage() {
-            navRow.HighlightedButtonIndex = ProfileNavRow.SETTINGS_INDEX;
-            mainBody.Content = SettingsPage;
+            navRow.NavHighlightIndex = ProfileNavRow.SETTINGS_INDEX;
+            MySubmissionsPage.IsVisible = false;
+            LikesPage.IsVisible = false;
+            EventsPage.IsVisible = false;
+            BadgesPage.IsVisible = false;
+            SettingsPage.IsVisible = true;
+            //mainBody = SettingsPage.Content;
         }
 
         public void gotoInstructionsPage() {
-            mainBody.Content = InstructionsPage;
+            //mainBody = InstructionsPage.Content;
+            // @todo Turn this instructions page back on.
         }
 
         // the zoom callback.
@@ -149,6 +272,7 @@ namespace ImageImprov {
             // This causes a hang for some reason...
             //mainBody.Content = PreviousView;  // i believe we will already be set to previous content.
             Content = portraitView;
+            //((MasterPage)Application.Current.MainPage).thePages.Position = MainPageSwipeUI.PROFILE_PAGE;
             /*
             if (PreviousView == MySubmissionsPage) {
                 gotoSubmissionsPage();
@@ -161,6 +285,7 @@ namespace ImageImprov {
             }*/
         }
 
+        // why doesn't badges code handle this?
         public virtual async void TokenReceived(object sender, EventArgs e) {
             //coreProfile.usernameLabel.Text = GlobalStatusSingleton.username;
             string jsonQuery = "";
@@ -170,7 +295,7 @@ namespace ImageImprov {
                 if (result.Equals("fail")) {
                     await Task.Delay(10000);
                 }
-            }
+            }  
             if (!result.Equals("fail")) {
                 BadgesResponseJSON badges = JsonConvert.DeserializeObject<BadgesResponseJSON>(result);
                 if (badges != null) {

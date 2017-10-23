@@ -165,7 +165,7 @@ namespace ImageImprov {
             submitCurrentPictureP.Text = "Enter photo to: " + CameraContentPage.activeCameraCategory.description;
             submitCurrentPictureP.IsEnabled = true;
 
-            buildUI();
+            //buildUI(); // rebuilds are bad. does it work without?
         }
 
         // click handler for SubmitCurrentPicture.

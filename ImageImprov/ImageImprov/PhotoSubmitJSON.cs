@@ -20,6 +20,9 @@ namespace ImageImprov {
         [JsonProperty("image")]
         public Byte[] imgStr { get; set; }
 
+        [JsonProperty("tags")]
+        public string[] tags { get; set; }
+
         //[JsonProperty("user_id")]
         //public long userId { get; set; }
 

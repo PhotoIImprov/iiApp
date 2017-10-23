@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,8 +18,9 @@ namespace ImageImprov
         public const int LEADERS_PAGE = 1;
         public const int CAMERA_PAGE = 2;
         public const int PROFILE_PAGE = 3;
+        public const int ZOOM_PAGE = 4;  // need to make this unreachable.
 
-        List<View> _children = new List<View> { };
+        /*List<View> _children = new List<View> { };
         public List<View> Children {
             get { return _children; }
             set {
@@ -26,7 +28,8 @@ namespace ImageImprov
                 OnPropertyChanged();
                 //Debug.WriteLine("DHB:MainPageSwipeUI:Children:Set called");
             }
-        }
+        }*/
+        ObservableCollection<View> Children = new ObservableCollection<View>();
 
         public JudgingContentPage judgingPage;
         // public so that i can implement zoom callback.
@@ -52,9 +55,10 @@ namespace ImageImprov
             leaderboardPage = new LeaderboardPage();  
             judgingPage = new JudgingContentPage();
             cameraPage = new CameraContentPage();
+            profilePage = new ProfilePage();
+
             Debug.WriteLine("DHB:MainPageSwipeUI:ctor cameraPage created.");
 
-            profilePage = new ProfilePage();
             
 
             // TokenReceived is my successful login event.
@@ -118,6 +122,9 @@ namespace ImageImprov
         }
 
         /*
+        public void gotoZoomPage() {
+            this.Position = ZOOM_PAGE;
+        }
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {
             //playerPage.goHome();
@@ -181,9 +188,9 @@ namespace ImageImprov
         }
 
         protected void printChildren() {
-            foreach (View v in _children) {
-                Debug.WriteLine("DHB:MainPageSwipeUI:printChildren __" + v.ToString());
-            }
+            //foreach (View v in _children) {
+            //    Debug.WriteLine("DHB:MainPageSwipeUI:printChildren __" + v.ToString());
+            //}
 
             foreach (View v in Children) {
                 Debug.WriteLine("DHB:MainPageSwipeUI:printChildren " + v.ToString());
