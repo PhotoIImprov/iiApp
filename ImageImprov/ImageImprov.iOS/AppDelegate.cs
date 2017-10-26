@@ -135,6 +135,14 @@ namespace ImageImprov.iOS
                         NSData finalBytes = NSData.FromArray(finalBmp.Bytes);
                         AppDelegate.snappedImgData = finalBytes;
                         GlobalStatusSingleton.latestImg = finalBmp;
+                        GlobalStatusSingleton.mostRecentImgBytes = finalBmp.Bytes; // this fails... need to encode as a jpeg first.
+
+                        SKImage img = SKImage.FromBitmap(finalBmp);
+                        GlobalStatusSingleton.mostRecentImgBytes = img.Encode(SKEncodedImageFormat.Jpeg, 100).ToArray();
+                        SKBitmap test = GlobalSingletonHelpers.SKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
+                        //SKBitmap test = GlobalSingletonHelpers.SKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
+
+                        Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon finalBMP sq?");
                     } else {
                         Debug.WriteLine("DHB:AppDelegate:FinishedLaunching:FinishedPickingMedia_Anon bitmap was null");
                     }

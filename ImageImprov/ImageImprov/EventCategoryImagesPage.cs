@@ -16,6 +16,19 @@ namespace ImageImprov {
         readonly static string PHOTO = "photo";
         IProvideEventDrillDown callingPage;
 
+        private Label loadingLabel = new Label {
+            //BackgroundColor = GlobalStatusSingleton.ButtonColor,
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.FillAndExpand,
+            HorizontalTextAlignment = TextAlignment.Center,
+            //VerticalTextAlignment = TextAlignment.Center,
+            TextColor = Color.Gray,
+            LineBreakMode = LineBreakMode.WordWrap,
+            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
+            FontAttributes = FontAttributes.Bold,
+            Text = "Loading...",
+        };
+
         // Want to keep photos in memory so that we don't implode when we switch between categories.
         // need submissions too...
         Dictionary<CategoryJSON, ObservableCollection<SubmissionsRow>> storedPhotos = new Dictionary<CategoryJSON, ObservableCollection<SubmissionsRow>>();
@@ -62,6 +75,7 @@ namespace ImageImprov {
             myListView.ItemAppearing += OnNewCategoryAppearing;  // get more images!
 
             portraitView.Children.Add(myListView, 0, 0);
+            portraitView.Children.Add(loadingLabel, 0, 4);
             Grid.SetRowSpan(myListView, numGridRows);
             portraitView.Children.Add(backCaret, 0, 0);
             Content = portraitView;
@@ -106,6 +120,7 @@ namespace ImageImprov {
                     await Task.Delay(10000);
                 }
             }
+            loadingLabel.IsVisible = false;
             return result;
         }
 
@@ -115,7 +130,7 @@ namespace ImageImprov {
             string result = await failProcessing(lookupId);
             Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync through request call");
 
-            if ((result.Equals(EMPTY)) && (submissions.Count == 0)) {
+            if ((result.Equals(EMPTY)) || (submissions.Count == 0)) {
                 SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = "No entries yet, be the first!", };
                 submissions.Add(titleRow);
             } else {

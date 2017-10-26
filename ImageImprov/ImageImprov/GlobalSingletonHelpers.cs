@@ -21,19 +21,6 @@ namespace ImageImprov {
     public static class GlobalSingletonHelpers {
         public const string EMPTY = "EMPTY";
 
-        public static string imageToByteArray(Image img) {
-            var file = img.Source;
-            return "hai";
-            /*
-            using (var memStream = new MemoryStream()) {
-                file.GetStream().CopyTo(memStream);
-                file.Dispose();
-                return memStream.ToArray();
-            }
-            */
-
-        }
-
         public static string getAuthToken() {
             return ("JWT " + GlobalStatusSingleton.authToken.accessToken);
         }
@@ -391,7 +378,7 @@ namespace ImageImprov {
                             //string res = "Orient:" + imgExifO.ToString() + "  W:" + imgExifWidth + ", H:" + imgExifHeight;
                             //string res2 = res + "dummy";
                         } catch (Exception e) {
-                            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromStr bad exif read");
+                            Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes bad exif read");
                             Debug.WriteLine(e.ToString());
                         }
                     }
@@ -427,6 +414,7 @@ namespace ImageImprov {
                         } else {
                             rotatedBmp = baseBmp;
                         }
+                        Debug.WriteLine("DHB:GlobalSingletonHelpers:buildFixedRotationSKBitmapFromBytes success");
                     } catch (Exception e) {
                         string msg = e.ToString();
                     }

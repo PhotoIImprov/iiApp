@@ -12,6 +12,7 @@ namespace ImageImprov {
     /// Provides the header (generally the "image improv" text) at the top of the screen.
     /// </summary>
     class PageHeader : ContentView {
+        iiBitmapView backCaret;
         iiBitmapView settingsButton;
         iiBitmapView settingsButton_active;
 
@@ -37,6 +38,20 @@ namespace ImageImprov {
             });
             settingsButton.GestureRecognizers.Add(tapped);
 
+            backCaret = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
+                HorizontalOptions = LayoutOptions.Start,
+                Margin = 4,
+                IsVisible = false, // starts invis.
+            };
+            TapGestureRecognizer goBack = new TapGestureRecognizer();
+            goBack.Tapped += ((a, b) => {
+                MasterPage mp = ((MasterPage)Application.Current.MainPage);
+                //backCaret.IsVisible = false;
+                //mp.thePages.profilePage.gotoSettingsPage();
+                mp.zoomPage.OnBack(a, b);
+            });
+            backCaret.GestureRecognizers.Add(goBack);
+
             this.Content = buildTextLogo();
         }
 
@@ -50,6 +65,7 @@ namespace ImageImprov {
             BoxView horizLine = new BoxView { HeightRequest = 1.0, BackgroundColor = GlobalStatusSingleton.highlightColor, HorizontalOptions = LayoutOptions.FillAndExpand, };
             textLogo.Children.Add(textImg, 0, 1);
             textLogo.Children.Add(horizLine, 0, 2);
+            textLogo.Children.Add(backCaret, 0, 1);
             textLogo.Children.Add(settingsButton, 0, 1);
             textLogo.Children.Add(settingsButton_active, 0, 1);
             return textLogo;
@@ -104,5 +120,11 @@ namespace ImageImprov {
         public static readonly BindableProperty ProfileNav
             = BindableProperty.Create("ProfileNavIndex", typeof(int), typeof(PageHeader), 0, BindingMode.Default, null, OnProfileNavChanged);
 
+        public void backCaretInvis() {
+            backCaret.IsVisible = false;
+        }
+        public void backCaretVis() {
+            backCaret.IsVisible = true;
+        }
     }
 }

@@ -186,6 +186,8 @@ namespace ImageImprov {
                 animate(this, new EventArgs());
             }
 
+            debug_checkImgSquare();
+
             //string result = await sendSubmitAsync(latestTakenImgBytes);
             string result = await sendSubmitAsync(GlobalStatusSingleton.mostRecentImgBytes);
             this.active = false;
@@ -334,6 +336,17 @@ namespace ImageImprov {
                 await Task.Delay(250);
             }
             bulb.IsVisible = false;
+        }
+
+        private void debug_checkImgSquare() {
+            SKBitmap test = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(GlobalStatusSingleton.mostRecentImgBytes);
+            //SKBitmap test2 = GlobalSingletonHelpers.buildFixedRotationSKBitmapFromBytes(GlobalStatusSingleton.latestImg);
+            if (test != null) {
+                Debug.WriteLine("DHB:CameraEnterPhotoView:debug_checkImgSquare: w:" + test.Width + ", h:" + test.Height);
+            } else {
+                Debug.WriteLine("DHB:CameraEnterPhotoView:debug_checkImgSquare: test null??!?");
+            }
+            bool fake = false;
         }
     }
 }

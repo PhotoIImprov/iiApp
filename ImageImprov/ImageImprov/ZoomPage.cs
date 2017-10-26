@@ -42,7 +42,7 @@ namespace ImageImprov {
         public bool saveDataOnExit { get; set; } = false;
         //Button backButton = null;
 
-        iiBitmapView backCaret = null;
+        //iiBitmapView backCaret = null;
 
         // this points back to the original calling ballot.
         // this MUST be set by the pushing page!!!
@@ -139,13 +139,13 @@ namespace ImageImprov {
                 PreviousContent.returnToCaller();
             };*/
 
-            backCaret = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
+            /*backCaret = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.backbutton.png", assembly)) {
                 Margin = 4,
                 HorizontalOptions = LayoutOptions.Start,
             };
             TapGestureRecognizer back = new TapGestureRecognizer();
             back.Tapped += OnBack;
-            backCaret.GestureRecognizers.Add(back);
+            backCaret.GestureRecognizers.Add(back);*/
         }
 
         /*        public int buildZoomView() {
@@ -211,8 +211,8 @@ namespace ImageImprov {
                 tagEntry.Text = ActiveMetaBallot.tags;
             }
             zoomView.Children.Clear();
-            zoomView.Children.Add(backCaret, 0, 0);
-            zoomView.Children.Add(MainImage, 0, 1);
+            //zoomView.Children.Add(backCaret, 0, 0);
+            zoomView.Children.Add(MainImage, 0, 0);
             Grid.SetRowSpan(MainImage, 12);
             Grid.SetColumnSpan(MainImage, 2);
             zoomView.Children.Add(unlikedImg, 0, 13);
@@ -250,8 +250,8 @@ namespace ImageImprov {
             //mainImage.Aspect = Aspect.AspectFill;  this is an old image setting, not a iiBitmapView setting
 
             zoomView.Children.Clear();
-            zoomView.Children.Add(backCaret, 0, 0);
-            zoomView.Children.Add(MainImage, 0, 1);
+            //zoomView.Children.Add(backCaret, 0, 0);
+            zoomView.Children.Add(MainImage, 0, 0);
             Grid.SetRowSpan(MainImage, 12);
             Grid.SetColumnSpan(MainImage, 2);
 

@@ -105,7 +105,7 @@ namespace ImageImprov {
                 eventHistory.events.Sort();
                 eventHistory.events.Reverse();
 
-                foreach (EventsJSON evt in eventHistory.events) {
+                foreach (EventJSON evt in eventHistory.events) {
                     CameraEventTitleElement cete = new CameraEventTitleElement {
                         eventName = evt.eventName,
                         accessKey = evt.accessKey,
@@ -116,6 +116,16 @@ namespace ImageImprov {
                 }
             }
 
+        }
+
+        public void AddEvent(EventJSON cerj) {
+            CameraEventTitleElement cete = new CameraEventTitleElement {
+                eventName = cerj.eventName,
+                accessKey = cerj.accessKey,
+                eventId = cerj.eventId,
+                fullEvent = cerj,
+            };
+            events.Insert(0, cete);
         }
 
         protected static async Task<string> requestApiCallAsync() {

@@ -10,6 +10,6 @@ namespace ImageImprov {
     [JsonObject]
     public class EventsResponseJSON {
         [JsonProperty("events")]
-        public List<EventsJSON> events { get; set; }
+        public List<EventJSON> events { get; set; }
     }
 }

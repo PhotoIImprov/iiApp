@@ -21,8 +21,8 @@ namespace ImageImprov {
         iiBitmapView lightbulbs;
         Label lightbulbCount = new Label {
             Text = "Loading",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.StartAndExpand,
+            //VerticalOptions = LayoutOptions.CenterAndExpand,
             BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
             //IsVisible = false,
@@ -30,16 +30,16 @@ namespace ImageImprov {
 
         Label usernameLabel = new Label {
             Text = "",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.StartAndExpand,
+            //VerticalOptions = LayoutOptions.CenterAndExpand,
             BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
             //IsVisible = false,
         };
         Label friendInfo = new Label {
             Text = "Friends: Coming Soon",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.StartAndExpand,
+            //VerticalOptions = LayoutOptions.CenterAndExpand,
             BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
             //IsVisible = false,
@@ -48,8 +48,8 @@ namespace ImageImprov {
 
         Label mostBulbsInOneDay = new Label {
             Text = MOST_BULBS + "Loading",
-            HorizontalOptions = LayoutOptions.CenterAndExpand,
-            VerticalOptions = LayoutOptions.CenterAndExpand,
+            HorizontalOptions = LayoutOptions.StartAndExpand,
+            //VerticalOptions = LayoutOptions.CenterAndExpand,
             BackgroundColor = GlobalStatusSingleton.backgroundColor,
             TextColor = Color.Black,
             //IsVisible = false,
@@ -59,7 +59,7 @@ namespace ImageImprov {
         public UpperProfileSection() {
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             lightbulbs = new iiBitmapView(GlobalSingletonHelpers.loadSKBitmapFromResourceName("ImageImprov.IconImages.ImageMetaIcons.reward.png", assembly));
-
+            mostBulbsInOneDay.SizeChanged += fixFontSizes;
             buildUI();
         }
 
@@ -100,7 +100,8 @@ namespace ImageImprov {
 
         public async void SetBadgesData(BadgesResponseJSON badges) {
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
-            usernameLabel.Text = GlobalStatusSingleton.username;
+            int ampersand = GlobalStatusSingleton.username.IndexOf("@");
+            usernameLabel.Text = GlobalStatusSingleton.username.Substring(0,ampersand);
             lightbulbCount.Text = badges.totalBulbs.ToString();
             mostBulbsInOneDay.Text = MOST_BULBS + badges.maxDailyBulbs.ToString();
 
@@ -110,6 +111,19 @@ namespace ImageImprov {
             }
         }
 
+        private void fixFontSizes(object sender, EventArgs args) {
+            // lightbulbCount not currently drawn.
+            //usernameLabel; friendInfo; mostBulbsInOneDay; 
+            GlobalSingletonHelpers.fixLabelHeight(usernameLabel,Width/2,usernameLabel.Height);
+            GlobalSingletonHelpers.fixLabelHeight(mostBulbsInOneDay, Width / 2, mostBulbsInOneDay.Height);
+            GlobalSingletonHelpers.fixLabelHeight(friendInfo, Width / 2, friendInfo.Height);
+            double smallestFont = usernameLabel.FontSize;
+            if (mostBulbsInOneDay.FontSize < smallestFont) smallestFont = mostBulbsInOneDay.FontSize;
+            if (friendInfo.FontSize < smallestFont) smallestFont = friendInfo.FontSize;
+            usernameLabel.FontSize = smallestFont;
+            mostBulbsInOneDay.FontSize = smallestFont;
+            friendInfo.FontSize = smallestFont;
+        }
     }
 }
 

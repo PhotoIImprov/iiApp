@@ -101,6 +101,7 @@ namespace ImageImprov {
         }
 
         private void zoomVis() {
+            header.backCaretVis();
             zoomPage.IsVisible = true;
             thePages.IsVisible = false;
         }
@@ -109,6 +110,7 @@ namespace ImageImprov {
             thePages.IsVisible = true;
         }
         public void returnFromZoom() {
+            header.backCaretInvis();
             pagesVis();
         }
         /// IProvideNavigation

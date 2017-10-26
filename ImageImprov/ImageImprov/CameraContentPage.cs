@@ -213,8 +213,15 @@ namespace ImageImprov {
             eventCategoryImgsView.IsVisible = true;
         }
 
+        /// <summary>
+        /// Called from join.
+        /// </summary>
+        /// <param name="cerj"></param>
         public void AddEvent(EventJSON cerj) {
             selectionView.AddEvent(cerj);
+            selectionView.clearJoinPassphrase();
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.thePages.profilePage.EventsPage.AddEvent(cerj);
         }
 
         public void fireLoadBallotFromPhotoSubmission(BallotFromPhotoSubmissionEventArgs ballotEvt) {

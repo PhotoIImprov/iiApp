@@ -10,8 +10,9 @@ namespace ImageImprov {
     /// <summary>
     /// Class used to encapsulate event objects returned by the event call.
     /// </summary>
+    /// 
     [JsonObject]
-    public class EventJSON {
+    public class EventJSON : IComparable<EventJSON> {
         // listing in swagger order.
 
         [JsonProperty("accesskey")]
@@ -34,5 +35,13 @@ namespace ImageImprov {
 
         [JsonProperty("name")]
         public string eventName { get; set; }
+
+        // Currently compare on create date.
+        public int CompareTo(EventJSON b) {
+            if (this.created > b.created) return 1;
+            else if (this.created < b.created) return -1;
+            else return 0;
+        }
+
     }
 }

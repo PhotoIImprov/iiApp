@@ -26,8 +26,8 @@ namespace ImageImprov {
     public class CameraEventTitleElement : CameraCategoryElement, IComparable<CameraEventTitleElement> {
         // @todo refactor so we can merge this.
         public EventJSON rawEvent { get; set; }  // used from the camera pages.
-        private EventsJSON _fullEvent;
-        public EventsJSON fullEvent {
+        private EventJSON _fullEvent;
+        public EventJSON fullEvent {
             get {
                 return _fullEvent;
             }

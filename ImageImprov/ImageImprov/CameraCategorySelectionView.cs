@@ -29,20 +29,6 @@ namespace ImageImprov {
         //DataTemplate myDataTemplate = new DataTemplate(typeof(CameraCategorySelectionCell));
         DataTemplateSelector dts = new CameraDataTemplateSelector();
 
-        /*Label categoryCreationButton = new Label {
-            BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            Text = "Create an event!",
-            HorizontalOptions = LayoutOptions.FillAndExpand,
-            VerticalOptions = LayoutOptions.FillAndExpand,
-            HorizontalTextAlignment = TextAlignment.Center,
-            //VerticalTextAlignment = TextAlignment.Center,
-            TextColor = Color.White,
-            LineBreakMode = LineBreakMode.WordWrap,
-            FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)),
-            FontAttributes = FontAttributes.Bold,
-        };
-        iiBitmapView categoryCreationImageStart;
-        iiBitmapView categoryCreationImageEnd;*/
         iiBitmapView categoryCreationButton;
 
         Frame joinPassphraseFrame = new Frame() { OutlineColor = Color.Black, };
@@ -56,22 +42,8 @@ namespace ImageImprov {
             HorizontalOptions = LayoutOptions.FillAndExpand,
             Margin = 2,
         };
-        /*
-        Label joinLabel = new Label {
-            BackgroundColor = GlobalStatusSingleton.ButtonColor,
-            Text = "Join",
-            HorizontalOptions = LayoutOptions.FillAndExpand,
-            VerticalOptions = LayoutOptions.FillAndExpand,
-            HorizontalTextAlignment = TextAlignment.Center,
-            //VerticalTextAlignment = TextAlignment.Center,
-            TextColor = Color.White,
-            LineBreakMode = LineBreakMode.WordWrap,
-            FontSize = Device.GetNamedSize(NamedSize.Medium, typeof(Label)),
-            FontAttributes = FontAttributes.Bold,
-        };
-        iiBitmapView joinImageStart;
-        */
         iiBitmapView joinImageEnd;
+        public void clearJoinPassphrase() { joinPassphrase.Text = ""; }
 
         // events
         EventHandler LoadEventsRequest;
@@ -275,7 +247,8 @@ namespace ImageImprov {
                     }
                     */
                     EventJSON newEvent = JsonConvert.DeserializeObject<EventJSON>(result);
-                    AddEvent(newEvent);
+                    //AddEvent(newEvent);
+                    cameraPage.AddEvent(newEvent);  // calls this.addevent, but also the profile page's.
                 }
             }
         }
