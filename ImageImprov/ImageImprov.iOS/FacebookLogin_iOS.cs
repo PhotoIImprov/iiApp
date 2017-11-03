@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Text;
 
 using Foundation;
@@ -93,10 +94,16 @@ namespace ImageImprov.iOS {
                 GlobalStatusSingleton.maintainLogin = true;
                 string result = await ThirdPartyAuthenticator.requestTokenAsync(ThirdPartyAuthenticator.METHOD_FACEBOOK, AccessToken.CurrentAccessToken.TokenString);
                 if (result.Equals("Success")) {
+                    GlobalStatusSingleton.facebookRefreshToken = AccessToken.CurrentAccessToken.TokenString;
                     // request token takes care of housekeeping issues, like setting the email address. goto login success steps.
                     loginCallback.LoginSuccess();
                 }
             }
+        }
+
+        public async Task<string> relogin() {
+            string result = await ThirdPartyAuthenticator.requestTokenAsync(ThirdPartyAuthenticator.METHOD_FACEBOOK, GlobalStatusSingleton.facebookRefreshToken);
+            return result;
         }
 
         public bool loginCheck() {

@@ -171,17 +171,26 @@ namespace ImageImprov {
             createView.IsVisible = false;
             eventView.IsVisible = false;
             eventCategoryImgsView.IsVisible = false;
+
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.deactivateBackCaret();
         }
         public void switchToSubmitView() {
-            if (activeCameraCategory != null) {
+            // activeCameraCategory is still used!!!
+            /* if (activeCameraCategory != null) {
                 submitView.setChallengeName(activeCameraCategory.description);
-            }
+            } */
             //Content = submitView.Content;
             selectionView.IsVisible = false;
             submitView.IsVisible = true;
             createView.IsVisible = false;
             eventView.IsVisible = false;
             eventCategoryImgsView.IsVisible = false;
+
+            // activate the back button on the page header.
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.setHeaderBackCaretDelegate(new BackButtonDelegate(submitView.OnBackPressed));
+
         }
 
         public void switchToCreateCategoryView() {
@@ -191,6 +200,9 @@ namespace ImageImprov {
             createView.IsVisible = true;
             eventView.IsVisible = false;
             eventCategoryImgsView.IsVisible = false;
+
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.deactivateBackCaret();
         }
 
         public void switchToEventView() {
@@ -201,6 +213,9 @@ namespace ImageImprov {
             createView.IsVisible = false;
             eventView.IsVisible = true;
             eventCategoryImgsView.IsVisible = false;
+
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.deactivateBackCaret();
         }
 
         public void switchToCategoryImgView(CategoryJSON category) {
@@ -211,6 +226,9 @@ namespace ImageImprov {
             createView.IsVisible = false;
             eventView.IsVisible = false;
             eventCategoryImgsView.IsVisible = true;
+
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.deactivateBackCaret();
         }
 
         /// <summary>

@@ -168,6 +168,16 @@ namespace ImageImprov
             
         }
 
+        public void setHeaderBackCaretDelegate(BackButtonDelegate backDelegate) {
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.setHeaderBackCaretDelegate(backDelegate);
+        }
+
+        public void deactivateBackCaret() {
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            mp.deactivateBackCaret();
+        }
+
         public virtual void TokenReceived(object sender, EventArgs e) {
             // ok, we're in. add pages.
             //this.Children.Insert(0, judgingPage);

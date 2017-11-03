@@ -383,6 +383,12 @@ namespace ImageImprov {
                 if (ballotImgsP.Count > 0) {
                     Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView drawing a ballot");
                     // new design is just 4 squares and that's the only orientation
+                    if (ballotImgsP.Count < 4) {
+                        if (DequeueBallotRequest != null) {
+                            DequeueBallotRequest(this, eDummy);
+                        }
+                        return result;
+                    }
                     result = buildFourPortraitImgPortraitView();
                 } else {
                     Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView no ballot; building instruction");
@@ -442,10 +448,18 @@ namespace ImageImprov {
                     Grid.SetColumnSpan(challengeLabelP, 6);
                     Grid.SetRowSpan(challengeLabelP, 2);
                 }
+            } catch (ArgumentOutOfRangeException ior) {
+                Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView exception bad ballot");
+                // ok. we actually need to figure out what went wrong.
+                Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView ballot:" + ballot);
+                if (DequeueBallotRequest != null) {
+                    DequeueBallotRequest(this, eDummy);
+                }
             } catch (Exception e) {
                 Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView exception");
                 Debug.WriteLine(e.ToString());
                 result = -1;
+                // @todo handle an index out of range by popping the next ballot.
             }
             Debug.WriteLine("DHB:JudgingContentPage:buildPortraitView end");
             return result;
@@ -614,7 +628,7 @@ namespace ImageImprov {
             portraitView.Children.Add(lightbulbRow, 0, 15);
             Grid.SetColumnSpan(lightbulbRow, 6);  // this this line has to be after adding.
             Grid.SetRowSpan(lightbulbRow, 2);
-            debugging_printGridElements();
+            //debugging_printGridElements();
             return 1;
         }
 
@@ -627,7 +641,7 @@ namespace ImageImprov {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void resetBallotImgs() {
-            debugging_printGridElements();
+            //debugging_printGridElements();
             int[] X = { 0, 3, 0, 3 };
             int[] Y = { 2, 2, 8, 8 };
             for (int i = 0; i < 4; i++) {
@@ -643,7 +657,7 @@ namespace ImageImprov {
                 rankImages[i].IsVisible = false;
                 portraitView.RaiseChild(voteBoxes[i]);
             }
-            debugging_printGridElements();
+            //debugging_printGridElements();
             bool block = false;
         }
 
@@ -1234,13 +1248,22 @@ namespace ImageImprov {
 #endif // Debug            
             orientationCount = 0;
             try {
+                // You don't want this comment unless you have ballot problems.
+                //Debug.WriteLine("DHB:JudgingContentPage:processBallotString ballot input:" + result);
                 ballot = JsonConvert.DeserializeObject<BallotJSON>(result);
+
+                if ((ballot == null) || (ballot.ballots == null) || (ballot.category == null)
+                    || (ballot.category.description == null) || (ballot.ballots.Count < 4)) {
+                    // bad ballot. fire a dequeue
+                    if (DequeueBallotRequest != null) {
+                        DequeueBallotRequest(this, eDummy);
+                    }
+                    return;
+                }
+
                 unvotedImgs = new List<BallotCandidateJSON>(ballot.ballots);
                 // handle category first.
                 //challengeLabelP.Text = "Category: " + ballot.category.description;
-                if (ballot.category.description == null) {
-                    bool falseBreak = true;
-                }
                 challengeLabelP.Text = ballot.category.description;
                 GlobalSingletonHelpers.fixLabelHeight(challengeLabelP, portraitView.Width, portraitView.Height/heightAdjustment);
                 // now handle ballot
@@ -1257,12 +1280,6 @@ namespace ImageImprov {
 
                 if ((ballot.ballots.Count < 4) || (ballotImgsP.Count != ballot.ballots.Count)) {
                     Debug.WriteLine("DHB:JudgingContentPage:processBallotString wtf. mismatch in drawing.");
-                }
-                if ((ballot==null) || (ballot.ballots.Count == 0)) {
-                    // bad ballot. fire a dequeue
-                    if (DequeueBallotRequest != null) {
-                        DequeueBallotRequest(this, eDummy);
-                    }
                 }
 #if DEBUG
                 int checkFull = ballotImgsP.Count;
@@ -1787,7 +1804,7 @@ namespace ImageImprov {
                     rankImages[vote.vote - 1].IsVisible = true;
                     Grid.SetColumn(rankImages[vote.vote - 1], col);
                     Grid.SetRow(rankImages[vote.vote - 1], row);
-                    debugging_printGridElements();
+                    //debugging_printGridElements();
                     portraitView.RaiseChild(rankImages[vote.vote - 1]);
                     portraitView.RaiseChild(voteBoxes[selectionId]);  // no longer have to remove and add. just make sure it's on top.
                     //Debug.WriteLine("DHB:JudgingContentPage:MultiVoteGeneratesBallot rankImage[" +vote.vote-1+ "] is grid element:")
@@ -1969,11 +1986,11 @@ namespace ImageImprov {
 
         public void debugging_printGridElements() {
             if (portraitView != null) {
-                Debug.WriteLine("DHB:Debug:GridElements BEGIN");
+                Debug.WriteLine("DHB:JudgingContentPage:debugging_printGridElements BEGIN");
                 foreach (View v in portraitView.Children) {
-                    Debug.WriteLine("DHB:Debug:GridElements: " + v.ToString());
+                    Debug.WriteLine("DHB:JudgingContentPage:debugging_printGridElements : " + v.ToString());
                 }
-                Debug.WriteLine("DHB:Debug:GridElements DONE");
+                Debug.WriteLine("DHB:JudgingContentPage:debugging_printGridElements  DONE");
             }
         }
     } // class

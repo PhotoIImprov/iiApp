@@ -25,7 +25,7 @@ namespace ImageImprov {
         iiBitmapView unflaggedImg;
         iiBitmapView likedImg;
         iiBitmapView flaggedImg;
-        long pid;
+        public long pid { get; set; }
 
         Entry tagEntry = new Entry {
             Placeholder = "#tag",

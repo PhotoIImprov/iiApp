@@ -27,6 +27,10 @@ namespace ImageImprov {
         void gotoMySubmissionsPage();
         //void gotoPurchasePage();
         */
+
+        // start exposing functions that enable backcarets in the header.
+        void setHeaderBackCaretDelegate(BackButtonDelegate bbd);
+        void deactivateBackCaret();
     }
 }
 

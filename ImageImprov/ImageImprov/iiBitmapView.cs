@@ -48,7 +48,7 @@ namespace ImageImprov {
 
         public static readonly BindableProperty PhotoMetaProperty
             = BindableProperty.Create("PhotoMeta", typeof(PhotoMetaJSON), typeof(iiBitmapView), DEFAULT_PHOTO_META, BindingMode.Default, null, OnPhotoMetaChanged);
-
+            
         // Scaling Property.
         public bool Scaling {
             get { return (bool)GetValue(ScalingProperty); }

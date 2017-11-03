@@ -18,6 +18,7 @@ namespace ImageImprov
         //public const string PROPERTY_REFRESH_TOKEN = "refresh_token";
         public const string PROPERTY_AUTH_ACCOUNT = "auth_account";
         public const string PROPERTY_OAUTH_DATA = "oauth";
+        public const string PROPERTY_FACEBOOK_REFRESH_TOKEN = "facebookRefreshToken";
         public const string PROPERTY_ASPECT_OR_FILL_IMGS = "aspectOrFillImgs";
         public const string PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP = "lastLightbulbTimestamp";
         public const string PROPERTY_LIGHTBULB_COUNT = "lightbulbCount";
@@ -68,6 +69,9 @@ namespace ImageImprov
             //Properties[PROPERTY_REFRESH_TOKEN] = ThirdPartyAuthenticator.refreshToken;
             Properties[PROPERTY_AUTH_ACCOUNT] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.authAccount);
             Properties[PROPERTY_OAUTH_DATA] = JsonConvert.SerializeObject(ThirdPartyAuthenticator.oauthData);
+            if ((GlobalStatusSingleton.facebookRefreshToken != null) && (!GlobalStatusSingleton.facebookRefreshToken.Equals(""))) {
+                Properties[PROPERTY_FACEBOOK_REFRESH_TOKEN] = GlobalStatusSingleton.facebookRefreshToken;
+            }
             Properties[PROPERTY_ASPECT_OR_FILL_IMGS] = GlobalStatusSingleton.aspectOrFillImgs.ToString();
             Properties[PROPERTY_LAST_LIGHTBULB_EARNED_TIMESTAMP] = LightbulbTracker.timeOfLastEarnedLightbulb.ToString();
             Properties[PROPERTY_LIGHTBULB_COUNT] = LightbulbTracker.todaysCount;
@@ -155,6 +159,9 @@ namespace ImageImprov
             }
             if (properties.ContainsKey(PROPERTY_OAUTH_DATA)) {
                 ThirdPartyAuthenticator.oauthData = JsonConvert.DeserializeObject<OAUTHDataJSON>(properties[PROPERTY_OAUTH_DATA] as string);
+            }
+            if (properties.ContainsKey(PROPERTY_FACEBOOK_REFRESH_TOKEN)) {
+                GlobalStatusSingleton.facebookRefreshToken = properties[PROPERTY_FACEBOOK_REFRESH_TOKEN] as string;
             }
             if (properties.ContainsKey(PROPERTY_ASPECT_OR_FILL_IMGS)) {
                 GlobalStatusSingleton.aspectOrFillImgs = ((properties[PROPERTY_ASPECT_OR_FILL_IMGS] as string).Equals("AspectFit") ? Aspect.AspectFit : Aspect.Fill);

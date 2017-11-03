@@ -39,6 +39,10 @@ namespace ImageImprov
         //public static string password = "pa55w0rd";
         public static string password = "";
 
+        // only used if the user logs in via facebook.
+        public static string facebookRefreshToken = null;
+
+        public static string version = null;
         /////////////////////////////////// 
         /// BEGIN PREFERENCES SECTION
         /// BEGIN PREFERENCES SECTION

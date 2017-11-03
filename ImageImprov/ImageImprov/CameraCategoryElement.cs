@@ -23,6 +23,9 @@ namespace ImageImprov {
         public string title { get; set;  }
     }
 
+    public class CameraSpacerRowElement : CameraCategoryElement {
+    }
+
     public class CameraEventTitleElement : CameraCategoryElement, IComparable<CameraEventTitleElement> {
         // @todo refactor so we can merge this.
         public EventJSON rawEvent { get; set; }  // used from the camera pages.

@@ -73,6 +73,16 @@ namespace ImageImprov {
             img7.SetBinding(iiBitmapView.BitmapProperty, "bitmap7");
             img8.SetBinding(iiBitmapView.BitmapProperty, "bitmap8");
 
+            img0.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp0Meta");
+            img1.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp1Meta");
+            img2.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp2Meta");
+            img3.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp3Meta");
+            img4.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp4Meta");
+            img5.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp5Meta");
+            img6.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp6Meta");
+            img7.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp7Meta");
+            img8.SetBinding(iiBitmapView.PhotoMetaProperty, "bmp8Meta");
+
             TapGestureRecognizer imgTapped = new TapGestureRecognizer();
             imgTapped.Tapped += OnImgTapped;
             img0.GestureRecognizers.Add(imgTapped);
@@ -107,9 +117,11 @@ namespace ImageImprov {
                 m1.zoomPage.ActiveMetaBallot = new BallotCandidateJSON(); // nada for now.
 
                 iiBitmapView taggedImg = new iiBitmapView {
-                    Bitmap = ((iiBitmapView)sender).Bitmap.Copy()
+                    Bitmap = ((iiBitmapView)sender).Bitmap.Copy(),
+                    PhotoMeta = ((iiBitmapView)sender).PhotoMeta,
                 };
                 m1.zoomPage.MainImage = taggedImg;
+                m1.zoomPage.pid = taggedImg.PhotoMeta.pid;
                 m1.zoomPage.buildZoomView();
                 //mp.zoomPage.PreviousContent = mp.thePages.leaderboardPage;
                 //m1.zoomPage.PreviousContent = mp.leaderboardPage;

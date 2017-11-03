@@ -15,5 +15,7 @@ namespace ImageImprov {
         void startFacebookLogin();
         bool loginCheck();
         void logout();
+        // used on startup if the user has previously logged in via facebook.
+        Task<string> relogin();
     }
 }

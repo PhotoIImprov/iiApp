@@ -33,7 +33,7 @@ namespace ImageImprov {
 
         Frame joinPassphraseFrame = new Frame() { OutlineColor = Color.Black, };
         Entry joinPassphrase = new Entry {
-            Placeholder = "Type your join phrase then tap play\n to join your event",
+            Placeholder = "Type your join phrase then tap play\n to join an event",
             PlaceholderColor = Color.Gray,
             TextColor = Color.Black,
             FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
@@ -58,7 +58,7 @@ namespace ImageImprov {
                 //MinimumHeightRequest = 80,
                 //MinimumWidthRequest = .8*360,
                 //HorizontalOptions = LayoutOptions.CenterAndExpand,
-                //Margin = 3,
+                Margin = 2,
             };
             categoryCreationButton.SizeChanged += CheckCatButton;
 
@@ -151,6 +151,10 @@ namespace ImageImprov {
                         openCategorys.Add(coce);
                     }
                 }
+
+                CameraSpacerRowElement csre = new CameraSpacerRowElement();
+                openCategorys.Add(csre);
+
                 chre = new CameraHeaderRowElement { title = "Joined Events", };
                 openCategorys.Add(chre);
             }

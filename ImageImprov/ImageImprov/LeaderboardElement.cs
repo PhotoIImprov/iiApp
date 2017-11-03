@@ -99,8 +99,8 @@ namespace ImageImprov {
         // Not drawn, but needed to uniquely id leaderboards.
         public long categoryId { get; set; }
 
-        private LeaderboardJSON _bmp0Meta;
-        public LeaderboardJSON bmp0Meta {
+        private PhotoMetaJSON _bmp0Meta;
+        public PhotoMetaJSON bmp0Meta {
             get { return _bmp0Meta; }
             set {
                 _bmp0Meta = value;
@@ -108,8 +108,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp1Meta;
-        public LeaderboardJSON bmp1Meta {
+        private PhotoMetaJSON _bmp1Meta;
+        public PhotoMetaJSON bmp1Meta {
             get { return _bmp1Meta; }
             set {
                 _bmp1Meta = value;
@@ -117,8 +117,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp2Meta;
-        public LeaderboardJSON bmp2Meta {
+        private PhotoMetaJSON _bmp2Meta;
+        public PhotoMetaJSON bmp2Meta {
             get { return _bmp2Meta; }
             set {
                 _bmp2Meta = value;
@@ -126,8 +126,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp3Meta;
-        public LeaderboardJSON bmp3Meta {
+        private PhotoMetaJSON _bmp3Meta;
+        public PhotoMetaJSON bmp3Meta {
             get { return _bmp3Meta; }
             set {
                 _bmp3Meta = value;
@@ -135,8 +135,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp4Meta;
-        public LeaderboardJSON bmp4Meta {
+        private PhotoMetaJSON _bmp4Meta;
+        public PhotoMetaJSON bmp4Meta {
             get { return _bmp4Meta; }
             set {
                 _bmp4Meta = value;
@@ -144,8 +144,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp5Meta;
-        public LeaderboardJSON bmp5Meta {
+        private PhotoMetaJSON _bmp5Meta;
+        public PhotoMetaJSON bmp5Meta {
             get { return _bmp5Meta; }
             set {
                 _bmp5Meta = value;
@@ -153,8 +153,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp6Meta;
-        public LeaderboardJSON bmp6Meta {
+        private PhotoMetaJSON _bmp6Meta;
+        public PhotoMetaJSON bmp6Meta {
             get { return _bmp6Meta; }
             set {
                 _bmp6Meta = value;
@@ -162,8 +162,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp7Meta;
-        public LeaderboardJSON bmp7Meta {
+        private PhotoMetaJSON _bmp7Meta;
+        public PhotoMetaJSON bmp7Meta {
             get { return _bmp7Meta; }
             set {
                 _bmp7Meta = value;
@@ -171,8 +171,8 @@ namespace ImageImprov {
             }
         }
 
-        private LeaderboardJSON _bmp8Meta;
-        public LeaderboardJSON bmp8Meta {
+        private PhotoMetaJSON _bmp8Meta;
+        public PhotoMetaJSON bmp8Meta {
             get { return _bmp8Meta; }
             set {
                 _bmp8Meta = value;
@@ -190,8 +190,10 @@ namespace ImageImprov {
                 PropertyInfo o = GlobalSingletonHelpers.GetProperty(this, "bitmap"+i);
                 o.SetValue(this, bitmaps[i]);
 
-                PropertyInfo p = GlobalSingletonHelpers.GetProperty(this, "bmp" + i + "Meta");
-                p.SetValue(this, photoMeta[i]);
+                string nameStr = "bmp" + i + "Meta";
+                PropertyInfo p = GlobalSingletonHelpers.GetProperty(this, nameStr);
+                p.SetValue(this, LeaderboardJSON.Convert(photoMeta[i]));
+                
                 i++;
             }
         }

@@ -40,7 +40,21 @@ namespace ImageImprov {
         [JsonProperty("you")]
         public string isYou { get; set; }
 
-
+        public static PhotoMetaJSON Convert(LeaderboardJSON orig) {
+            if (orig == null) { return null; }
+            return new PhotoMetaJSON {
+                likes = orig.likes,
+                pid = orig.pid,
+                score = orig.score,
+                //tags,
+                //url,
+                votes = orig.votes,
+                user = orig.username,
+                //isFriend,
+                //active,
+                offensive = false,
+            };
+        }
         // unlike ballot, I don't need portrait vs landscape orientation info as it doesn't impact layout
         // @todo add thumbnail here.
     }

@@ -24,6 +24,8 @@ namespace ImageImprov {
 
         public SKBitmap combineLightbulbs(SKBitmap outputBmp, SKBitmap lowerImage, SKBitmap upperImage, double pctScale) {
             using (var canvas = new SKCanvas(outputBmp)) {
+                //canvas.Clear(new SKColor(242,242,242)); // this works.
+                canvas.Clear(GlobalSingletonHelpers.SKColorFromXamarinColor(GlobalStatusSingleton.backgroundColor));
                 int y = (int)(pctScale * (double)lowerImage.Height);
                 SKRect lwrRegion = SKRect.Create(0, 0, lowerImage.Width, y);
                 canvas.DrawBitmap(lowerImage, lwrRegion, lwrRegion);

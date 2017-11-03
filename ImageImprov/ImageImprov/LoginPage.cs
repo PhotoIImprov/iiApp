@@ -279,6 +279,7 @@ namespace ImageImprov {
 #if DEBUG
             versionLabel.Text = "Debug " + versionLabel.Text;
 #endif
+            GlobalStatusSingleton.version = versionLabel.Text;
         }
 
         // public so it is exposed to ThirdPartyAuthenticator
@@ -620,8 +621,13 @@ namespace ImageImprov {
             if (termsOfServiceLabel == null) {
                 createWebButtons();
             }
+            int usernameEntryRow = 7;
             Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < usernameEntryRow; i++) {
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+            for (int i = 0; i < (20 - usernameEntryRow - 1); i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             int colsWide = 8;
@@ -701,8 +707,15 @@ namespace ImageImprov {
             };
             cancelRegistrationButton.GestureRecognizers.Add(tap);
 
+            int startAutoRows = 7;
             Grid portraitView = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < startAutoRows; i++) {
+                portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+            portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+            portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+            portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+            for (int i = 0; i < (20 - startAutoRows-3); i++) {
                 portraitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             }
             int colsWide = 8;
@@ -920,12 +933,28 @@ namespace ImageImprov {
             //string loginResult = await requestLoginAsync();
             Debug.WriteLine("DHB:LoginPage:OnMyLogin");
             loggedInLabel.Text = " Connecting... ";
-            if ((ThirdPartyAuthenticator.oauthData == null) || (ThirdPartyAuthenticator.oauthData.refreshToken == null) || (ThirdPartyAuthenticator.oauthData.refreshToken.Equals(""))) {
+            if ((GlobalStatusSingleton.facebookRefreshToken != null) && (!GlobalStatusSingleton.facebookRefreshToken.Equals(""))) {
+                // login via facebook.
+                string loginResult = await PlatformSpecificCalls.relogin();
+                if (loginResult.Equals("Success")) {
+                    // still good with facebook. now grab our token.
+                    loginResult = await ThirdPartyAuthenticator.requestTokenAsync(ThirdPartyAuthenticator.METHOD_FACEBOOK, GlobalStatusSingleton.facebookRefreshToken);
+                    if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))
+                    || (loginResult.Equals(BAD_CONNECTION))) {
+                        handleLoginFail(loginResult);
+                    } else {
+                        LoginSuccess();
+                    }
+                } else {
+                    GlobalStatusSingleton.facebookRefreshToken = null;  // wipe this as a cautionary measure.
+                    handleLoginFail(loginResult);
+                }
+            } else if ((ThirdPartyAuthenticator.oauthData == null) || (ThirdPartyAuthenticator.oauthData.refreshToken == null) || (ThirdPartyAuthenticator.oauthData.refreshToken.Equals(""))) {
                 Debug.WriteLine("DHB:LoginPage:OnMyLogin no oauth data");
                 loginAttemptCounter++;
                 string loginResult = await requestTokenAsync();
                 Debug.WriteLine("DHB:LoginPage:OnMyLogin requestToken result:" + loginResult);
-                if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE)) 
+                if ((loginResult.Equals("login failure")) || (loginResult.Equals(BAD_PASSWORD_LOGIN_FAILURE)) || (loginResult.Equals(ANON_REGISTRATION_FAILURE))
                     || (loginResult.Equals(BAD_CONNECTION))) {
                     handleLoginFail(loginResult);
                 } else {

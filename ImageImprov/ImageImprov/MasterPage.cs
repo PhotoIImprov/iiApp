@@ -102,6 +102,7 @@ namespace ImageImprov {
 
         private void zoomVis() {
             header.backCaretVis();
+            header.resetBackButton();  // make sure we return to the correct place on a back.
             zoomPage.IsVisible = true;
             thePages.IsVisible = false;
         }
@@ -142,7 +143,16 @@ namespace ImageImprov {
         public void gotoZoomPage() {
             zoomVis();
         }
-        
+
+        public void setHeaderBackCaretDelegate(BackButtonDelegate backDelegate) {
+            header.backCaretVis();
+            header.setHeaderBackCaretDelegate(backDelegate);
+        }
+
+        public void deactivateBackCaret() {
+            header.backCaretInvis();
+        }
+
         /*
         // This takes the user to the PlayerContentPage.
         public void gotoHomePage() {

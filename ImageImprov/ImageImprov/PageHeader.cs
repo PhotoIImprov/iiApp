@@ -9,12 +9,19 @@ using Xamarin.Forms;
 
 namespace ImageImprov {
     /// <summary>
+    /// Provides a function pointer for what the back button does when called.
+    /// </summary>
+    public delegate void BackButtonDelegate(object Sender, EventArgs args);
+
+    /// <summary>
     /// Provides the header (generally the "image improv" text) at the top of the screen.
     /// </summary>
     class PageHeader : ContentView {
         iiBitmapView backCaret;
         iiBitmapView settingsButton;
         iiBitmapView settingsButton_active;
+
+        BackButtonDelegate backButtonDelegate;
 
         public PageHeader() {
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
@@ -43,16 +50,41 @@ namespace ImageImprov {
                 Margin = 4,
                 IsVisible = false, // starts invis.
             };
+
             TapGestureRecognizer goBack = new TapGestureRecognizer();
             goBack.Tapped += ((a, b) => {
-                MasterPage mp = ((MasterPage)Application.Current.MainPage);
-                //backCaret.IsVisible = false;
-                //mp.thePages.profilePage.gotoSettingsPage();
-                mp.zoomPage.OnBack(a, b);
+                if (backButtonDelegate != null) {
+                    backButtonDelegate(a, b);
+                }
             });
             backCaret.GestureRecognizers.Add(goBack);
 
             this.Content = buildTextLogo();
+        }
+
+        public static void zoomPageBack(object Sender, EventArgs args) {
+            MasterPage mp = ((MasterPage)Application.Current.MainPage);
+            //backCaret.IsVisible = false;
+            //mp.thePages.profilePage.gotoSettingsPage();
+            mp.zoomPage.OnBack(Sender, args);
+        }
+
+        public void autoInvisDelegate(object Sender, EventArgs args) {
+            backCaret.IsVisible = false;
+        }
+
+        public void setHeaderBackCaretDelegate(BackButtonDelegate backDelegate, bool addAutoInvis = true) {
+            backButtonDelegate = backDelegate;
+            if (addAutoInvis) {
+                backButtonDelegate += autoInvisDelegate;
+            }
+        }
+
+        /// <summary>
+        /// Convenience function for returning the default behavior of the back button to register for zoom pages.
+        /// </summary>
+        public void resetBackButton() {
+            backButtonDelegate = new BackButtonDelegate(zoomPageBack);
         }
 
         private Grid buildTextLogo() {

@@ -19,6 +19,8 @@ namespace ImageImprov {
         //CheckBox aspectOrFillCheckbox;
         StackLayout maintainLogin;
 
+        Label versionLabel;
+
         public SettingsPage() {
             buildUI();
             Content = settingsGrid;
@@ -51,6 +53,9 @@ namespace ImageImprov {
             };
             */
             //defaultNavigationButtons = new KeyPageNavigator(GlobalSingletonHelpers.getUploadingCategoryDesc()) { ColumnSpacing = 1, RowSpacing = 1 };
+            if (GlobalStatusSingleton.version != null) {
+                versionLabel = new Label { Text = GlobalStatusSingleton.version, TextColor = Color.Black, };
+            }
 
             Grid someGrid = new Grid { ColumnSpacing = 0, RowSpacing = 0 };
             for (int i = 0; i < 8; i++) {
@@ -63,6 +68,8 @@ namespace ImageImprov {
                 someGrid.Children.Add(maintainLogin, 1, 3);
                 Grid.SetColumnSpan(maintainLogin, 4);
             }
+            someGrid.Children.Add(versionLabel, 1, 7);
+            Grid.SetColumnSpan(versionLabel, 4);
             //settingsGrid.Children.Add(aspectOrFillCheckbox, 0, 6);
             //settingsGrid.Children.Add(defaultNavigationButtons, 0, 9);  // object, col, row
             settingsGrid = someGrid;

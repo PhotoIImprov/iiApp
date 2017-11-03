@@ -130,7 +130,7 @@ namespace ImageImprov {
             string result = await failProcessing(lookupId);
             Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync through request call");
 
-            if ((result.Equals(EMPTY)) || (submissions.Count == 0)) {
+            if (result.Equals(EMPTY)) {
                 SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = "No entries yet, be the first!", };
                 submissions.Add(titleRow);
             } else {
@@ -184,6 +184,10 @@ namespace ImageImprov {
                             }
                             //SubmissionsBlankRow blank = new SubmissionsBlankRow();
                             //submissions.Add(blank);  // causing issues at this row. skip for now.
+                        } else {
+                            // @todo This may need to adjust after an entry comes in!
+                            SubmissionsTitleRow titleRow = new SubmissionsTitleRow { title = "No entries yet, be the first!", };
+                            submissions.Add(titleRow);
                         }
                         Debug.WriteLine("DHB:EventCategoryImagesPage:processImageLoadAsync  category: " + _ActiveCategory.description + " complete.");
                     }

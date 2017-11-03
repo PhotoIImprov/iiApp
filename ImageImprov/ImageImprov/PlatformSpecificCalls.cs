@@ -70,5 +70,13 @@ namespace ImageImprov {
             return result;
         }
 
+        public static async Task<string> relogin() {
+            string result = "";
+            I_ii_FacebookLogin iFB = DependencyService.Get<I_ii_FacebookLogin>();
+            if (iFB != null) {
+                result = await iFB.relogin();
+            }
+            return result;
+        }
     }
 }

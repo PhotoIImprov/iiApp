@@ -693,6 +693,9 @@ namespace ImageImprov {
             return (int)result;
         }
 
+        public static SKColor SKColorFromXamarinColor(Color color) {
+            return new SKColor(Convert.ToByte(255*color.R), Convert.ToByte(255 * color.G), Convert.ToByte(255 * color.B));
+        }
         //
         //
         //   END IMAGE PROCESSING HELPERS

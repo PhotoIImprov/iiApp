@@ -14,6 +14,7 @@ using Android.Support.V4.App;
 using System.Diagnostics;
 using Java.Lang;
 using System;
+using System.Threading.Tasks;
 using Android.Content;
 
 [assembly: Dependency(typeof(ImageImprov.Droid.FacebookLogin_Droid))]
@@ -89,6 +90,7 @@ namespace ImageImprov.Droid {
                 GlobalStatusSingleton.maintainLogin = true;
                 string result = await ThirdPartyAuthenticator.requestTokenAsync(ThirdPartyAuthenticator.METHOD_FACEBOOK, AccessToken.CurrentAccessToken.Token);
                 if (result.Equals("Success")) {
+                    GlobalStatusSingleton.facebookRefreshToken = AccessToken.CurrentAccessToken.Token;
                     // request token takes care of housekeeping issues, like setting the email address. goto login success steps.
                     loginCallback.LoginSuccess();
                 }
@@ -96,6 +98,10 @@ namespace ImageImprov.Droid {
             }
         }
         
+        public async Task<string> relogin() {
+            string result = await ThirdPartyAuthenticator.requestTokenAsync(ThirdPartyAuthenticator.METHOD_FACEBOOK, GlobalStatusSingleton.facebookRefreshToken);
+            return result;
+        }
 
         public IntPtr Handle { get;}
         
